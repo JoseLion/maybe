@@ -1,0 +1,49 @@
+version: 2
+jobs:
+  build:
+    working_directory: ~/repo/maybe
+
+    docker:
+      - image: circleci/openjdk:13-jdk-buster
+        environment:
+          JVM_OPTS: -Xmx4096m
+          TERM: dumb
+
+    steps:
+      - checkout:
+          path: ~/repo
+
+      - run:
+          name: Generate gradle.lock
+          command: cat gradle/wrapper/gradle-wrapper.properties gradle/dependency-locks/* > gradle.lock
+
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "gradle.lock" }}
+            - v1-dependencies-
+
+      - run:
+          name: Compile and build
+          command: ./gradlew build -x test
+
+      - run:
+          name: Lint
+          command: ./gradlew lintGradle sonarlintMain sonarlintTest
+
+      - run:
+          name: Test
+          command: ./gradlew test
+
+      # - run:
+      #     name: Test reports
+      #     command: ./gradlew jacocoTestReport
+
+      - save_cache:
+          paths:
+            - ~/repo/maybe/.gradle
+            - ~/.gradle
+          key: v1-dependencies-{{ checksum "gradle.lock" }}
+
+      # - run:
+      #     name: Upload reports
+      #     command: bash <(curl -s https://codecov.io/bash)

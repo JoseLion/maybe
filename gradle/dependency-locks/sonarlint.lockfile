@@ -1,0 +1,7 @@
+# This is a Gradle generated file for dependency locking.
+# Manual edits can break the build and are not advised.
+# This file is expected to be part of source control.
+com.google.code.findbugs:jsr305:3.0.2
+commons-lang:commons-lang:2.6
+org.sonarsource.sonarlint.core:sonarlint-client-api:4.8.0.14729
+org.sonarsource.sonarlint.core:sonarlint-core:4.8.0.14729
