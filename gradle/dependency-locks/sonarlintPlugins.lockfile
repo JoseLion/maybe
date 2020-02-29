@@ -1,0 +1,7 @@
+# This is a Gradle generated file for dependency locking.
+# Manual edits can break the build and are not advised.
+# This file is expected to be part of source control.
+org.sonarsource.html:sonar-html-plugin:3.2.0.2082
+org.sonarsource.java:sonar-java-plugin:5.14.0.18788
+org.sonarsource.javascript:sonar-javascript-plugin:5.2.1.7778
+org.sonarsource.xml:sonar-xml-plugin:2.0.1.2020
