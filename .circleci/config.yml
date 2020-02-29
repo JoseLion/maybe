@@ -34,9 +34,9 @@ jobs:
           name: Test
           command: ./gradlew test
 
-      # - run:
-      #     name: Test reports
-      #     command: ./gradlew jacocoTestReport
+      - run:
+          name: Test reports
+          command: ./gradlew jacocoTestReport
 
       - save_cache:
           paths:
@@ -44,6 +44,6 @@ jobs:
             - ~/.gradle
           key: v1-dependencies-{{ checksum "gradle.lock" }}
 
-      # - run:
-      #     name: Upload reports
-      #     command: bash <(curl -s https://codecov.io/bash)
+      - run:
+          name: Upload reports
+          command: bash <(curl -s https://codecov.io/bash)
