@@ -1,4 +1,5 @@
-version: 2
+version: 2.1
+
 jobs:
   build:
     working_directory: ~/repo/maybe
@@ -23,20 +24,16 @@ jobs:
             - v1-dependencies-
 
       - run:
-          name: Lint
-          command: ./gradlew lintGradle sonarlintMain sonarlintTest
+          name: Lint Gradle
+          command: ./gradlew lintGradle
 
       - run:
           name: Compile and build
           command: ./gradlew build -x test
 
       - run:
-          name: Test
-          command: ./gradlew test
-
-      - run:
-          name: Test reports
-          command: ./gradlew jacocoTestReport
+          name: Test, Lint and Coverage
+          command: ./gradlew sonarqube
 
       - save_cache:
           paths:
@@ -47,3 +44,9 @@ jobs:
       - run:
           name: Upload reports
           command: bash <(curl -s https://codecov.io/bash)
+
+workflows:
+  main:
+    jobs:
+      - build:
+          context: SonarCloud
