@@ -39,3 +39,6 @@ build
 
 # Gradle Wrapper
 !gradle/wrapper/gradle-wrapper.jar
+
+# 12 factor
+gradle.properties

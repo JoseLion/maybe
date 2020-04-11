@@ -1,0 +1,6 @@
+signing.keyId=031E46E1
+signing.password=<SIGNING_PASSWORD>
+signing.secretKeyRingFile=lion-keyring.asc
+
+ossrhUsername=JoseLion
+ossrhPassword=<OSSRH_PASSWORD>

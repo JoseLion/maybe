@@ -15,6 +15,8 @@ commons-collections:commons-collections:3.2.1
 commons-lang:commons-lang:2.4
 commons-logging:commons-logging:1.1.1
 gradle.plugin.com.github.joselion.pretty-jupiter:pretty-jupiter:1.0.0
+io.codearte.gradle.nexus:gradle-nexus-staging-plugin:0.21.2
+io.codearte.nexus-staging:io.codearte.nexus-staging.gradle.plugin:0.21.2
 javax.inject:javax.inject:1
 junit:junit:3.8.1
 nebula.lint:nebula.lint.gradle.plugin:16.7.0
