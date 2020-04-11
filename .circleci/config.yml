@@ -32,12 +32,16 @@ jobs:
           command: ./gradlew build -x test
 
       - run:
-          name: Test, Lint and Coverage
+          name: Test, Lint
           command: ./gradlew sonarqube
 
       - run:
           name: Build javadocs
           command: ./gradlew javadoc
+
+      - run:
+          name: Coverage
+          command: ./gradlew jacocoTestReport
 
       - save_cache:
           paths:
@@ -81,6 +85,7 @@ workflows:
       - build:
           context: SonarCloud
       - publish:
+          context: SonarCloud
           requires:
             - build
           filters:

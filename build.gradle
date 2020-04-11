@@ -37,8 +37,6 @@ gradleLint {
   ]
 }
 
-project.tasks["sonarqube"].dependsOn "jacocoTestReport"
-
 sonarqube {
   properties {
     property 'sonar.projectKey', 'JoseLion_maybe'
