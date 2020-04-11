@@ -35,6 +35,10 @@ jobs:
           name: Test, Lint and Coverage
           command: ./gradlew sonarqube
 
+      - run:
+          name: Build javadocs
+          command: ./gradlew javadoc
+
       - save_cache:
           paths:
             - ~/repo/maybe/.gradle
@@ -45,8 +49,40 @@ jobs:
           name: Upload reports
           command: bash <(curl -s https://codecov.io/bash)
 
+  publish:
+    working_directory: ~/repo/maybe
+
+    docker:
+      - image: circleci/openjdk:13-jdk-buster
+        environment:
+          JVM_OPTS: -Xmx4096m
+          TERM: dumb
+
+    steps:
+      - checkout:
+          path: ~/repo/maybe
+
+      - run:
+          name: Generate gradle.lock
+          command: cat gradle/wrapper/gradle-wrapper.properties gradle/dependency-locks/* > gradle.lock
+
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "gradle.lock" }}
+            - v1-dependencies-
+
+      - run:
+          name: Upload to Bintray
+          command: ./gradlew bintrayUpload
+
 workflows:
   main:
     jobs:
       - build:
           context: SonarCloud
+      - publish:
+          requires:
+            - build
+          filters:
+            branches:
+              only: release

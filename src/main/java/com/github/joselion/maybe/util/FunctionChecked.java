@@ -5,7 +5,7 @@ package com.github.joselion.maybe.util;
  * expression throws an {@code E} checked exception.
  * 
  * This is a functional interface whose functional method is
- * {@link #applyChecked()}
+ * {@link #applyChecked(Object)}
  * 
  * @param <T> the type of argument passed to the function
  * @param <R> the type of results returned by the function

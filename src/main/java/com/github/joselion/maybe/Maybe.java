@@ -48,6 +48,7 @@ public class Maybe<T, E extends Exception> {
    * {@code null}, it returns {@link #nothing()}.
    * 
    * @param <T>   the type of the value
+   * @param <E>   the type of the exception
    * @param value the value to wrap on the monad
    * @return a {@code Maybe} wrapping the value if it's non-{@code null},
    *         {@link #nothing()} otherwise
@@ -60,7 +61,8 @@ public class Maybe<T, E extends Exception> {
    * Returns a {@code Maybe} monad with the given failure exception. If the
    * exception is {@code null}, it returns {@link #nothing()}.
    * 
-   * @param <E>       the type of exception for the monad
+   * @param <T>       the type of the value
+   * @param <E>       the type of exception
    * @param exception the expection the monad will fail with
    * @return a {@code Maybe} with the given failure exception if it's
    *         non-{@code null}, {@link #nothing()} otherwise
@@ -73,6 +75,8 @@ public class Maybe<T, E extends Exception> {
    * Returns a {@code Maybe} monad with nothing on it. This means the monad does
    * not contain a success value, neither a failure exception.
    * 
+   * @param <T> the type of the value
+   * @param <E> the type of the exception
    * @return a {@code Maybe} with nothing
    */
   public static <T, E extends Exception> Maybe<T, E> nothing() {
