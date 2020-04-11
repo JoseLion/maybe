@@ -15,7 +15,9 @@ plugins {
   id 'org.sonarqube' version '2.8'
 }
 
-version = '0.1.0-M1'
+def releaseVer = '0.1.0.RC1'
+
+version = releaseVer
 
 sourceCompatibility = '1.8'
 targetCompatibility = '1.8'
@@ -97,6 +99,13 @@ task javadocJar(type: Jar, dependsOn: javadoc) {
     from javadoc.destinationDir
 }
 
+def maybeDesc = """\
+  Maybe for Java is not a replacement for java.util.Optional. Instead, it leverages \
+  its benefits to create a functional API that allows to execute/resolve operations \
+  that may throw an exception. The intention is not only to avoid the imperative \
+  try/catch, but also to promote safe exception handling and functional programming in Java
+"""
+
 bintray {
   user = 'joselion'
   key = '2494c77caea0b1ab7865f2feb9a642f177bc8115'
@@ -104,15 +113,15 @@ bintray {
 
   pkg {
     repo = 'maven'
-    name = 'maybe'
+    name = 'com.github.joselion.maybe'
     licenses = ['Apache-2.0']
     vcsUrl = 'https://github.com/JoseLion/maybe.git'
 
     version {
-      name = version
-      desc = "Maybe library for Java - v${version}"
+      name = "${releaseVer}"
+      desc = maybeDesc
       released = new Date()
-      vcsTag = version
+      vcsTag = "${releaseVer}"
     }
   }
 }
@@ -126,16 +135,11 @@ publishing {
 
       groupId 'com.github.joselion'
       artifactId 'maybe'
-      version version
+      version "${releaseVer}"
 
       pom {
         name = 'Maybe'
-        description = """\
-          Maybe for Java is not a replacement for java.util.Optional. Instead, it leverages \
-          its benefits to create a functional API that allows to execute/resolve operations \
-          that may throw an exception. The intention is not only to avoid the imperative \
-          try/catch, but also to promote safe exception handling and functional programming in Java
-        """
+        description = maybeDesc
         url = 'https://github.com/JoseLion/maybe'
 
         licenses {
