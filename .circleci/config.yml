@@ -18,6 +18,12 @@ jobs:
           name: Generate gradle.lock
           command: cat gradle/wrapper/gradle-wrapper.properties gradle/dependency-locks/* > gradle.lock
 
+      - run:
+          name: Provide Credentials
+          command: |
+            cp gradle.properties.sample gradle.properties
+            sed -i "s/<SIGNING_PASSWORD>/$SIGNING_PASSWORD/g" gradle.properties
+
       - restore_cache:
           keys:
             - v1-dependencies-{{ checksum "gradle.lock" }}
@@ -70,14 +76,25 @@ jobs:
           name: Generate gradle.lock
           command: cat gradle/wrapper/gradle-wrapper.properties gradle/dependency-locks/* > gradle.lock
 
+      - run:
+          name: Provide Credentials
+          command: |
+            cp gradle.properties.sample gradle.properties
+            sed -i "s/<SIGNING_PASSWORD>/$SIGNING_PASSWORD/g" gradle.properties
+            sed -i "s/<OSSRH_PASSWORD>/$OSSRH_PASSWORD/g" gradle.properties
+
       - restore_cache:
           keys:
             - v1-dependencies-{{ checksum "gradle.lock" }}
             - v1-dependencies-
 
       - run:
-          name: Upload to Bintray
-          command: ./gradlew bintrayUpload
+          name: Upload to Sonatype OSSRH
+          command: ./gradlew uploadArchives
+
+      - run:
+          name: Close and Release to Maven Central
+          command: ./gradlew closeAndReleaseRepository
 
 workflows:
   main:
