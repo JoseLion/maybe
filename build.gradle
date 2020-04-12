@@ -160,3 +160,9 @@ javadoc {
     options.addBooleanOption('html5', true)
   }
 }
+
+task withGAVersion() {
+  doLast {
+    project.version = version.replace('SNAPSHOT', 'GA')
+  }
+}
