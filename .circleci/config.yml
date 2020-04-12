@@ -1,7 +1,7 @@
 version: 2.1
 
-jobs:
-  build:
+executors:
+  common-env:
     working_directory: ~/repo/maybe
 
     docker:
@@ -10,24 +10,39 @@ jobs:
           JVM_OPTS: -Xmx4096m
           TERM: dumb
 
+commands:
+  setup-env:
+    description: "Setup the common environment to run tasks on CI"
+
     steps:
       - checkout:
           path: ~/repo/maybe
 
       - run:
           name: Generate gradle.lock
-          command: cat gradle/wrapper/gradle-wrapper.properties gradle/dependency-locks/* > gradle.lock
+          command: |
+            cat gradle/wrapper/gradle-wrapper.properties gradle/dependency-locks/* > gradle.lock
+            echo "All lock files were merged into gradle.lock file"
 
       - run:
           name: Provide Credentials
           command: |
             cp gradle.properties.sample gradle.properties
             sed -i "s/<SIGNING_PASSWORD>/$SIGNING_PASSWORD/g" gradle.properties
+            sed -i "s/<OSSRH_PASSWORD>/$OSSRH_PASSWORD/g" gradle.properties
+            echo "All credentials were provisioned to gradle.properties file"
 
       - restore_cache:
           keys:
             - v1-dependencies-{{ checksum "gradle.lock" }}
             - v1-dependencies-
+
+jobs:
+  build:
+    executor: common-env
+
+    steps:
+      - setup-env
 
       - run:
           name: Lint Gradle
@@ -38,12 +53,8 @@ jobs:
           command: ./gradlew build -x test
 
       - run:
-          name: Test, Lint
+          name: Test and Lint
           command: ./gradlew sonarqube
-
-      - run:
-          name: Build javadocs
-          command: ./gradlew javadoc
 
       - run:
           name: Coverage
@@ -55,44 +66,34 @@ jobs:
             - ~/.gradle
           key: v1-dependencies-{{ checksum "gradle.lock" }}
 
-      - run:
+      - deploy:
           name: Upload reports
           command: bash <(curl -s https://codecov.io/bash)
 
-  publish:
-    working_directory: ~/repo/maybe
+      - store_test_results:
+          path: build/test-results
 
-    docker:
-      - image: circleci/openjdk:13-jdk-buster
-        environment:
-          JVM_OPTS: -Xmx4096m
-          TERM: dumb
+  publish-snapshot:
+    executor: common-env
 
     steps:
-      - checkout:
-          path: ~/repo/maybe
+      - setup-env
 
-      - run:
-          name: Generate gradle.lock
-          command: cat gradle/wrapper/gradle-wrapper.properties gradle/dependency-locks/* > gradle.lock
-
-      - run:
-          name: Provide Credentials
-          command: |
-            cp gradle.properties.sample gradle.properties
-            sed -i "s/<SIGNING_PASSWORD>/$SIGNING_PASSWORD/g" gradle.properties
-            sed -i "s/<OSSRH_PASSWORD>/$OSSRH_PASSWORD/g" gradle.properties
-
-      - restore_cache:
-          keys:
-            - v1-dependencies-{{ checksum "gradle.lock" }}
-            - v1-dependencies-
-
-      - run:
-          name: Upload to Sonatype OSSRH
+      - deploy:
+          name: Publish to Sonatype Snapshot OSSRH
           command: ./gradlew publish
 
-      - run:
+  publish-release:
+    executor: common-env
+
+    steps:
+      - setup-env
+
+      - deploy:
+          name: Upload to Sonatype Release OSSRH
+          command: ./gradlew publish
+
+      - deploy:
           name: Close and Release to Maven Central
           command: ./gradlew closeAndReleaseRepository
 
@@ -101,8 +102,15 @@ workflows:
     jobs:
       - build:
           context: SonarCloud
-      - publish:
-          context: SonarCloud
+
+      - publish-snapshot:
+          requires:
+            - build
+          filters:
+            branches:
+              only: master
+
+      - publish-release:
           requires:
             - build
           filters:
