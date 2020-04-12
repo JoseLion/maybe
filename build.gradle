@@ -18,7 +18,7 @@ plugins {
 }
 
 group = 'com.github.joselion'
-version = '0.1.0.SNAPSHOT'
+version = '0.1.0-SNAPSHOT'
 
 sourceCompatibility = JavaVersion.VERSION_1_9
 targetCompatibility = JavaVersion.VERSION_1_9
@@ -67,6 +67,10 @@ dependencies {
 
 test {
   useJUnitPlatform()
+
+  reports {
+    junitXml.destination = file("${buildDir}/test-results/junit")
+  }
 }
 
 prettyJupiter {
@@ -95,21 +99,11 @@ tasks.withType(Javadoc) {
 
 publishing {
   publications {
-    maven(MavenPublication) {
+    mavenJava(MavenPublication) {
       from components.java
 
-      versionMapping {
-        usage('java-api') {
-          fromResolutionOf('runtimeClasspath')
-        }
-
-        usage('java-runtime') {
-          fromResolutionResult()
-        }
-      }
-
       pom {
-        name = 'Maybe'
+        name = 'maybe'
         packaging = 'jar'
         description = """\
           Maybe for Java is not a replacement for java.util.Optional. Instead, it leverages \
@@ -158,7 +152,7 @@ publishing {
 }
 
 signing {
-  sign publishing.publications.maven
+  sign publishing.publications.mavenJava
 }
 
 javadoc {
