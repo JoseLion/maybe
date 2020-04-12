@@ -90,7 +90,7 @@ jobs:
 
       - run:
           name: Upload to Sonatype OSSRH
-          command: ./gradlew uploadArchives
+          command: ./gradlew publish
 
       - run:
           name: Close and Release to Maven Central
