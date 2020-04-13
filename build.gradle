@@ -21,7 +21,7 @@ def isRelease = project.hasProperty('releaseVersion')
 def versionType = isRelease ? 'GA' : 'SNAPSHOT'
 
 group = 'com.github.joselion'
-version = "0.1.0-${versionType}"
+version = "0.2.0-${versionType}"
 
 sourceCompatibility = JavaVersion.VERSION_1_9
 targetCompatibility = JavaVersion.VERSION_1_9
