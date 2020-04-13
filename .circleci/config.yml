@@ -54,7 +54,9 @@ jobs:
 
       - run:
           name: Test and Lint
-          command: ./gradlew sonarqube
+          command: |
+            git fetch --no-tags $CIRCLE_REPOSITORY_URL +refs/heads/master:refs/remotes/origin/master
+            ./gradlew sonarqube
 
       - run:
           name: Coverage
@@ -91,11 +93,11 @@ jobs:
 
       - deploy:
           name: Upload to Sonatype Release OSSRH
-          command: ./gradlew withGAVersion publish
+          command: ./gradlew -PreleaseVersion publish
 
       - deploy:
           name: Close and Release to Maven Central
-          command: ./gradlew withGAVersion closeAndReleaseRepository
+          command: ./gradlew -PreleaseVersion closeAndReleaseRepository
 
 workflows:
   main:
