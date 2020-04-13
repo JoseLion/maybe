@@ -54,7 +54,9 @@ jobs:
 
       - run:
           name: Test and Lint
-          command: ./gradlew sonarqube
+          command: |
+            git fetch --no-tags $CIRCLE_REPOSITORY_URL +refs/heads/master:refs/remotes/origin/master
+            ./gradlew sonarqube
 
       - run:
           name: Coverage
