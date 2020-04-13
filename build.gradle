@@ -164,3 +164,8 @@ javadoc {
     options.addBooleanOption('html5', true)
   }
 }
+
+nexusStaging {
+  username = ossrhUsername
+  password = ossrhPassword
+}
