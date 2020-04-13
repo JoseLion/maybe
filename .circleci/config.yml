@@ -91,11 +91,11 @@ jobs:
 
       - deploy:
           name: Upload to Sonatype Release OSSRH
-          command: ./gradlew withGAVersion publish
+          command: ./gradlew -PreleaseVersion publish
 
       - deploy:
           name: Close and Release to Maven Central
-          command: ./gradlew withGAVersion closeAndReleaseRepository
+          command: ./gradlew -PreleaseVersion closeAndReleaseRepository
 
 workflows:
   main:
