@@ -48,6 +48,7 @@ sonarqube {
     property 'sonar.projectKey', 'JoseLion_maybe'
     property 'sonar.organization', 'joselion'
     property 'sonar.host.url', 'https://sonarcloud.io'
+    property 'sonar.pullrequest.provider', 'github'
   }
 }
 
@@ -158,5 +159,11 @@ signing {
 javadoc {
   if(JavaVersion.current().isJava9Compatible()) {
     options.addBooleanOption('html5', true)
+  }
+}
+
+task withGAVersion() {
+  doLast {
+    project.version = version.replace('SNAPSHOT', 'GA')
   }
 }
