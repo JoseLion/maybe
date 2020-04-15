@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.InstanceOfAssertFactories.optional;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.util.NoSuchElementException;
 
@@ -275,6 +276,36 @@ public class MaybeTest {
           })
         )
         .isEqualTo("OTHER");
+      }
+    }
+  }
+
+  @Nested
+  class orThrow {
+    
+    @Nested
+    class when_there_is_a_success_value_in_the_monad {
+
+      @Test
+      void returns_the_success_value() throws IOException, EOFException {
+        final Maybe<String, IOException> maybe = Maybe.resolve(throwingOp(false));
+
+        assertThat(maybe.orThrow()).isEqualTo("OK");
+        assertThat(maybe.orThrow(e -> new EOFException())).isEqualTo("OK");
+        assertThat(maybe.orThrow(RuntimeException::new)).isEqualTo("OK");
+      }
+    }
+
+    @Nested
+    class when_there_is_a_failure_exception_in_the_monad {
+
+      @Test
+      void throws_the_failure_exception() {
+        final Maybe<String, IOException> maybe = Maybe.resolve(throwingOp(true));
+
+        assertThrows(IOException.class, () -> maybe.orThrow());
+        assertThrows(EOFException.class, () -> maybe.orThrow(e -> new EOFException()));
+        assertThrows(RuntimeException.class, () -> maybe.orThrow(RuntimeException::new));
       }
     }
   }

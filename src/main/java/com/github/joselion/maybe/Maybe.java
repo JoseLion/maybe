@@ -181,6 +181,31 @@ public class Maybe<T, E extends Exception> {
   }
 
   /**
+   * Returns the success value if present. Otherwise, throws the
+   * current failure exception present in the monad.
+   * 
+   * @return    the success value if present
+   * @throws E  the failure exception throw by the operation
+   */
+  public T orThrow() throws E {
+    return success.orElseThrow(() -> failure.get());
+  }
+
+  /**
+   * Returns the success value if present. Otherwise, maps the
+   * current failure exception with the {@code exceptionMapper}
+   * provided and throws a new {@code X} exception.
+   * 
+   * @param <X>             the type of the new exception to throw
+   * @param exceptionMapper a mapper function to provide the new exception
+   * @return                the success value if present
+   * @throws X              the new mapped exception if the operation throws one 
+   */
+  public <X extends Exception> T orThrow(final Function<E, X> exceptionMapper) throws X {
+    return success.orElseThrow(() -> exceptionMapper.apply(failure.get()));
+  }
+
+  /**
    * Maps the current success value of the monad to another value using the
    * provided {@link Function} mapper. If the monda has a failure instead, the
    * monad with the same exception is returned.
