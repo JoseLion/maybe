@@ -52,6 +52,8 @@ sonarqube {
     property 'sonar.organization', 'joselion'
     property 'sonar.host.url', 'https://sonarcloud.io'
     property 'sonar.pullrequest.provider', 'github'
+    property 'sonar.junit.reportPaths', "${buildDir}/test-results/junit"
+    property 'sonar.coverage.jacoco.xmlReportPaths', "${jacoco.reportsDir}/test/jacocoTestReport.xml"
   }
 }
 
