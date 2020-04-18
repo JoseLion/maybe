@@ -53,14 +53,18 @@ jobs:
           command: ./gradlew build -x test
 
       - run:
-          name: Test and Lint
-          command: |
-            git fetch --no-tags $CIRCLE_REPOSITORY_URL +refs/heads/master:refs/remotes/origin/master
-            ./gradlew sonarqube
+          name: Test
+          command: ./gradlew test
 
       - run:
           name: Coverage
           command: ./gradlew jacocoTestReport
+
+      - run:
+          name: Quality Gate
+          command: |
+            git fetch --no-tags $CIRCLE_REPOSITORY_URL +refs/heads/master:refs/remotes/origin/master
+            ./gradlew sonarqube
 
       - save_cache:
           paths:
