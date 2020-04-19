@@ -86,7 +86,11 @@ jobs:
 
       - deploy:
           name: Code Climate reports
-          command: ./cc-test-reporter after-build --exit-code $?
+          command: |
+            ./cc-test-reporter format-coverage --input-type jacoco build/reports/jacoco/test/jacocoTestReport.xml
+            ./cc-test-reporter upload-coverage
+          environment:
+            JACOCO_SOURCE_PATH: src/main/java
 
       - store_test_results:
           path: build/test-results
