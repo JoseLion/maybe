@@ -12,4 +12,4 @@ jobs:
         if: github.actor == github.repository_owner
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          number: $GITHUB_REF
+          number: $(jq --raw-output .pull_request.number "$GITHUB_EVENT_PATH")
