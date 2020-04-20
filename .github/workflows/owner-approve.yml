@@ -8,7 +8,8 @@ jobs:
   approve:
     runs-on: ubuntu-latest
     steps:
-      - uses: hmarr/auto-approve-action@v2.0.0
-        if: github.actor == 'JoseLion'
+      - uses: juliangruber/approve-pull-request-action@v1
+        if: github.actor == github.repository_owner
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          number: $GITHUB_REF
