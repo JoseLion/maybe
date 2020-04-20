@@ -1,11 +1,12 @@
 name: Auto approve for owner
 
 on:
-  check_suite: [completed]
+  check_suite:
+    types: [completed]
 
 jobs:
   approve:
-    runs-on: [ubuntu-latest]
+    runs-on: ubuntu-latest
     steps:
       - uses: hmarr/auto-approve-action@v2.0.0
         if: github.actor == 'JoseLion'
