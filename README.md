@@ -4,4 +4,4 @@ Maybe for Java is not a replacement for java.util.Optional. Instead, it leverage
 
 ## Usage
 
-> Docs comming soon! 😁
+> Docs comming soon! 😀
