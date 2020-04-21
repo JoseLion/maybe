@@ -22,7 +22,6 @@ commands:
           name: Generate gradle.lock
           command: |
             cat gradle/wrapper/gradle-wrapper.properties gradle/dependency-locks/* > gradle.lock
-            echo "All lock files were merged into gradle.lock file"
 
       - run:
           name: Provide Credentials
@@ -30,7 +29,7 @@ commands:
             cp gradle.properties.sample gradle.properties
             sed -i "s/<SIGNING_PASSWORD>/$SIGNING_PASSWORD/g" gradle.properties
             sed -i "s/<OSSRH_PASSWORD>/$OSSRH_PASSWORD/g" gradle.properties
-            echo "All credentials were provisioned to gradle.properties file"
+            echo "systemProp.sonar.branch.name=$CIRCLE_BRANCH" >> gradle.properties
 
       - restore_cache:
           keys:
@@ -70,9 +69,7 @@ jobs:
 
       - run:
           name: Quality Gate
-          command: |
-            git fetch --no-tags $CIRCLE_REPOSITORY_URL +refs/heads/master:refs/remotes/origin/master
-            ./gradlew sonarqube
+          command: ./gradlew sonarqube
 
       - save_cache:
           paths:
