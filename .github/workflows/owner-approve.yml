@@ -1,15 +1,12 @@
 name: Auto approve for owner
 
-on:
-  check_suite:
-    types: [completed]
+on: pull_request
 
 jobs:
   approve:
     runs-on: ubuntu-latest
     steps:
-      - uses: juliangruber/approve-pull-request-action@v1
+      - uses: hmarr/auto-approve-action@v2.0.0
         if: github.actor == github.repository_owner
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          number: $(jq --raw-output .pull_request.number "$GITHUB_EVENT_PATH")
