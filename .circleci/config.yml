@@ -68,12 +68,6 @@ jobs:
           name: Coverage
           command: ./gradlew jacocoTestReport
 
-      - run:
-          name: Quality Gate
-          command: |
-            git fetch --no-tags $CIRCLE_REPOSITORY_URL +refs/heads/master:refs/remotes/origin/master
-            ./gradlew sonarqube
-
       - save_cache:
           paths:
             - ~/repo/maybe/.gradle
