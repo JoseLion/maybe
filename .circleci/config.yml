@@ -62,9 +62,7 @@ jobs:
 
       - run:
           name: Quality Gate
-          command: |
-            git fetch --no-tags $CIRCLE_REPOSITORY_URL +refs/heads/master:refs/remotes/origin/master
-            ./gradlew sonarqube
+          command: ./gradlew sonarqube
 
       - save_cache:
           paths:
