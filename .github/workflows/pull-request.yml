@@ -25,7 +25,7 @@ jobs:
       - name: Cache Gradle packages
         uses: actions/cache@v1
         with:
-          path: ~/.gradle/caches
+          path: ~/.gradle
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.lockfile') }}
           restore-keys: ${{ runner.os }}-gradle
 
