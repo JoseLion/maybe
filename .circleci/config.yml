@@ -34,8 +34,9 @@ commands:
 
       - restore_cache:
           keys:
-            - v2-dependencies-{{ checksum "gradle.lock" }}
-            - v2-dependencies-
+            - v3-dependencies-{{ .Branch }}-{{ checksum "gradle.lock" }}
+            - v3-dependencies-{{ .Branch }}-
+            - v3-dependencies-
 
 jobs:
   build:
@@ -67,9 +68,9 @@ jobs:
       - save_cache:
           paths:
             - ~/repo/maybe/.gradle
-            - ~/.gradle/caches
+            - ~/.gradle
             - ~/.sonar/cache
-          key: v2-dependencies-{{ checksum "gradle.lock" }}
+          key: v3-dependencies-{{ .Branch }}-{{ checksum "gradle.lock" }}
 
       - deploy:
           name: Upload reports
