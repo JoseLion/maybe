@@ -28,18 +28,8 @@ public class Maybe<T, E extends Exception> {
 
   private Optional<E> failure;
 
-  private Maybe() {
-    this.success = Optional.empty();
-    this.failure = Optional.empty();
-  }
-
-  private Maybe(final T success) {
+  private Maybe(final T success, final E failure) {
     this.success = Optional.ofNullable(success);
-    this.failure = Optional.empty();
-  }
-
-  private Maybe(final E failure) {
-    this.success = Optional.empty();
     this.failure = Optional.ofNullable(failure);
   }
 
@@ -54,7 +44,7 @@ public class Maybe<T, E extends Exception> {
    *         {@link #nothing()} otherwise
    */
   public static <T, E extends Exception> Maybe<T, E> just(final T value) {
-    return new Maybe<>(value);
+    return new Maybe<>(value, null);
   }
 
   /**
@@ -68,7 +58,7 @@ public class Maybe<T, E extends Exception> {
    *         non-{@code null}, {@link #nothing()} otherwise
    */
   public static <T, E extends Exception> Maybe<T, E> fail(final E exception) {
-    return new Maybe<>(exception);
+    return new Maybe<>(null, exception);
   }
 
   /**
@@ -80,7 +70,7 @@ public class Maybe<T, E extends Exception> {
    * @return a {@code Maybe} with nothing
    */
   public static <T, E extends Exception> Maybe<T, E> nothing() {
-    return new Maybe<>();
+    return new Maybe<>(null, null);
   }
 
   /**
@@ -98,12 +88,12 @@ public class Maybe<T, E extends Exception> {
    */
   public static <T, E extends Exception> Maybe<T, E> resolve(final SupplierChecked<T, E> operation) {
     try {
-      return new Maybe<>(operation.getChecked());
+      return Maybe.just(operation.getChecked());
     } catch (final Exception e) {
       @SuppressWarnings("unchecked")
       final E exception = (E) e;
 
-      return new Maybe<>(exception);
+      return Maybe.fail(exception);
     }
   }
 
@@ -122,12 +112,12 @@ public class Maybe<T, E extends Exception> {
     try {
       operation.runChecked();
 
-      return new Maybe<>();
+      return Maybe.nothing();
     } catch (Exception e) {
       @SuppressWarnings("unchecked")
       final E exception = (E) e;
 
-      return new Maybe<>(exception);
+      return Maybe.fail(exception);
     }
   }
 
@@ -243,14 +233,7 @@ public class Maybe<T, E extends Exception> {
   public <U, X extends Exception> Maybe<U, X> thenResolve(
     final BiFunctionChecked<Optional<T>, Optional<E>, U, X> thenOperation
   ) {
-    try {
-      return new Maybe<>(thenOperation.applyChecked(success, failure));
-    } catch (Exception e) {
-      @SuppressWarnings("unchecked")
-      final X exception = (X) e;
-
-      return new Maybe<>(exception);
-    }
+    return Maybe.resolve(() -> thenOperation.applyChecked(success, failure));
   }
 
   /**
@@ -266,16 +249,7 @@ public class Maybe<T, E extends Exception> {
   public <X extends Exception> Maybe<Void, X> thenExecute(
     final BiConsumerChecked<Optional<T>, Optional<E>, X> thenOperation
   ) {
-    try {
-      thenOperation.acceptChecked(success, failure);
-
-      return new Maybe<>();
-    } catch (Exception e) {
-      @SuppressWarnings("unchecked")
-      final X exception = (X) e;
-
-      return new Maybe<>(exception);
-    }
+    return Maybe.execute(() -> thenOperation.acceptChecked(success, failure));
   }
 
   /**
@@ -291,11 +265,11 @@ public class Maybe<T, E extends Exception> {
    */
   public <U> Maybe<U, E> cast(Class<U> type) {
     if (success.isPresent()) {
-      return new Maybe<>(type.cast(success.get()));
+      return Maybe.just(type.cast(success.get()));
     }
 
     if (failure.isPresent()) {
-      return new Maybe<>(failure.get());
+      return Maybe.fail(failure.get());
     }
 
     return Maybe.nothing();
