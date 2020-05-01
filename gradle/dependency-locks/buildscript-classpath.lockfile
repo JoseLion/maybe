@@ -3,7 +3,7 @@
 # This file is expected to be part of source control.
 backport-util-concurrent:backport-util-concurrent:3.1
 classworlds:classworlds:1.1-alpha-2
-com.github.joselion.pretty-jupiter:com.github.joselion.pretty-jupiter.gradle.plugin:1.0.0
+com.github.joselion.pretty-jupiter:com.github.joselion.pretty-jupiter.gradle.plugin:1.2.0
 com.google.guava:guava:19.0
 com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.5
 com.jfrog.bintray:com.jfrog.bintray.gradle.plugin:1.8.5
@@ -14,7 +14,7 @@ commons-codec:commons-codec:1.6
 commons-collections:commons-collections:3.2.1
 commons-lang:commons-lang:2.4
 commons-logging:commons-logging:1.1.1
-gradle.plugin.com.github.joselion.pretty-jupiter:pretty-jupiter:1.0.0
+gradle.plugin.com.github.joselion.pretty-jupiter:pretty-jupiter:1.2.0
 io.codearte.gradle.nexus:gradle-nexus-staging-plugin:0.21.2
 io.codearte.nexus-staging:io.codearte.nexus-staging.gradle.plugin:0.21.2
 javax.inject:javax.inject:1

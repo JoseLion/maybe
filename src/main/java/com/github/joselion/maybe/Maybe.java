@@ -132,17 +132,6 @@ public class Maybe<T, E extends Exception> {
   }
 
   /**
-   * Safely unbox the value of the {@code Maybe} monad. Returns the value if
-   * present. Throws a checked exception otherwise.
-   * 
-   * @return the success value of the {@code Maybe} if present
-   * @throws E exception if the value is not present
-   */
-  public T getSafe() throws E {
-    return success.orElseThrow(() -> failure.get());
-  }
-
-  /**
    * Unsafely unbox the value of the {@code Maybe} monad. Returns the value if
    * present. Throws an unchecked exception otherwise.
    * 
@@ -181,27 +170,14 @@ public class Maybe<T, E extends Exception> {
   }
 
   /**
-   * Returns the success value if present. Otherwise, throws the
-   * current failure exception present in the monad.
-   * 
-   * @return    the success value if present
-   * @throws E  the failure exception throw by the operation
-   */
-  public T orThrow() throws E {
-    return success.orElseThrow(() -> failure.get());
-  }
-
-  /**
    * Returns the success value if present. Otherwise, maps the
    * current failure exception with the {@code exceptionMapper}
-   * provided and throws a new {@code X} exception.
+   * provided and throws a new unchecked exception.
    * 
-   * @param <X>             the type of the new exception to throw
    * @param exceptionMapper a mapper function to provide the new exception
    * @return                the success value if present
-   * @throws X              the new mapped exception if the operation throws one 
    */
-  public <X extends Exception> T orThrow(final Function<E, X> exceptionMapper) throws X {
+  public T orThrow(final Function<E, ? extends RuntimeException> exceptionMapper) {
     return success.orElseThrow(() -> exceptionMapper.apply(failure.get()));
   }
 
