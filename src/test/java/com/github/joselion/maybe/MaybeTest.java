@@ -151,48 +151,6 @@ public class MaybeTest {
   }
 
   @Nested
-  class getSafe {
-    
-    @Nested
-    class when_there_is_a_success_value_in_the_monad {
-
-      @Test
-      void returns_the_success_value() throws Exception {
-        final Maybe<Integer, Exception> maybe = Maybe.just(5);
-
-        assertThat(maybe.getSafe()).isEqualTo(5);
-      }
-    }
-
-    @Nested
-    class when_there_is_NO_success_value_in_the_monad {
-
-      @Nested
-      class and_the_failure_exception_is_present {
-        @Test
-        void throws_the_failure_exception() {
-          final Maybe<Object, IOException> maybe = Maybe.fail(new IOException("FAIL"));
-  
-          assertThat(
-            assertThrows(IOException.class, maybe::getSafe)
-          )
-          .hasMessage("FAIL");
-        }
-      }
-
-      @Nested
-      class and_the_failure_exception_is_NOT_present {
-
-        @Test
-        void throws_a_NoSuchElementException_exception() {
-          assertThrows(NoSuchElementException.class, Maybe.nothing()::getSafe);
-        }
-      }
-
-    }
-  }
-
-  @Nested
   class getUnsafe {
 
     @Nested
@@ -287,11 +245,9 @@ public class MaybeTest {
     class when_there_is_a_success_value_in_the_monad {
 
       @Test
-      void returns_the_success_value() throws IOException, EOFException {
+      void returns_the_success_value() {
         final Maybe<String, IOException> maybe = Maybe.resolve(throwingOp(false));
 
-        assertThat(maybe.orThrow()).isEqualTo("OK");
-        assertThat(maybe.orThrow(e -> new EOFException())).isEqualTo("OK");
         assertThat(maybe.orThrow(RuntimeException::new)).isEqualTo("OK");
       }
     }
@@ -303,8 +259,6 @@ public class MaybeTest {
       void throws_the_failure_exception() {
         final Maybe<String, IOException> maybe = Maybe.resolve(throwingOp(true));
 
-        assertThrows(IOException.class, () -> maybe.orThrow());
-        assertThrows(EOFException.class, () -> maybe.orThrow(e -> new EOFException()));
         assertThrows(RuntimeException.class, () -> maybe.orThrow(RuntimeException::new));
       }
     }
