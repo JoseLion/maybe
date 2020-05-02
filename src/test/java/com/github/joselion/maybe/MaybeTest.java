@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.InstanceOfAssertFactories.optional;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import java.io.EOFException;
 import java.io.IOException;
 import java.util.NoSuchElementException;
 
@@ -31,7 +30,7 @@ public class MaybeTest {
 
       @Test
       void returns_the_monad_with_the_value() {
-        final Maybe<String, Exception> maybe = Maybe.just("foo");
+        final Maybe<String> maybe = Maybe.just("foo");
 
         assertThat(maybe).extracting(SUCCESS, optional(String.class)).contains("foo");
         assertThat(maybe).extracting(FAILURE, optional(Exception.class)).isEmpty();
@@ -43,7 +42,7 @@ public class MaybeTest {
 
       @Test
       void there_is_nothing_in_the_monad() {
-        final Maybe<Object, Exception> maybe = Maybe.just(null);
+        final Maybe<Object> maybe = Maybe.just(null);
 
         assertThat(maybe).extracting(SUCCESS, optional(Object.class)).isEmpty();
         assertThat(maybe).extracting(FAILURE, optional(Exception.class)).isEmpty();
@@ -60,7 +59,7 @@ public class MaybeTest {
       @Test
       void returns_the_monad_with_the_failure_exception() {
         final IOException exception = new IOException();
-        final Maybe<Object, IOException> maybe = Maybe.fail(exception);
+        final Maybe<Object> maybe = Maybe.fail(exception);
 
         assertThat(maybe).extracting(SUCCESS, optional(Object.class)).isEmpty();
         assertThat(maybe).extracting(FAILURE, optional(IOException.class)).contains(exception);
@@ -72,7 +71,7 @@ public class MaybeTest {
 
       @Test
       void there_is_nothing_in_the_monad() {
-        final Maybe<Object, Exception> maybe = Maybe.fail(null);
+        final Maybe<Object> maybe = Maybe.fail(null);
 
         assertThat(maybe).extracting(SUCCESS, optional(Object.class)).isEmpty();
         assertThat(maybe).extracting(FAILURE, optional(Exception.class)).isEmpty();
@@ -85,7 +84,7 @@ public class MaybeTest {
 
     @Test
     void there_is_nothing_in_the_monad() {
-      Maybe<Object, Exception> maybe = Maybe.nothing();
+      Maybe<Object> maybe = Maybe.nothing();
 
       assertThat(maybe).extracting(SUCCESS, optional(Object.class)).isEmpty();
       assertThat(maybe).extracting(FAILURE, optional(Exception.class)).isEmpty();
@@ -100,7 +99,7 @@ public class MaybeTest {
 
       @Test
       void returns_the_monad_with_the_value() {
-        final Maybe<String, RuntimeException> maybe = Maybe.resolve(() -> "OK");
+        final Maybe<String> maybe = Maybe.resolve(() -> "OK");
 
         assertThat(maybe).extracting(SUCCESS, optional(String.class)).contains("OK");
         assertThat(maybe).extracting(FAILURE, optional(RuntimeException.class)).isEmpty();
@@ -113,7 +112,7 @@ public class MaybeTest {
       @Test
       void returns_the_monad_with_the_failure_exception() {
         final IOException exception = new IOException("FAIL");
-        final Maybe<String, IOException> maybe = Maybe.resolve(() -> { throw exception; });
+        final Maybe<String> maybe = Maybe.resolve(() -> { throw exception; });
 
         assertThat(maybe).extracting(SUCCESS, optional(String.class)).isEmpty();
         assertThat(maybe).extracting(FAILURE, optional(IOException.class)).contains(exception);
@@ -129,7 +128,7 @@ public class MaybeTest {
 
       @Test
       void returns_the_monad_with_nothing() {
-        final Maybe<Void, IOException> maybe = Maybe.execute(() -> { });
+        final Maybe<Void> maybe = Maybe.execute(() -> { });
 
         assertThat(maybe).extracting(SUCCESS, optional(Void.class)).isEmpty();
         assertThat(maybe).extracting(FAILURE, optional(IOException.class)).isEmpty();
@@ -142,7 +141,7 @@ public class MaybeTest {
       @Test
       void returns_the_monad_with_the_failure_exception() {
         final IOException exception = new IOException("FAIL");
-        final Maybe<Void, IOException> maybe = Maybe.execute(() -> { throw exception; });
+        final Maybe<Void> maybe = Maybe.execute(() -> { throw exception; });
 
         assertThat(maybe).extracting(SUCCESS, optional(Void.class)).isEmpty();
         assertThat(maybe).extracting(FAILURE, optional(IOException.class)).contains(exception);
@@ -158,7 +157,7 @@ public class MaybeTest {
 
       @Test
       void returns_the_success_value() {
-        final Maybe<Boolean, Exception> maybe = Maybe.just(true);
+        final Maybe<Boolean> maybe = Maybe.just(true);
 
         assertThat(maybe.getUnsafe()).isEqualTo(true);
       }
@@ -172,7 +171,7 @@ public class MaybeTest {
 
         @Test
         void throws_a_MaybeFailureException_exception() {
-          final Maybe<Object, IOException> maybe = Maybe.fail(new IOException("FAIL"));
+          final Maybe<Object> maybe = Maybe.fail(new IOException("FAIL"));
 
           assertThat(
             assertThrows(MaybeFailureException.class, maybe::getUnsafe)
@@ -202,16 +201,10 @@ public class MaybeTest {
 
       @Test
       void returns_the_success_value() {
-        final Maybe<String, IOException> maybe = Maybe.resolve(throwingOp(false));
+        final Maybe<String> maybe = Maybe.resolve(throwingOp(false));
 
         assertThat(maybe.orElse("BAD")).isEqualTo("OK");
-        assertThat(
-          maybe.orElse(exception -> {
-            assertThat(exception).isEmpty();
-            return "BAD";
-          })
-        )
-        .isEqualTo("OK");
+        assertThat(maybe.orElse(() -> "BAD")).isEqualTo("OK");
       }
     }
 
@@ -220,20 +213,10 @@ public class MaybeTest {
 
       @Test
       void returns_the_other_value() {
-        final Maybe<String, IOException> maybe = Maybe.resolve(throwingOp(true));
+        final Maybe<String> maybe = Maybe.resolve(throwingOp(true));
 
         assertThat(maybe.orElse("OTHER")).isEqualTo("OTHER");
-        assertThat(
-          maybe.orElse(exception -> {
-            assertThat(exception).hasValueSatisfying(ex -> {
-              assertThat(ex)
-                .isExactlyInstanceOf(IOException.class)
-                .hasMessage("FAIL");
-            });
-            return "OTHER";
-          })
-        )
-        .isEqualTo("OTHER");
+        assertThat(maybe.orElse(() -> "OTHER")).isEqualTo("OTHER");
       }
     }
   }
@@ -246,8 +229,9 @@ public class MaybeTest {
 
       @Test
       void returns_the_success_value() {
-        final Maybe<String, IOException> maybe = Maybe.resolve(throwingOp(false));
+        final Maybe<String> maybe = Maybe.resolve(throwingOp(false));
 
+        assertThat(maybe.orThrow(new RuntimeException())).isEqualTo("OK");
         assertThat(maybe.orThrow(RuntimeException::new)).isEqualTo("OK");
       }
     }
@@ -257,9 +241,16 @@ public class MaybeTest {
 
       @Test
       void throws_the_failure_exception() {
-        final Maybe<String, IOException> maybe = Maybe.resolve(throwingOp(true));
+        final Maybe<String> maybe = Maybe.resolve(throwingOp(true));
 
-        assertThrows(RuntimeException.class, () -> maybe.orThrow(RuntimeException::new));
+        assertThrows(
+          RuntimeException.class,
+          () -> maybe.orThrow(new RuntimeException())
+        );
+        assertThrows(
+          RuntimeException.class,
+          () -> maybe.orThrow(RuntimeException::new)
+        );
       }
     }
   }
@@ -272,7 +263,7 @@ public class MaybeTest {
 
       @Test
       void maps_the_value_with_the_passed_function() {
-        final Maybe<Integer, IOException> maybe = Maybe.resolve(throwingOp(false)).map(String::length);
+        final Maybe<Integer> maybe = Maybe.resolve(throwingOp(false)).map(String::length);
         
         assertThat(maybe)
           .extracting(SUCCESS, optional(Integer.class))
@@ -293,7 +284,7 @@ public class MaybeTest {
 
         @Test
         void returns_the_monad_with_the_failure_exception() {
-          final Maybe<Integer, IOException> maybe = Maybe.resolve(throwingOp(true)).map(String::length);
+          final Maybe<Integer> maybe = Maybe.resolve(throwingOp(true)).map(String::length);
 
           assertThat(maybe)
             .extracting(SUCCESS, optional(Integer.class))
@@ -314,7 +305,7 @@ public class MaybeTest {
 
         @Test
         void returns_the_monad_with_nothing() {
-          Maybe<Integer, IOException> maybe = Maybe.<String, IOException>nothing().map(String::length);
+          Maybe<Integer> maybe = Maybe.<String>nothing().map(String::length);
 
           assertThat(maybe)
           .extracting(SUCCESS, optional(IOException.class))
@@ -336,7 +327,7 @@ public class MaybeTest {
 
       @Test
       void maps_the_value_with_the_passed_maybe_function() {
-        final Maybe<Integer, IOException> maybe = Maybe.resolve(throwingOp(false)).flatMap(str -> Maybe.just(str.length()));
+        final Maybe<Integer> maybe = Maybe.resolve(throwingOp(false)).flatMap(str -> Maybe.just(str.length()));
 
         assertThat(maybe)
           .extracting(SUCCESS, optional(Integer.class))
@@ -357,7 +348,7 @@ public class MaybeTest {
 
         @Test
         void returns_the_monad_with_the_failure_exception() {
-          final Maybe<Integer, IOException> maybe = Maybe.resolve(throwingOp(true)).flatMap(str -> Maybe.just(str.length()));
+          final Maybe<Integer> maybe = Maybe.resolve(throwingOp(true)).flatMap(str -> Maybe.just(str.length()));
 
           assertThat(maybe)
             .extracting(SUCCESS, optional(Integer.class))
@@ -378,15 +369,15 @@ public class MaybeTest {
 
         @Test
         void returns_the_monad_with_nothing() {
-          Maybe<Integer, IOException> maybe = Maybe.<String, IOException>nothing().flatMap(str -> Maybe.just(str.length()));
+          Maybe<Integer> maybe = Maybe.<String>nothing().flatMap(str -> Maybe.just(str.length()));
 
           assertThat(maybe)
           .extracting(SUCCESS, optional(IOException.class))
-            .isEmpty();
+          .isEmpty();
 
             assertThat(maybe)
             .extracting(FAILURE, optional(IOException.class))
-              .isEmpty();
+            .isEmpty();
         }
       }
     }
@@ -396,50 +387,64 @@ public class MaybeTest {
   class thenResolve {
 
     @Nested
-    class when_the_previous_maybe_had_resolved {
+    class when_the_previous_operation_resolves {
 
       @Test
-      void the_success_argument_has_a_value_and_the_failure_is_empty() {
-        Maybe.just(1).thenResolve((prev, error) -> {
-          assertThat(prev).contains(1);
-          assertThat(error).isEmpty();
-
-          return "OK";
-        });
-      }
-    }
-
-    @Nested
-    class when_the_previous_maybe_had_failed {
-
-      @Test
-      void the_success_argument_is_empty_and_the_failure_has_an_exception() {
-        Maybe.fail(new IOException("FAIL"))
-          .thenResolve((prev, error) -> {
-            assertThat(prev).isEmpty();
-            assertThat(error).hasValueSatisfying(e -> {
-              assertThat(e)
-                .isExactlyInstanceOf(IOException.class)
-                .hasMessage("FAIL");
-            });
-
+      void the_then_operation_is_called_with_the_previous_value() {
+        Maybe<String> maybe = Maybe.just(1)
+          .thenResolve(value -> {
+            assertThat(value).isEqualTo(1);
             return "OK";
           });
+
+        assertThat(maybe)
+          .extracting(SUCCESS, optional(String.class))
+          .contains("OK");
+
+        assertThat(maybe)
+          .extracting(FAILURE, optional(Exception.class))
+          .isEmpty();
       }
     }
 
     @Nested
-    class when_the_previous_maybe_had_nothing {
+    class when_the_previous_operation_failed {
 
       @Test
-      void the_success_and_failure_arguments_are_empty() {
-        Maybe.nothing()
-          .thenResolve((prev, error) -> {
-            assertThat(prev).isEmpty();
-            assertThat(error).isEmpty();
-
-            return null;
+      void the_then_operation_is_not_executed_and_the_failure_value_has_an_exception() {
+        Maybe<String> maybe = Maybe.fail(new IOException("FAIL"))
+          .thenResolve(value -> {
+            throw new Exception("The then operation should not be executed");
           });
+
+        assertThat(maybe)
+          .extracting(SUCCESS, optional(Object.class))
+          .isEmpty();
+
+        assertThat(maybe)
+          .extracting(FAILURE, optional(IOException.class))
+          .containsInstanceOf(IOException.class)
+          .withFailMessage("FAIL");
+      }
+    }
+
+    @Nested
+    class when_the_previous_maybe_has_nothing {
+
+      @Test
+      void the_then_operation_is_not_executed_and_both_success_and_failure_are_empty() {
+        Maybe<Object> maybe = Maybe.nothing()
+          .thenResolve(value -> {
+            throw new Exception("The then operation should not be executed");
+          });
+
+        assertThat(maybe)
+          .extracting(SUCCESS, optional(Object.class))
+          .isEmpty();
+
+        assertThat(maybe)
+          .extracting(FAILURE, optional(IOException.class))
+          .isEmpty();
       }
     }
 
@@ -448,15 +453,16 @@ public class MaybeTest {
 
       @Test
       void returns_the_monad_with_the_new_value() {
-        final Maybe<String, IOException> maybe = Maybe.just(3).thenResolve((num, error) -> "OK".repeat(num.orElse(0)));
+        final Maybe<String> maybe = Maybe.just(3)
+          .thenResolve(value -> "OK".repeat(value));
 
         assertThat(maybe)
           .extracting(SUCCESS, optional(String.class))
-            .contains("OKOKOK");
+          .contains("OKOKOK");
 
         assertThat(maybe)
           .extracting(FAILURE, optional(IOException.class))
-            .isEmpty();
+          .isEmpty();
       }
     }
 
@@ -466,15 +472,16 @@ public class MaybeTest {
       @Test
       void returns_the_monad_with_the_failure_exception() {
         final IOException exception = new IOException("FAIL");
-        final Maybe<String, IOException> maybe = Maybe.just(3).thenResolve((num, error) -> { throw exception; });
+        final Maybe<String> maybe = Maybe.just(3)
+          .thenResolve(value -> { throw exception; });
 
         assertThat(maybe)
           .extracting(SUCCESS, optional(String.class))
-            .isEmpty();
+          .isEmpty();
 
         assertThat(maybe)
           .extracting(FAILURE, optional(IOException.class))
-            .contains(exception);
+          .contains(exception);
       }
     }
   }
@@ -483,44 +490,63 @@ public class MaybeTest {
   class thenExecute {
 
     @Nested
-    class when_the_previous_maybe_had_resolved {
+    class when_the_previous_operation_resolves {
 
       @Test
-      void the_success_argument_has_a_value_and_the_failure_is_empty() {
-        Maybe.just(1).thenExecute((prev, error) -> {
-          assertThat(prev).contains(1);
-          assertThat(error).isEmpty();
-        });
+      void the_then_operation_is_called_with_the_previous_value() {
+        Maybe<Void> maybe = Maybe.just(1)
+          .thenExecute(value -> {
+            assertThat(value).isEqualTo(1);
+          });
+
+        assertThat(maybe)
+          .extracting(SUCCESS, optional(Void.class))
+          .isEmpty();
+
+        assertThat(maybe)
+          .extracting(FAILURE, optional(Exception.class))
+          .isEmpty();
       }
     }
 
     @Nested
-    class when_the_previous_maybe_had_failed {
+    class when_the_previous_operation_fails {
 
       @Test
-      void the_success_argument_is_empty_and_the_failure_has_an_exception() {
-        Maybe.fail(new IOException("FAIL"))
-          .thenExecute((prev, error) -> {
-            assertThat(prev).isEmpty();
-            assertThat(error).hasValueSatisfying(e -> {
-              assertThat(e)
-                .isExactlyInstanceOf(IOException.class)
-                .hasMessage("FAIL");
-            });
+      void the_then_operation_is_not_called_and_the_failure_value_has_an_exception() {
+        Maybe<Void> maybe = Maybe.fail(new IOException("FAIL"))
+          .thenExecute(value -> {
+            throw new Exception("The then operation should not be executed");
           });
+
+        assertThat(maybe)
+          .extracting(SUCCESS, optional(Void.class))
+          .isEmpty();
+
+        assertThat(maybe)
+          .extracting(FAILURE, optional(IOException.class))
+          .containsInstanceOf(IOException.class)
+          .withFailMessage("FAIL");
       }
     }
 
     @Nested
-    class when_the_previous_maybe_had_nothing {
+    class when_the_previous_maybe_has_nothing {
 
       @Test
-      void the_success_and_failure_arguments_are_empty() {
-        Maybe.nothing()
-          .thenExecute((prev, error) -> {
-            assertThat(prev).isEmpty();
-            assertThat(error).isEmpty();
+      void the_then_operation_is_not_called_and_the_success_and_failure_values_are_empty() {
+        Maybe<Void> maybe = Maybe.nothing()
+          .thenExecute(value -> {
+            throw new Exception("The then operation should not be executed");
           });
+
+        assertThat(maybe)
+          .extracting(SUCCESS, optional(Void.class))
+          .isEmpty();
+
+        assertThat(maybe)
+          .extracting(FAILURE, optional(IOException.class))
+          .isEmpty();
       }
     }
 
@@ -529,14 +555,17 @@ public class MaybeTest {
 
       @Test
       void returns_the_monad_with_nothing() {
-        final Maybe<Void, IOException> maybe = Maybe.just(3).thenExecute((num, error) -> { });
+        final Maybe<Void> maybe = Maybe.just(3)
+          .thenExecute(value -> {
+            assertThat(value).isEqualTo(3);
+          });
 
         assertThat(maybe)
           .extracting(SUCCESS, optional(Void.class))
             .isEmpty();
 
         assertThat(maybe)
-          .extracting(FAILURE, optional(IOException.class))
+          .extracting(FAILURE, optional(Exception.class))
             .isEmpty();
       }
     }
@@ -547,7 +576,10 @@ public class MaybeTest {
       @Test
       void returns_the_monad_with_the_failure_exception() {
         final IOException exception = new IOException("FAIL");
-        final Maybe<Void, IOException> maybe = Maybe.just(3).thenExecute((num, error) -> { throw exception; });
+        final Maybe<Void> maybe = Maybe.just(3)
+          .thenExecute(value -> {
+            throw exception;
+          });
 
         assertThat(maybe)
           .extracting(SUCCESS, optional(Void.class))
@@ -568,7 +600,7 @@ public class MaybeTest {
 
       @Test
       void casts_the_value_to_the_passed_type() {
-        final Maybe<Object, IOException> maybe = Maybe.just(3);
+        final Maybe<Object> maybe = Maybe.just(3);
 
         assertThat(maybe.cast(Integer.class))
           .extracting(SUCCESS, optional(Integer.class))
@@ -589,7 +621,7 @@ public class MaybeTest {
         @Test
         void returns_the_monad_with_the_failure_exception() {
           final IOException exception = new IOException("FAIL");
-          final Maybe<Object, IOException> maybe = Maybe.fail(exception);
+          final Maybe<Object> maybe = Maybe.fail(exception);
   
           assertThat(maybe.cast(Integer.class))
             .extracting(SUCCESS, optional(Integer.class))
