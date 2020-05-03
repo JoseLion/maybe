@@ -17,8 +17,6 @@ public class MaybeFailedException extends RuntimeException {
 
   /**
    * Constructs a new {@code MaybeFailedException} with a generic message
-   * 
-   * @param cause the exception in the {@code Maybe} monad
    */
   public MaybeFailedException() {
     super("Cannot unbox the success value. The operation failed to resolve or execute");
