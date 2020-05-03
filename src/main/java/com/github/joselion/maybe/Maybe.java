@@ -5,8 +5,7 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import com.github.joselion.maybe.exceptions.MaybeFailureException;
-import com.github.joselion.maybe.util.BiFunctionChecked;
+import com.github.joselion.maybe.exceptions.MaybeFailedException;
 import com.github.joselion.maybe.util.ConsumerChecked;
 import com.github.joselion.maybe.util.FunctionChecked;
 import com.github.joselion.maybe.util.RunnableChecked;
@@ -18,7 +17,7 @@ import com.github.joselion.maybe.util.SupplierChecked;
  * in a functional way with the posibility of safely or unsafely unboxing the
  * result of the operations.
  * 
- * @param <T> the type of the wrapped value\
+ * @param <T> the type of the wrapped value
  * 
  * @author Jose Luis Leon
  * @since v0.1.0
@@ -27,16 +26,13 @@ public class Maybe<T> {
 
   private Optional<T> success;
 
-  private Optional<? extends Exception> failure;
-
-  private <E extends Exception> Maybe(final T success, final E failure) {
+  private <E extends Exception> Maybe(final T success) {
     this.success = Optional.ofNullable(success);
-    this.failure = Optional.ofNullable(failure);
   }
 
   /**
    * Returns a {@code Maybe} monad wrapping the given value. If the value is
-   * {@code null}, it returns {@link #nothing()}.
+   * {@code null}, it returns a {@link #nothing()}.
    * 
    * @param <T>   the type of the value
    * @param value the value to wrap on the monad
@@ -44,69 +40,51 @@ public class Maybe<T> {
    *         {@link #nothing()} otherwise
    */
   public static <T> Maybe<T> just(final T value) {
-    return new Maybe<>(value, null);
-  }
-
-  /**
-   * Returns a {@code Maybe} monad with the given failure exception. If the
-   * exception is {@code null}, it returns {@link #nothing()}.
-   * 
-   * @param <T>       the type of the value
-   * @param <E>       the type of exception
-   * @param exception the expection the monad will fail with
-   * @return a {@code Maybe} with the given failure exception if it's
-   *         non-{@code null}, {@link #nothing()} otherwise
-   */
-  public static <T, E extends Exception> Maybe<T> fail(final E exception) {
-    return new Maybe<>(null, exception);
+    return new Maybe<>(value);
   }
 
   /**
    * Returns a {@code Maybe} monad with nothing on it. This means the monad does
-   * not contain a success value, neither a failure exception.
+   * not contain a success value because an exception may have occurred.
    * 
    * @param <T> the type of the value
    * @return a {@code Maybe} with nothing
    */
   public static <T> Maybe<T> nothing() {
-    return new Maybe<>(null, null);
+    return new Maybe<>(null);
   }
 
   /**
    * Resolves the value of a throwing operation using a {@link SupplierChecked}
    * expression. Returning then a {@code Maybe} monad with either the success
-   * value, or the failure exception.
+   * value or {@link #nothing()}.
    * 
-   * @param <T>       the type of the value returned by the
-   *                  {@link SupplierChecked} expression
-   * @param operation the throwing operation supplier
-   * @return a {@code Maybe} with either the success value, or the failure
-   *         exception
+   * @param <T> the type of the value returned by the passed {@code operation}
+   * @param operation the checked supplier operation to resolve
+   * @return a {@code Maybe} with either the success resolved value or {@link #nothing()}
    */
   public static <T> Maybe<T> resolve(final SupplierChecked<T, ? extends Exception> operation) {
     try {
       return Maybe.just(operation.getChecked());
     } catch (Exception e) {
 
-      return Maybe.fail(e);
+      return Maybe.nothing();
     }
   }
 
   /**
    * Executes a throwing operation using a {@link RunnableChecked} expression.
-   * Returning then a {@code Maybe} monad with either {@link #nothing()}, or the
-   * failure exception {@code E}.
+   * Returning then a {@code Maybe} monad with {@link #nothing()}
    * 
    * @param operation the throwing operation runnable
-   * @return a {@code Maybe} with either {@link #nothing()}, or the failure
-   *         exception
+   * @return a {@code Maybe} with {@link #nothing()}
    */
   public static Maybe<Void> execute(final RunnableChecked<? extends Exception> operation) {
     try {
       operation.runChecked();
       return Maybe.nothing();
     } catch (Exception e) {
-      return Maybe.fail(e);
+      return Maybe.nothing();
     }
   }
 
@@ -115,13 +93,10 @@ public class Maybe<T> {
    * present. Throws an unchecked exception otherwise.
    * 
    * @return the success value of the {@code Maybe} monad if present
-   * @throws MaybeFailureException if the success value is not present and a
-   *                               failure exception exists.
-   *                               {@link NoSuchElementException} exception
-   *                               otherwise
+   * @throws MaybeFailedException if the success value is not present
    */
   public T getUnsafe() {
-    return success.orElseThrow(() -> new MaybeFailureException(failure.orElseThrow()));
+    return success.orElseThrow(MaybeFailedException::new);
   }
 
   /**
@@ -135,10 +110,10 @@ public class Maybe<T> {
   }
 
   /**
-   * Returns the success value if present. Otherwise, the result returned by the
-   * {@code otherFn} function.
+   * Returns the success value if present. Otherwise, the result resolved by the
+   * {@code otherFn} supplier.
    * 
-   * @param otherFn the function to get the {@code other} value.
+   * @param otherFn the supplier to get the {@code other} value.
    * @return the success value, if present, the result of applying the
    *         {@code otherFn} otherwise
    */
@@ -172,21 +147,16 @@ public class Maybe<T> {
 
   /**
    * Maps the current success value of the monad to another value using the
-   * provided {@link Function} mapper. If the monda has a failure instead, the
-   * monad with the same exception is returned.
+   * provided {@link Function} mapper.
    * 
    * @param <U>    the type the success value will be mapped to
    * @param mapper the mapper function
-   * @return a {@code Maybe} with the mapped value if success is present, with the
-   *         same exception if failed, {@link #nothing()} otherwise
+   * @return a {@code Maybe} with the mapped value if success is present,
+   *         {@link #nothing()} otherwise
    */
   public <U> Maybe<U> map(final Function<T, U> mapper) {
     if (success.isPresent()) {
       return Maybe.just(mapper.apply(success.get()));
-    }
-
-    if (failure.isPresent()) {
-      return Maybe.fail(failure.get());
     }
 
     return Maybe.nothing();
@@ -194,25 +164,20 @@ public class Maybe<T> {
 
   /**
    * Maps the current success value of the monad to another value using the
-   * provided {@link Function} mapper. If the monda has a failure instead, the
-   * monad with the same exception is returned.
+   * provided {@link Function} mapper.
    * 
    * This method is similar to {@link #map(Function)}, but the mapping function is
    * one whose result is already a {@code Maybe}, and if invoked, flatMap does not
    * wrap it within an additional {@code Maybe}.
    * 
-   * @param <U>    the type the success value will be mapped to
+   * @param <U> the type the success value will be mapped to
    * @param mapper the mapper function
-   * @return a {@code Maybe} with the mapped value if success is present, with the
-   *         same exception if failed, {@link #nothing()} otherwise
+   * @return a {@code Maybe} with the mapped value if success is present,
+   *         {@link #nothing()} otherwise
    */
   public <U> Maybe<U> flatMap(final Function<T, Maybe<U>> mapper) {
     if (success.isPresent()) {
       return mapper.apply(success.get());
-    }
-
-    if (failure.isPresent()) {
-      return Maybe.fail(failure.get());
     }
 
     return Maybe.nothing();
@@ -222,18 +187,13 @@ public class Maybe<T> {
    * Resolves the value of another throwing operation. The value of the previous
    * {@code maybe} is passed to the checked function.
    * 
-   * @param <U>           the type of the value returned by the passes operation
-   * @param thenOperation the {@link BiFunctionChecked} throwing operation
-   * @return another {@code Maybe} with other success value, or other failure
-   *         exception
+   * @param <U> the type of the value returned by the passes operation
+   * @param thenOperation the {@link FunctionChecked} throwing operation
+   * @return another {@code Maybe} with other success value if resolved
    */
   public <U> Maybe<U> thenResolve(final FunctionChecked<T, U, ? extends Exception> thenOperation) {
     if (success.isPresent()) {
       return Maybe.resolve(() -> thenOperation.applyChecked(success.get()));
-    }
-
-    if (failure.isPresent()) {
-      return Maybe.fail(failure.get());
     }
 
     return Maybe.nothing();
@@ -241,19 +201,14 @@ public class Maybe<T> {
 
   /**
    * Executes another throwing operation. The value of the previous {@code maybe} is
-   * passed to the checked function.
+   * passed to the checked consumer.
    * 
-   * @param thenOperation the {@link BiFunctionChecked} throwing operation
-   * @return another {@code Maybe} with either {@link #nothing()}, or the failure
-   *         exception
+   * @param thenOperation the {@link ConsumerChecked} throwing operation
+   * @return another {@code Maybe} with {@link #nothing()}
    */
   public Maybe<Void> thenExecute(final ConsumerChecked<T, ? extends Exception> thenOperation) {
     if (success.isPresent()) {
       return Maybe.execute(() -> thenOperation.acceptChecked(success.get()));
-    }
-
-    if (failure.isPresent()) {
-      return Maybe.fail(failure.get());
     }
 
     return Maybe.nothing();
@@ -266,17 +221,12 @@ public class Maybe<T> {
    * 
    * @param <U> the type the success value will be cast to
    * @param type the class instance of the type to cast
-   * @return a new {@code Maybe} with the cast success value, if present, the
-   *         same failure exception otherwhise. If none is present, {@link #nothing()}\
-   *         is returned instead.
+   * @return a new {@code Maybe} with the cast success value
+   *         if present, {@link #nothing()} otherwise
    */
   public <U> Maybe<U> cast(Class<U> type) {
     if (success.isPresent()) {
       return Maybe.just(type.cast(success.get()));
-    }
-
-    if (failure.isPresent()) {
-      return Maybe.fail(failure.get());
     }
 
     return Maybe.nothing();
@@ -292,15 +242,6 @@ public class Maybe<T> {
   }
 
   /**
-   * Checks if the {@code Maybe} has a failure exception.
-   * 
-   * @return true if a failure exception is present, false otherwise
-   */
-  public boolean hasFailure() {
-    return failure.isPresent();
-  }
-
-  /**
    * Checks if the {@code Maybe} has nothing. That is, when no success
    * value and failure exception are present.
    * 
@@ -308,6 +249,6 @@ public class Maybe<T> {
    *         present, false otherwise
    */
   public boolean hasNothing() {
-    return success.isEmpty() && failure.isEmpty();
+    return success.isEmpty();
   }
 }
