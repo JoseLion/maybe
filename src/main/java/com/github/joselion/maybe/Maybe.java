@@ -1,21 +1,17 @@
 package com.github.joselion.maybe;
 
-import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
 import com.github.joselion.maybe.exceptions.MaybeFailedException;
-import com.github.joselion.maybe.util.ConsumerChecked;
 import com.github.joselion.maybe.util.FunctionChecked;
-import com.github.joselion.maybe.util.RunnableChecked;
 import com.github.joselion.maybe.util.SupplierChecked;
 
 /**
- * Maybe is a container object (monad) that may contain a value, a
- * {@link Throwable}, or neither. Its API allow us to process throwing operation
- * in a functional way with the posibility of safely or unsafely unboxing the
- * result of the operations.
+ * Maybe is a container object (monad) that may contain a value. Its API allows
+ * to process throwing operations in a functional way leveraging
+ * {@link java.util.Optional Optional} to unbox the possible contained value.
  * 
  * @param <T> the type of the wrapped value
  * 
@@ -24,9 +20,9 @@ import com.github.joselion.maybe.util.SupplierChecked;
  */
 public class Maybe<T> {
 
-  private Optional<T> success;
+  private final Optional<T> success;
 
-  private <E extends Exception> Maybe(final T success) {
+  private Maybe(final T success) {
     this.success = Optional.ofNullable(success);
   }
 
@@ -56,35 +52,23 @@ public class Maybe<T> {
 
   /**
    * Resolves the value of a throwing operation using a {@link SupplierChecked}
-   * expression. Returning then a {@code Maybe} monad with either the success
-   * value or {@link #nothing()}.
+   * expression. Returning then a {@link ResolveHandler} whic allows to handle
+   * the possible error and return a safe value.
    * 
-   * @param <T> the type of the value returned by the passed {@code operation}
+   * @param <T> the type of the value returned by the {@code operation}
+   * @param <E> the typew of exception the {@code operation} may throw
    * @param operation the checked supplier operation to resolve
-   * @return a {@code Maybe} with either the success resolved value or {@link #nothing()}
+   * @return a {@link ResolveHandler} with either the value resolved or the
+   *         thrown exception to be handled
    */
-  public static <T> Maybe<T> resolve(final SupplierChecked<T, ? extends Exception> operation) {
+  public static <T, E extends Exception> ResolveHandler<T, E> resolve(final SupplierChecked<T, E> operation) {
     try {
-      return Maybe.just(operation.getChecked());
+      return ResolveHandler.withSuccess(operation.getChecked());
     } catch (Exception e) {
+      @SuppressWarnings("unchecked")
+      final E error = (E) e;
 
-      return Maybe.nothing();
-    }
-  }
-
-  /**
-   * Executes a throwing operation using a {@link RunnableChecked} expression.
-   * Returning then a {@code Maybe} monad with {@link #nothing()}
-   * 
-   * @param operation the throwing operation runnable
-   * @return a {@code Maybe} with {@link #nothing()}
-   */
-  public static Maybe<Void> execute(final RunnableChecked<? extends Exception> operation) {
-    try {
-      operation.runChecked();
-      return Maybe.nothing();
-    } catch (Exception e) {
-      return Maybe.nothing();
+      return ResolveHandler.withError(error);
     }
   }
 
@@ -102,11 +86,11 @@ public class Maybe<T> {
   /**
    * Returns the success value if present, the {@code other} value otherwise.
    * 
-   * @param other the value to return if the {@code Maybe} operation fails.
-   * @return the success value, if present, {@code other} otherwise
+   * @param otherValue the value to return if the {@code Maybe} operation fails.
+   * @return the success value, if present, {@code otherValue} otherwise
    */
-  public T orElse(final T other) {
-    return success.orElse(other);
+  public T orElse(final T otherValue) {
+    return success.orElse(otherValue);
   }
 
   /**
@@ -184,34 +168,23 @@ public class Maybe<T> {
   }
 
   /**
-   * Resolves the value of another throwing operation. The value of the previous
-   * {@code maybe} is passed to the checked function.
+   * Chains the current Maybe to another operation which is executed only if a
+   * value is present in the Monad. The value is passed to a {@link FunctionChecked}
+   * to be used in the next operation. If there's no value in the monad, a Maybe
+   * with {@code nothing} is returned.
    * 
-   * @param <U> the type of the value returned by the passes operation
-   * @param thenOperation the {@link FunctionChecked} throwing operation
-   * @return another {@code Maybe} with other success value if resolved
+   * @param <U> the type of the value returned by the next operation
+   * @param <X> the type of the exception the new operation may throw
+   * @param next the {@link FunctionChecked} operation applied next
+   * @return a {@link ResolveHandler} with either the value resolved or the
+   *         thrown exception to be handled
    */
-  public <U> Maybe<U> thenResolve(final FunctionChecked<T, U, ? extends Exception> thenOperation) {
+  public <U, X extends Exception> ResolveHandler<U, X> thenResolve(final FunctionChecked<T, U, X> next) {
     if (success.isPresent()) {
-      return Maybe.resolve(() -> thenOperation.applyChecked(success.get()));
+      return Maybe.resolve(() -> next.applyChecked(success.get()));
     }
 
-    return Maybe.nothing();
-  }
-
-  /**
-   * Executes another throwing operation. The value of the previous {@code maybe} is
-   * passed to the checked consumer.
-   * 
-   * @param thenOperation the {@link ConsumerChecked} throwing operation
-   * @return another {@code Maybe} with {@link #nothing()}
-   */
-  public Maybe<Void> thenExecute(final ConsumerChecked<T, ? extends Exception> thenOperation) {
-    if (success.isPresent()) {
-      return Maybe.execute(() -> thenOperation.acceptChecked(success.get()));
-    }
-
-    return Maybe.nothing();
+    return ResolveHandler.withNothing();
   }
 
   /**
