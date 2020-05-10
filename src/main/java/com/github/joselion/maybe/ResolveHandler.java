@@ -46,7 +46,7 @@ class ResolveHandler<T, E extends Exception> {
    */
   public ResolveHandler<T, E> onError(final Function<E, T> handler) {
     if (error.isPresent()) {
-      return ResolveHandler.withSuccess(handler.apply(error.get()));
+      return withSuccess(handler.apply(error.get()));
     }
     
     return this;
@@ -64,5 +64,16 @@ class ResolveHandler<T, E extends Exception> {
     }
 
     return Maybe.nothing();
+  }
+
+  /**
+   * Returns the value resolved/handled if present. A default value otherwise.
+   * 
+   * @param defaultValue the value to return if {@code resolve} failed and/or
+   *                     the error was not handled.
+   * @return the resolved/handled value if present. A default value otherwise
+   */
+  public T orDefault(final T defaultValue) {
+    return success.orElse(defaultValue);
   }
 }

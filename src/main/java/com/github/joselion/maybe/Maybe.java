@@ -2,9 +2,7 @@ package com.github.joselion.maybe;
 
 import java.util.Optional;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
-import com.github.joselion.maybe.exceptions.MaybeFailedException;
 import com.github.joselion.maybe.util.FunctionChecked;
 import com.github.joselion.maybe.util.SupplierChecked;
 
@@ -52,14 +50,14 @@ public class Maybe<T> {
 
   /**
    * Resolves the value of a throwing operation using a {@link SupplierChecked}
-   * expression. Returning then a {@link ResolveHandler} whic allows to handle
-   * the possible error and return a safe value.
+   * expression. Returning then a {@link ResolveHandler} whic allows to handle the
+   * possible error and return a safe value.
    * 
-   * @param <T> the type of the value returned by the {@code operation}
-   * @param <E> the typew of exception the {@code operation} may throw
+   * @param <T>       the type of the value returned by the {@code operation}
+   * @param <E>       the typew of exception the {@code operation} may throw
    * @param operation the checked supplier operation to resolve
-   * @return a {@link ResolveHandler} with either the value resolved or the
-   *         thrown exception to be handled
+   * @return a {@link ResolveHandler} with either the value resolved or the thrown
+   *         exception to be handled
    */
   public static <T, E extends Exception> ResolveHandler<T, E> resolve(final SupplierChecked<T, E> operation) {
     try {
@@ -70,63 +68,6 @@ public class Maybe<T> {
 
       return ResolveHandler.withError(error);
     }
-  }
-
-  /**
-   * Unsafely unbox the value of the {@code Maybe} monad. Returns the value if
-   * present. Throws an unchecked exception otherwise.
-   * 
-   * @return the success value of the {@code Maybe} monad if present
-   * @throws MaybeFailedException if the success value is not present
-   */
-  public T getUnsafe() {
-    return success.orElseThrow(MaybeFailedException::new);
-  }
-
-  /**
-   * Returns the success value if present, the {@code other} value otherwise.
-   * 
-   * @param otherValue the value to return if the {@code Maybe} operation fails.
-   * @return the success value, if present, {@code otherValue} otherwise
-   */
-  public T orElse(final T otherValue) {
-    return success.orElse(otherValue);
-  }
-
-  /**
-   * Returns the success value if present. Otherwise, the result resolved by the
-   * {@code otherFn} supplier.
-   * 
-   * @param otherFn the supplier to get the {@code other} value.
-   * @return the success value, if present, the result of applying the
-   *         {@code otherFn} otherwise
-   */
-  public T orElse(final Supplier<T> otherFn) {
-    return success.orElseGet(otherFn);
-  }
-
-  /**
-   * Returns the success value if present. Otherwise, 
-   * throws a new unchecked exception.
-   * 
-   * @param newException an unchecked exception to throw if the
-   *                     success value is not present.
-   * @return the success value if present
-   */
-  public T orThrow(final RuntimeException newException) {
-    return success.orElseThrow(() -> newException);
-  }
-
-  /**
-   * Returns the success value if present. Otherwise, throws a new
-   * unchecked resolved by the {@code exceptionSupplier} function.
-   * 
-   * @param exceptionSupplier an unchecked exception supplier to throw
-   *                          if the success value is not present.
-   * @return the success value if present
-   */
-  public T orThrow(final Supplier<? extends RuntimeException> exceptionSupplier) {
-    return success.orElseThrow(exceptionSupplier);
   }
 
   /**
@@ -143,7 +84,7 @@ public class Maybe<T> {
       return Maybe.just(mapper.apply(success.get()));
     }
 
-    return Maybe.nothing();
+    return nothing();
   }
 
   /**
@@ -154,7 +95,7 @@ public class Maybe<T> {
    * one whose result is already a {@code Maybe}, and if invoked, flatMap does not
    * wrap it within an additional {@code Maybe}.
    * 
-   * @param <U> the type the success value will be mapped to
+   * @param <U>    the type the success value will be mapped to
    * @param mapper the mapper function
    * @return a {@code Maybe} with the mapped value if success is present,
    *         {@link #nothing()} otherwise
@@ -164,20 +105,20 @@ public class Maybe<T> {
       return mapper.apply(success.get());
     }
 
-    return Maybe.nothing();
+    return nothing();
   }
 
   /**
    * Chains the current Maybe to another operation which is executed only if a
-   * value is present in the Monad. The value is passed to a {@link FunctionChecked}
-   * to be used in the next operation. If there's no value in the monad, a Maybe
-   * with {@code nothing} is returned.
+   * value is present in the Monad. The value is passed to a
+   * {@link FunctionChecked} to be used in the next operation. If there's no value
+   * in the monad, a Maybe with {@code nothing} is returned.
    * 
-   * @param <U> the type of the value returned by the next operation
-   * @param <X> the type of the exception the new operation may throw
+   * @param <U>  the type of the value returned by the next operation
+   * @param <X>  the type of the exception the new operation may throw
    * @param next the {@link FunctionChecked} operation applied next
-   * @return a {@link ResolveHandler} with either the value resolved or the
-   *         thrown exception to be handled
+   * @return a {@link ResolveHandler} with either the value resolved or the thrown
+   *         exception to be handled
    */
   public <U, X extends Exception> ResolveHandler<U, X> thenResolve(final FunctionChecked<T, U, X> next) {
     if (success.isPresent()) {
@@ -188,21 +129,24 @@ public class Maybe<T> {
   }
 
   /**
-   * Cast the success value of the monad to the passed {@code Class} type, if present.
-   * This operation may throw an unchecked @{link java.lang.ClassCastException ClassCastException}
-   * if the object is not null and is not assignable to the type {@code U}.
+   * If the value is present in the monad, casts the value to another type. In
+   * case of any exception during the cast, a Maybe with {@code nothing} is
+   * returned.
    * 
-   * @param <U> the type the success value will be cast to
-   * @param type the class instance of the type to cast
-   * @return a new {@code Maybe} with the cast success value
-   *         if present, {@link #nothing()} otherwise
+   * @param <U>  the type that the value will be cast to
+   * @param type a class instance of the type to cast
+   * @return a new {@code Maybe} with the cast value if it can be cast,
+   *         {@link #nothing()} otherwise
    */
   public <U> Maybe<U> cast(Class<U> type) {
-    if (success.isPresent()) {
-      return Maybe.just(type.cast(success.get()));
-    }
+    try {
+      final T value = success.orElseThrow();
+      final U newValue = type.cast(value);
 
-    return Maybe.nothing();
+      return Maybe.just(newValue);
+    } catch (RuntimeException e) {
+      return nothing();
+    }
   }
 
   /**
@@ -215,13 +159,74 @@ public class Maybe<T> {
   }
 
   /**
-   * Checks if the {@code Maybe} has nothing. That is, when no success
-   * value and failure exception are present.
+   * Checks if the {@code Maybe} has nothing. That is, when no success value and
+   * failure exception are present.
    * 
-   * @return true if both success value and failure exception are not
-   *         present, false otherwise
+   * @return true if both success value and failure exception are not present,
+   *         false otherwise
    */
   public boolean hasNothing() {
     return success.isEmpty();
+  }
+
+  /**
+   * Safely unbox the value of the monad as an {@link java.util.Optional Optional}
+   * which may or may not contain a value.
+   * 
+   * @return an {@code Optional} with the value of the monad, if preset.
+   */
+  public Optional<T> toOptional() {
+    return success;
+  }
+
+  /**
+   * Checks if some other object is equal to this {@code Maybe}. For two objects
+   * to be equal they both must:
+   * <ul>
+   *   <li>Be an instance of {@code Maybe}</li>
+   *   <li>Contain a values equal to via {@code equals()} comparation</li>
+   * </ul>
+   * 
+   * @param obj an object to be tested for equality
+   * @return {@code true} if the other object is "equal to" this object,
+   *         {@code false} otherwise
+   */
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj) {
+      return true;
+    }
+
+    if (obj instanceof Maybe) {
+      final Maybe<?> other = (Maybe<?>) obj;
+      return other.toOptional().equals(success);
+    }
+
+    return false;
+  }
+
+  /**
+   * Returns the hash code of the value, if present, otherwise {@code 0} (zero)
+   * if no value is present.
+   * 
+   * @return hash code value of the present value or {@code 0} if no value is present
+   */
+  @Override
+  public int hashCode() {
+    return success.hashCode();
+  }
+
+  /**
+   * Returns a non-empty string representation of this {@code Maybe} suitable
+   * for debugging. The exact presentation format is unspecified and may vary
+   * between implementations and versions.
+   * 
+   * @return the string representation of this instance
+   */
+  @Override
+  public String toString() {
+    return success.isPresent()
+      ? String.format("Maybe[%s]", success.get())
+      : "Maybe.nothing";
   }
 }
