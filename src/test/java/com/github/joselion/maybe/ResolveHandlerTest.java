@@ -69,27 +69,57 @@ public class ResolveHandlerTest {
   class and {
     
     @Nested
-    class when_the_success_value_is_present {
+    class when_the_value_is_present {
 
       @Test
-      void returns_a_maybe_with_the_success_value() {
-        final ResolveHandler<String, RuntimeException> handler = Maybe.resolve(() -> "OK");
-
-        assertThat(handler.and())
-          .extracting(SUCCESS, optional(String.class))
-          .contains("OK");
+      void returns_a_maybe_with_the_value() {
+        assertThat(
+          Maybe.resolve(() -> "OK").and()
+        )
+        .extracting(SUCCESS, optional(String.class))
+        .contains("OK");
       }
     }
 
     @Nested
-    class when_the_success_value_is_NOT_present {
+    class when_the_value_is_NOT_present {
       @Test
       void returns_a_maybe_with_nothing() {
-        final ResolveHandler<String, IOException> handler = Maybe.resolve(() -> throwingOp());
+        assertThat(
+          Maybe.resolve(() -> throwingOp()).and()
+        )
+        .extracting(SUCCESS, optional(String.class))
+        .isEmpty();
+      }
+    }
+  }
 
-        assertThat(handler.and())
-          .extracting(SUCCESS, optional(String.class))
-          .isEmpty();
+  @Nested
+  class orDefault {
+    
+    @Nested
+    class when_the_value_is_presen {
+
+      @Test
+      void returns_the_value() {
+        assertThat(
+          Maybe.resolve(() -> "OK")
+            .orDefault("OTHER")
+        )
+        .isEqualTo("OK");
+      }
+    }
+
+    @Nested
+    class when_the_value_is_NOT_present {
+
+      @Test
+      void returns_the_default_value() {
+        assertThat(
+          Maybe.resolve(() -> throwingOp())
+            .orDefault("OTHER")
+        )
+        .isEqualTo("OTHER");
       }
     }
   }

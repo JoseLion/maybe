@@ -2,11 +2,9 @@ package com.github.joselion.maybe;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.InstanceOfAssertFactories.optional;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.IOException;
 
-import com.github.joselion.maybe.exceptions.MaybeFailedException;
 import com.github.joselion.maybe.helpers.UnitTest;
 
 import org.junit.jupiter.api.Nested;
@@ -69,7 +67,7 @@ public class MaybeTest {
     class when_the_operation_success {
 
       @Test
-      void returns_the_a_handler_with_the_success_value() {
+      void returns_the_a_handler_with_the_value() {
         final ResolveHandler<String, Exception> handler = Maybe.resolve(() -> "OK");
 
         assertThat(handler)
@@ -82,7 +80,7 @@ public class MaybeTest {
     class when_the_operation_fails {
 
       @Test
-      void returns_the_a_handler_with_the_success_value() {
+      void returns_the_a_handler_with_the_value() {
         final IOException exception = new IOException("FAIL");
         final ResolveHandler<?, IOException> handler = Maybe.resolve(() -> { throw exception; });
 
@@ -99,102 +97,10 @@ public class MaybeTest {
   }
 
   @Nested
-  class getUnsafe {
-
-    @Nested
-    class when_there_is_a_success_value_in_the_monad {
-
-      @Test
-      void returns_the_success_value() {
-        final Maybe<Boolean> maybe = Maybe.just(true);
-
-        assertThat(maybe.getUnsafe()).isEqualTo(true);
-      }
-    }
-
-    @Nested
-    class when_there_is_NO_success_value_in_the_monad {
-
-      @Test
-      void throws_a_NoShuchElement_exception() {
-        final Maybe<?> maybe = Maybe.nothing();
-
-        assertThat(
-          assertThrows(MaybeFailedException.class, maybe::getUnsafe)
-        )
-        .isInstanceOf(RuntimeException.class)
-        .hasMessage("Cannot unbox the success value. The operation failed to resolve or execute");
-      }
-    }
-  }
-
-  @Nested
-  class orElse {
-
-    @Nested
-    class when_there_is_a_success_value_in_the_monad {
-
-      @Test
-      void returns_the_success_value() {
-        final Maybe<String> maybe = Maybe.just("OK");
-
-        assertThat(maybe.orElse("BAD")).isEqualTo("OK");
-        assertThat(maybe.orElse(() -> "BAD")).isEqualTo("OK");
-      }
-    }
-
-    @Nested
-    class when_there_is_NO_success_value_in_the_monad {
-
-      @Test
-      void returns_the_other_value() {
-        final Maybe<String> maybe = Maybe.nothing();
-
-        assertThat(maybe.orElse("OTHER")).isEqualTo("OTHER");
-        assertThat(maybe.orElse(() -> "OTHER")).isEqualTo("OTHER");
-      }
-    }
-  }
-
-  @Nested
-  class orThrow {
-    
-    @Nested
-    class when_there_is_a_success_value_in_the_monad {
-
-      @Test
-      void returns_the_success_value() {
-        final Maybe<String> maybe = Maybe.just("OK");
-
-        assertThat(maybe.orThrow(new RuntimeException())).isEqualTo("OK");
-        assertThat(maybe.orThrow(RuntimeException::new)).isEqualTo("OK");
-      }
-    }
-
-    @Nested
-    class when_there_is_NO_success_value_in_the_monad {
-
-      @Test
-      void throws_the_passed_failure_exception() {
-        final Maybe<?> maybe = Maybe.nothing();
-
-        assertThrows(
-          RuntimeException.class,
-          () -> maybe.orThrow(new RuntimeException())
-        );
-        assertThrows(
-          RuntimeException.class,
-          () -> maybe.orThrow(RuntimeException::new)
-        );
-      }
-    }
-  }
-
-  @Nested
   class map {
 
     @Nested
-    class when_there_is_a_success_value_in_the_monad {
+    class when_there_is_a_value_in_the_monad {
 
       @Test
       void maps_the_value_with_the_passed_function() {
@@ -208,7 +114,7 @@ public class MaybeTest {
     }
 
     @Nested
-    class when_there_is_NO_success_value_in_the_monad {
+    class when_there_is_NO_value_in_the_monad {
 
       @Test
       void returns_nothing() {
@@ -225,7 +131,7 @@ public class MaybeTest {
   class flatMap {
 
     @Nested
-    class when_there_is_a_success_value_in_the_monad {
+    class when_there_is_a_value_in_the_monad {
 
       @Test
       void maps_the_value_with_the_passed_maybe_function() {
@@ -239,7 +145,7 @@ public class MaybeTest {
     }
 
     @Nested
-    class when_there_is_NO_success_value_in_the_monad {
+    class when_there_is_NO_value_in_the_monad {
 
       @Test
       void returns_nothing() {
@@ -340,11 +246,11 @@ public class MaybeTest {
   class cast {
 
     @Nested
-    class when_there_is_a_success_value_in_the_monad {
+    class when_the_value_is_castable_to_the_passed_type {
 
       @Test
-      void casts_the_value_to_the_passed_type() {
-        final Maybe<Object> maybe = Maybe.just(3);
+      void returns_a_maybe_with_the_value_cast() {
+        final Maybe<Number> maybe = Maybe.<Number>just(3);
 
         assertThat(maybe.cast(Integer.class))
           .extracting(SUCCESS, optional(Integer.class))
@@ -354,11 +260,11 @@ public class MaybeTest {
     }
 
     @Nested
-    class when_there_is_NO_success_value_in_the_monad {
+    class when_the_value_is_NOT_castable_to_the_passed_type {
 
       @Test
       void returns_nothing() {
-        final Maybe<String> maybe = Maybe.<String>nothing();
+        final Maybe<String> maybe = Maybe.just("3");
 
         assertThat(maybe.cast(Integer.class))
           .extracting(SUCCESS, optional(Integer.class))
@@ -371,7 +277,7 @@ public class MaybeTest {
   class hasSuccess {
 
     @Nested
-    class when_there_is_a_success_value_in_the_monad {
+    class when_there_is_a_value_in_the_monad {
 
       @Test
       void returns_true() {
@@ -380,7 +286,7 @@ public class MaybeTest {
     }
 
     @Nested
-    class when_there_is_NO_success_value_in_the_monad {
+    class when_there_is_NO_value_in_the_monad {
 
       @Test
       void returns_false() {
@@ -402,11 +308,115 @@ public class MaybeTest {
     }
 
     @Nested
-    class when_there_is_a_success_value_in_the_monad {
+    class when_there_is_a_value_in_the_monad {
 
       @Test
       void returns_false() {
         assertThat(Maybe.just("OK").hasNothing()).isFalse();
+      }
+    }
+  }
+
+  @Nested
+  class toOptional {
+    
+    @Test
+    void returns_the_value_of_the_monad_as_optional() {
+      final Maybe<String> maybe = Maybe.just("OK");
+
+      assertThat(maybe.toOptional())
+        .contains("OK");
+    }
+  }
+
+  @Nested
+  class equals {
+
+    @Nested
+    class when_the_tested_object_is_the_same_instance {
+
+      @Test
+      void returns_true() {
+        final Maybe<Integer> maybe = Maybe.just(3);
+        final Object other = maybe;
+
+        assertThat(maybe.equals(other)).isTrue();
+      }
+    }
+
+    @Nested
+    class when_both_wrapped_values_are_equal {
+
+      @Test
+      void returns_true() {
+        final Maybe<String> maybe = Maybe.just("OK");
+        final Maybe<String> other = Maybe.just("OK");
+
+        assertThat(maybe.equals(other)).isTrue();
+      }
+    }
+
+    @Nested
+    class when_both_wrapped_values_are_NOT_equal {
+
+      @Test
+      void returns_false() {
+        final Maybe<String> maybe = Maybe.just("OK");
+        final Maybe<String> other = Maybe.just("OTHER");
+        final Object obj = "OK";
+
+        assertThat(maybe.equals(obj)).isFalse();
+        assertThat(maybe.equals(other)).isFalse();
+      }
+    }
+  }
+
+  @Nested
+  class hashCode {
+    @Nested
+    class when_there_is_a_value_in_the_monad {
+  
+      @Test
+      void returns_the_hash_code_of_the_value() {
+        final Maybe<String> maybe = Maybe.just("OK");
+  
+        assertThat(maybe.hashCode()).isEqualTo("OK".hashCode());
+      }
+    }
+
+    @Nested
+    class when_there_is_NO_value_in_the_monad {
+
+      @Test
+      void returns_zero() {
+        final Maybe<?> maybe = Maybe.nothing();
+
+        assertThat(maybe.hashCode()).isEqualTo(0);
+      }
+    }
+  }
+
+  @Nested
+  class toString {
+    @Nested
+    class when_there_is_a_value_in_the_monad {
+  
+      @Test
+      void returns_the_string_representation_of_the_value() {
+        final Maybe<String> maybe = Maybe.just("OK");
+  
+        assertThat(maybe.toString()).isEqualTo("Maybe[OK]");
+      }
+    }
+
+    @Nested
+    class when_there_is_NO_value_in_the_monad {
+
+      @Test
+      void returns_the_string_representation_of_nothing() {
+        final Maybe<?> maybe = Maybe.nothing();
+
+        assertThat(maybe.toString()).isEqualTo("Maybe.nothing");
       }
     }
   }
