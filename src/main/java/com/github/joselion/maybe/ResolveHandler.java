@@ -37,8 +37,8 @@ class ResolveHandler<T, E extends Exception> {
   }
 
   /**
-   * Returns a new value in case an error exits. The error is passed in the argunment
-   * of to the {@code handler} function.
+   * Id an error exits, handle the error and return a new value. The error is
+   * passed in the argunment of to the {@code handler} function.
    * 
    * @param handler a function that should return a new value in case of error
    * @return a new handler with the new value if error is present. The same
@@ -49,6 +49,26 @@ class ResolveHandler<T, E extends Exception> {
       return withSuccess(handler.apply(error.get()));
     }
     
+    return this;
+  }
+
+  /**
+   * Catch en error if it's instance of the {@code errorType} passed, then handle
+   * the error and return a new value. The catched error is passed in the argument
+   * of the {@code handler} function.
+   * 
+   * @param <X> the type of the error to catch
+   * @param errorType a class instance of the error type to catch
+   * @param handler a function that should return a new value in case of error
+   * @return a new handler with the new value if the error is catched. The same
+   *         handler instance otherwise
+   */
+  public <X extends E> ResolveHandler<T, E> catchError(final Class<X> errorType, final Function<X, T> handler) {
+    if (error.isPresent() && errorType.isAssignableFrom(error.get().getClass())) {
+      final X exception = errorType.cast(error.get());
+      return withSuccess(handler.apply(exception));
+    }
+
     return this;
   }
 
@@ -75,5 +95,30 @@ class ResolveHandler<T, E extends Exception> {
    */
   public T orDefault(final T defaultValue) {
     return success.orElse(defaultValue);
+  }
+
+  /**
+   * Returns the value resolved/handled if present. Throws the error otherwise.
+   * 
+   * @return the resolved/handled value if present
+   * @throws E the error thrown by the {@code resolve} operation
+   */
+  public T orThrow() throws E {
+    return success.orElseThrow(error::orElseThrow);
+  }
+
+  /**
+   * Returns the value resolved/handled if present. Throws another error otherwise.
+   * 
+   * @param <X> the new error type
+   * @param errorMapper a function to map the new exception to throw
+   * @return the resolved/handled value if present
+   */
+  public <X extends Throwable> T orThrow(final Function<E, X> errorMapper) throws X {
+    if (success.isPresent()) {
+      return success.get();
+    }
+
+    throw errorMapper.apply(error.orElseThrow());
   }
 }
