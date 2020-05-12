@@ -3,7 +3,9 @@ package com.github.joselion.maybe;
 import java.util.Optional;
 import java.util.function.Function;
 
+import com.github.joselion.maybe.util.ConsumerChecked;
 import com.github.joselion.maybe.util.FunctionChecked;
+import com.github.joselion.maybe.util.RunnableChecked;
 import com.github.joselion.maybe.util.SupplierChecked;
 
 /**
@@ -50,23 +52,45 @@ public class Maybe<T> {
 
   /**
    * Resolves the value of a throwing operation using a {@link SupplierChecked}
-   * expression. Returning then a {@link ResolveHandler} whic allows to handle the
+   * expression. Returning then a {@link ResolveHandler} which allows to handle the
    * possible error and return a safe value.
    * 
-   * @param <T>       the type of the value returned by the {@code operation}
-   * @param <E>       the typew of exception the {@code operation} may throw
-   * @param operation the checked supplier operation to resolve
+   * @param <T> the type of the value returned by the {@code resolver}
+   * @param <E> the type of exception the {@code resolver} may throw
+   * @param resolver the checked supplier operation to resolve
    * @return a {@link ResolveHandler} with either the value resolved or the thrown
    *         exception to be handled
    */
-  public static <T, E extends Exception> ResolveHandler<T, E> resolve(final SupplierChecked<T, E> operation) {
+  public static <T, E extends Exception> ResolveHandler<T, E> resolve(final SupplierChecked<T, E> resolver) {
     try {
-      return ResolveHandler.withSuccess(operation.getChecked());
+      return ResolveHandler.withSuccess(resolver.getChecked());
     } catch (Exception e) {
       @SuppressWarnings("unchecked")
       final E error = (E) e;
 
       return ResolveHandler.withError(error);
+    }
+  }
+
+  /**
+   * Runs an effect that may throw an exception using a {@link RunnableChecked}
+   * expression. Returning then an {@link EffectHandler} which allows to handle
+   * the possible error.
+   * 
+   * @param <E> the type of exception the {@code effect} may throw
+   * @param effect the checked runnable operation to execute
+   * @return an {@link EffectHandler} with either the thrown exception to be
+   *         handled or nothing
+   */
+  public static <E extends Exception> EffectHandler<E> runEffect(final RunnableChecked<E> effect) {
+    try {
+      effect.runChecked();
+      return EffectHandler.withNothing();
+    } catch (Exception e) {
+      @SuppressWarnings("unchecked")
+      final E error = (E) e;
+
+      return EffectHandler.withError(error);
     }
   }
 
@@ -109,23 +133,39 @@ public class Maybe<T> {
   }
 
   /**
-   * Chains the current Maybe to another operation which is executed only if a
-   * value is present in the Monad. The value is passed to a
-   * {@link FunctionChecked} to be used in the next operation. If there's no value
-   * in the monad, a Maybe with {@code nothing} is returned.
+   * Chain the {@code Maybe} with another resolver, if and only if the previous
+   * operation was handled with no errors. The value of the previous operation
+   * is passed as argument of the {@link FunctionChecked}.
    * 
-   * @param <U>  the type of the value returned by the next operation
-   * @param <X>  the type of the exception the new operation may throw
-   * @param next the {@link FunctionChecked} operation applied next
+   * @param <U>  the type of value returned by the next operation
+   * @param <E>  the type of exception the new resolver may throw
+   * @param resolver the checked supplier operation to resolve
    * @return a {@link ResolveHandler} with either the value resolved or the thrown
    *         exception to be handled
    */
-  public <U, X extends Exception> ResolveHandler<U, X> thenResolve(final FunctionChecked<T, U, X> next) {
+  public <U, E extends Exception> ResolveHandler<U, E> thenResolve(final FunctionChecked<T, U, E> resolver) {
     if (success.isPresent()) {
-      return Maybe.resolve(() -> next.applyChecked(success.get()));
+      return Maybe.resolve(() -> resolver.applyChecked(success.get()));
     }
 
     return ResolveHandler.withNothing();
+  }
+
+  /**
+   * Chain the {@code Maybe} with another effect, if and only if the previous
+   * operation was handled with no errors.
+   * 
+   * @param <E> the type of exception the new effect may throw
+   * @param effect the checked runnable operation to execute next
+   * @return an {@link EffectHandler} with either the thrown exception to be
+   *         handled or nothing
+   */
+  public <E extends Exception> EffectHandler<E> thenRunEffect(final ConsumerChecked<T, E> effect) {
+    if (success.isPresent()) {
+      return Maybe.runEffect(() -> effect.acceptChecked(success.get()));
+    }
+
+    return EffectHandler.withNothing();
   }
 
   /**

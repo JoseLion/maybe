@@ -37,7 +37,7 @@ class ResolveHandler<T, E extends Exception> {
   }
 
   /**
-   * Id an error exits, handle the error and return a new value. The error is
+   * If an error exits, handle the error and return a new value. The error is
    * passed in the argunment of to the {@code handler} function.
    * 
    * @param handler a function that should return a new value in case of error
@@ -53,7 +53,7 @@ class ResolveHandler<T, E extends Exception> {
   }
 
   /**
-   * Catch en error if it's instance of the {@code errorType} passed, then handle
+   * Catch an error if it's instance of the {@code errorType} passed, then handle
    * the error and return a new value. The catched error is passed in the argument
    * of the {@code handler} function.
    * 
@@ -74,7 +74,7 @@ class ResolveHandler<T, E extends Exception> {
 
   /**
    * Allows the ResolveHandler API to go back to the Maybe API. This is useful
-   * to continue chaining more more Maybe operations.
+   * to continue chaining more Maybe operations.
    * 
    * @return a Maybe with the success value if present. A Maybe with nothing otherwise
    */
@@ -111,8 +111,9 @@ class ResolveHandler<T, E extends Exception> {
    * Returns the value resolved/handled if present. Throws another error otherwise.
    * 
    * @param <X> the new error type
-   * @param errorMapper a function to map the new exception to throw
+   * @param errorMapper a function that maps the new exception to throw
    * @return the resolved/handled value if present
+   * @throws X a mapped exception
    */
   public <X extends Throwable> T orThrow(final Function<E, X> errorMapper) throws X {
     if (success.isPresent()) {
