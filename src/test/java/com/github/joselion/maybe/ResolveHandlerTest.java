@@ -8,6 +8,7 @@ import java.io.EOFException;
 import java.io.IOException;
 
 import com.github.joselion.maybe.helpers.UnitTest;
+import com.github.joselion.maybe.util.SupplierChecked;
 
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -18,6 +19,12 @@ public class ResolveHandlerTest {
   private final String SUCCESS = "success";
 
   private final String ERROR = "error";
+
+  private final SupplierChecked<String, IOException> throwingOp = () -> {
+    throw new IOException("FAIL");
+  };
+
+  private final SupplierChecked<String, RuntimeException> okOp = () -> "OK";
   
   @Nested
   class onError {
@@ -27,7 +34,7 @@ public class ResolveHandlerTest {
       
       @Test
       void applies_the_handler_function() {
-        final ResolveHandler<String, IOException> handler = Maybe.resolve(() -> throwingOp())
+        final ResolveHandler<String, IOException> handler = Maybe.resolve(throwingOp)
           .onError(error -> {
             assertThat(error)
               .isInstanceOf(IOException.class)
@@ -51,7 +58,7 @@ public class ResolveHandlerTest {
 
       @Test
       void the_error_handler_is_not_executed() {
-        final ResolveHandler<String, RuntimeException> handler = Maybe.resolve(() -> "OK")
+        final ResolveHandler<String, RuntimeException> handler = Maybe.resolve(okOp)
           .onError(error -> {
             throw new AssertionError("The handler should not be executed");
           });
@@ -78,7 +85,7 @@ public class ResolveHandlerTest {
 
         @Test
         void catches_the_error_and_the_handler_is_applied() {
-          final ResolveHandler<String, IOException> handler = Maybe.resolve(() -> throwingOp())
+          final ResolveHandler<String, IOException> handler = Maybe.resolve(throwingOp)
             .catchError(IOException.class, error -> {
               assertThat(error)
                 .isInstanceOf(IOException.class)
@@ -102,7 +109,7 @@ public class ResolveHandlerTest {
 
         @Test
         void the_error_is_NOT_catched_and_the_handler_is_not_applied() {
-          final ResolveHandler<String, IOException> handler = Maybe.resolve(() -> throwingOp())
+          final ResolveHandler<String, IOException> handler = Maybe.resolve(throwingOp)
             .catchError(EOFException.class, error -> {
               throw new AssertionError("The handler should not be executed");
             });
@@ -124,7 +131,7 @@ public class ResolveHandlerTest {
 
       @Test
       void the_error_handler_is_not_executed() {
-        final ResolveHandler<String, RuntimeException> handler = Maybe.resolve(() -> "OK")
+        final ResolveHandler<String, RuntimeException> handler = Maybe.resolve(okOp)
           .catchError(RuntimeException.class, error -> {
             throw new AssertionError("The handler should not be executed");
           });
@@ -149,7 +156,7 @@ public class ResolveHandlerTest {
       @Test
       void returns_a_maybe_with_the_value() {
         assertThat(
-          Maybe.resolve(() -> "OK").and()
+          Maybe.resolve(okOp).and()
         )
         .extracting(SUCCESS, optional(String.class))
         .contains("OK");
@@ -161,7 +168,7 @@ public class ResolveHandlerTest {
       @Test
       void returns_a_maybe_with_nothing() {
         assertThat(
-          Maybe.resolve(() -> throwingOp()).and()
+          Maybe.resolve(throwingOp).and()
         )
         .extracting(SUCCESS, optional(String.class))
         .isEmpty();
@@ -178,7 +185,7 @@ public class ResolveHandlerTest {
       @Test
       void returns_the_value() {
         assertThat(
-          Maybe.resolve(() -> "OK")
+          Maybe.resolve(okOp)
             .orDefault("OTHER")
         )
         .isEqualTo("OK");
@@ -191,7 +198,7 @@ public class ResolveHandlerTest {
       @Test
       void returns_the_default_value() {
         assertThat(
-          Maybe.resolve(() -> throwingOp())
+          Maybe.resolve(throwingOp)
             .orDefault("OTHER")
         )
         .isEqualTo("OTHER");
@@ -207,12 +214,12 @@ public class ResolveHandlerTest {
       @Test
       void returns_the_value() throws EOFException {
         assertThat(
-          Maybe.resolve(() -> "OK").orThrow()
+          Maybe.resolve(okOp).orThrow()
         )
         .isEqualTo("OK");
 
         assertThat(
-          Maybe.resolve(() -> "OK").orThrow(error -> new EOFException(error.getMessage()))
+          Maybe.resolve(okOp).orThrow(error -> new EOFException(error.getMessage()))
         )
         .isEqualTo("OK");
       }
@@ -223,7 +230,7 @@ public class ResolveHandlerTest {
 
       @Test
       void throws_the_error() {
-        final ResolveHandler<?, IOException> handler = Maybe.resolve(() -> throwingOp());
+        final ResolveHandler<?, IOException> handler = Maybe.resolve(throwingOp);
 
         assertThat(
           assertThrows(IOException.class, handler::orThrow)
@@ -233,7 +240,7 @@ public class ResolveHandlerTest {
 
         assertThat(
           assertThrows(
-            IOException.class,
+            EOFException.class,
             () -> handler.orThrow(error -> new EOFException(error.getMessage() + " - OTHER ERROR"))
           )
         )
@@ -241,10 +248,5 @@ public class ResolveHandlerTest {
         .hasMessage("FAIL - OTHER ERROR");
       }
     }
-  }
-
-
-  private String throwingOp() throws IOException {
-    throw new IOException("FAIL");
   }
 }

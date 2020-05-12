@@ -67,12 +67,16 @@ public class MaybeTest {
     class when_the_operation_success {
 
       @Test
-      void returns_the_a_handler_with_the_value() {
-        final ResolveHandler<String, Exception> handler = Maybe.resolve(() -> "OK");
+      void returns_a_handler_with_the_value() {
+        final ResolveHandler<String, ?> handler = Maybe.resolve(() -> "OK");
 
         assertThat(handler)
           .extracting(SUCCESS, optional(String.class))
           .contains("OK");
+
+        assertThat(handler)
+          .extracting(ERROR, optional(RuntimeException.class))
+          .isEmpty();
       }
     }
 
@@ -80,13 +84,45 @@ public class MaybeTest {
     class when_the_operation_fails {
 
       @Test
-      void returns_the_a_handler_with_the_value() {
+      void returns_a_handler_with_the_value() {
         final IOException exception = new IOException("FAIL");
         final ResolveHandler<?, IOException> handler = Maybe.resolve(() -> { throw exception; });
 
         assertThat(handler)
           .extracting(SUCCESS, optional(Object.class))
           .isEmpty();
+
+        assertThat(handler)
+          .extracting(ERROR, optional(IOException.class))
+          .containsInstanceOf(IOException.class)
+          .contains(exception);
+      }
+    }
+  }
+
+  @Nested
+  class runEffect {
+
+    @Nested
+    class when_the_operation_success {
+
+      @Test
+      void returns_a_handler_with_nothing() {
+        final EffectHandler<?> handler = Maybe.runEffect(() -> { });
+
+        assertThat(handler)
+          .extracting(ERROR, optional(RuntimeException.class))
+          .isEmpty();
+      }
+    }
+
+    @Nested
+    class when_the_operation_fails {
+
+      @Test
+      void returns_a_handler_with_the_error() {
+        final IOException exception = new IOException("FAIL");
+        final EffectHandler<IOException> handler = Maybe.runEffect(() -> { throw exception; });
 
         assertThat(handler)
           .extracting(ERROR, optional(IOException.class))
@@ -184,7 +220,7 @@ public class MaybeTest {
     }
 
     @Nested
-    class when_the_previous_operation_failed {
+    class when_the_previous_operation_fails {
 
       @Test
       void the_then_operation_is_not_called() {
@@ -233,6 +269,78 @@ public class MaybeTest {
         assertThat(handler)
           .extracting(SUCCESS, optional(Object.class))
           .isEmpty();
+
+        assertThat(handler)
+          .extracting(ERROR, optional(IOException.class))
+          .containsInstanceOf(IOException.class)
+          .contains(exception);
+      }
+    }
+  }
+
+  @Nested
+  class thenRunEffect {
+
+    @Nested
+    class when_the_previous_operation_resolves {
+
+      @Test
+      void the_then_operation_is_called_with_the_previous_value() {
+        final EffectHandler<RuntimeException> handler = Maybe.just(1)
+          .thenRunEffect(value -> {
+            assertThat(value).isEqualTo(1);
+          })
+          .and()
+          .thenRunEffect(none -> {
+            assertThat(none).isExactlyInstanceOf(EffectHandler.None.class);
+          });
+
+        assertThat(handler)
+          .extracting(ERROR, optional(RuntimeException.class))
+          .isEmpty();
+      }
+    }
+
+    @Nested
+    class when_the_previous_operation_fails {
+
+      @Test
+      void the_then_operation_is_not_called() {
+        final EffectHandler<Exception> handler = Maybe.nothing()
+          .thenRunEffect(value -> {
+            throw new Exception("The then operation should not be executed");
+          });
+
+        assertThat(handler)
+          .extracting(ERROR, optional(Exception.class))
+          .isEmpty();
+      }
+    }
+
+    @Nested
+    class when_the_new_operation_success {
+
+      @Test
+      void returns_the_a_handler_with_nothing() {
+        final EffectHandler<RuntimeException> handler = Maybe.just(3)
+          .thenRunEffect(value -> {
+            assertThat(value).isEqualTo(3);
+          });
+
+        assertThat(handler)
+          .extracting(ERROR, optional(Exception.class))
+          .isEmpty();
+      }
+    }
+
+    @Nested
+    class when_the_new_operation_fails {
+
+      @Test
+      void returns_a_handler_with_the_error() {
+        final IOException exception = new IOException("FAIL");
+        final EffectHandler<IOException> handler = Maybe.just(3)
+          .thenRunEffect(value -> { throw exception; });
 
         assertThat(handler)
           .extracting(ERROR, optional(IOException.class))
