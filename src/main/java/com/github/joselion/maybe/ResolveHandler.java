@@ -13,7 +13,7 @@ import java.util.function.Function;
  * 
  * @since v0.3.2
  */
-class ResolveHandler<T, E extends Exception> {
+public final class ResolveHandler<T, E extends Exception> {
 
   private final Optional<T> success;
   

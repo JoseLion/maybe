@@ -4,7 +4,7 @@ import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-public class EffectHandler<E extends Exception> {
+public final class EffectHandler<E extends Exception> {
 
   private final Optional<E> error;
 
