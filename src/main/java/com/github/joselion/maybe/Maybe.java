@@ -18,7 +18,7 @@ import com.github.joselion.maybe.util.SupplierChecked;
  * @author Jose Luis Leon
  * @since v0.1.0
  */
-public class Maybe<T> {
+public final class Maybe<T> {
 
   private final Optional<T> success;
 
