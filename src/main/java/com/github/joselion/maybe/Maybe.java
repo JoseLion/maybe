@@ -41,7 +41,7 @@ public final class Maybe<T> {
 
   /**
    * Returns a {@code Maybe} monad with nothing on it. This means the monad does
-   * not contain a success value because an exception may have occurred.
+   * not contains a value because an exception may have occurred.
    * 
    * @param <T> the type of the value
    * @return a {@code Maybe} with nothing
@@ -190,17 +190,16 @@ public final class Maybe<T> {
   }
 
   /**
-   * Checks if the {@code Maybe} has a success value.
+   * Checks if the {@code Maybe} has a value.
    * 
-   * @return true if a success value is present, false otherwise
+   * @return true if a value is present, false otherwise
    */
-  public boolean hasSuccess() {
+  public boolean hasValue() {
     return success.isPresent();
   }
 
   /**
-   * Checks if the {@code Maybe} has nothing. That is, when no success value and
-   * failure exception are present.
+   * Checks if the {@code Maybe} has nothing. That is, when no value is present.
    * 
    * @return true if both success value and failure exception are not present,
    *         false otherwise

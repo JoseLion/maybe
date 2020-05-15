@@ -1,9 +1,14 @@
 package com.github.joselion.maybe;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.InstanceOfAssertFactories.optional;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
 
 import com.github.joselion.maybe.helpers.UnitTest;
 
@@ -27,9 +32,7 @@ public class MaybeTest {
       void returns_the_monad_with_the_value() {
         final Maybe<String> maybe = Maybe.just("foo");
 
-        assertThat(maybe)
-          .extracting(SUCCESS, optional(String.class))
-          .contains("foo");
+        assertThat(maybe).extracting(SUCCESS, optional(String.class)).contains("foo");
       }
     }
 
@@ -40,9 +43,7 @@ public class MaybeTest {
       void there_is_nothing_in_the_monad() {
         final Maybe<Object> maybe = Maybe.just(null);
 
-        assertThat(maybe)
-          .extracting(SUCCESS, optional(Object.class))
-          .isEmpty();
+        assertThat(maybe).extracting(SUCCESS, optional(Object.class)).isEmpty();
       }
     }
   }
@@ -54,9 +55,7 @@ public class MaybeTest {
     void there_is_nothing_in_the_monad() {
       Maybe<Object> maybe = Maybe.nothing();
 
-      assertThat(maybe)
-        .extracting(SUCCESS, optional(Object.class))
-        .isEmpty();
+      assertThat(maybe).extracting(SUCCESS, optional(Object.class)).isEmpty();
     }
   }
 
@@ -382,14 +381,14 @@ public class MaybeTest {
   }
 
   @Nested
-  class hasSuccess {
+  class hasValue {
 
     @Nested
     class when_there_is_a_value_in_the_monad {
 
       @Test
       void returns_true() {
-        assertThat(Maybe.just("OK").hasSuccess()).isTrue();
+        assertThat(Maybe.just("OK").hasValue()).isTrue();
       }
     }
 
@@ -398,7 +397,7 @@ public class MaybeTest {
 
       @Test
       void returns_false() {
-        assertThat(Maybe.nothing().hasSuccess()).isFalse();
+        assertThat(Maybe.nothing().hasValue()).isFalse();
       }
     }
   }
