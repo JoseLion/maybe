@@ -23,8 +23,8 @@ def versionType = isRelease ? 'GA' : 'SNAPSHOT'
 group = 'com.github.joselion'
 version = "0.3.3-${versionType}"
 
-sourceCompatibility = JavaVersion.VERSION_1_9
-targetCompatibility = JavaVersion.VERSION_1_9
+sourceCompatibility = JavaVersion.VERSION_1_8
+targetCompatibility = JavaVersion.VERSION_1_8
 
 java {
   withJavadocJar()
