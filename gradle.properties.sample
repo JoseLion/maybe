@@ -4,3 +4,5 @@ signing.secretKeyRingFile=lion-keyring.asc
 
 ossrhUsername=JoseLion
 ossrhPassword=<OSSRH_PASSWORD>
+
+systemProp.org.gradle.internal.publish.checksums.insecure=true
