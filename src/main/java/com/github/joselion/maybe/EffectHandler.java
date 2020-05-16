@@ -4,6 +4,8 @@ import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import com.github.joselion.maybe.util.Helpers;
+
 public final class EffectHandler<E extends Exception> {
 
   private final Optional<E> error;
@@ -65,9 +67,10 @@ public final class EffectHandler<E extends Exception> {
    * 
    * @return a Maybe with the error if present. A Maybe with nothing otherwise
    */
-  public Maybe<None> and() {
+  public Maybe<Void> and() {
     if (error.isEmpty()) {
-      return Maybe.just(new None());
+      final Void shallowVoid = Helpers.shallowInstance(Void.class);
+      return Maybe.just(shallowVoid);
     }
 
     return Maybe.nothing();
@@ -95,13 +98,6 @@ public final class EffectHandler<E extends Exception> {
   public <X extends Throwable> void onErrorThrow(final Function<E, X> errorMapper) throws X {
     if (error.isPresent()) {
       throw errorMapper.apply(error.get());
-    }
-  }
-
-  protected static class None {
-    
-    public None() {
-      // Placeholder instance of no value
     }
   }
 }

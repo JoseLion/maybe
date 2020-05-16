@@ -148,8 +148,8 @@ public class EffectHandlerTest {
         assertThat(
           Maybe.runEffect(noOp).and()
         )
-        .extracting(SUCCESS, optional(EffectHandler.None.class))
-        .containsInstanceOf(EffectHandler.None.class)
+        .extracting(SUCCESS, optional(Void.class))
+        .containsInstanceOf(Void.class)
         .isPresent();
       }
     }

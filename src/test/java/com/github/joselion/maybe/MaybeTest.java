@@ -1,14 +1,9 @@
 package com.github.joselion.maybe;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.InstanceOfAssertFactories.optional;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.List;
 
 import com.github.joselion.maybe.helpers.UnitTest;
 
@@ -291,7 +286,7 @@ public class MaybeTest {
           })
           .and()
           .thenRunEffect(none -> {
-            assertThat(none).isExactlyInstanceOf(EffectHandler.None.class);
+            assertThat(none).isExactlyInstanceOf(Void.class);
           });
 
         assertThat(handler)
