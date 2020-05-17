@@ -1,3 +1,11 @@
+[![Maven Central](https://img.shields.io/maven-central/v/com.github.joselion/maybe.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22com.github.joselion%22%20AND%20a:%22maybe%22)
+[![JoseLion](https://circleci.com/gh/JoseLion/maybe.svg?style=svg)](https://app.circleci.com/pipelines/github/JoseLion/maybe)
+[![codecov](https://codecov.io/gh/JoseLion/maybe/branch/master/graph/badge.svg)](https://codecov.io/gh/JoseLion/maybe)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=JoseLion_maybe&metric=alert_status)](https://sonarcloud.io/dashboard?id=JoseLion_maybe)
+[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=JoseLion_maybe&metric=sqale_rating)](https://sonarcloud.io/dashboard?id=JoseLion_maybe)
+[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=JoseLion_maybe&metric=reliability_rating)](https://sonarcloud.io/dashboard?id=JoseLion_maybe)
+[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=JoseLion_maybe&metric=security_rating)](https://sonarcloud.io/dashboard?id=JoseLion_maybe)
+
 # Maybe for Java
 
 Maybe for Java is not a replacement of `java.util.Optional`. Instead, it leverages its benefits to create a functional API that allows to run operations that may throw an exception. The intention is not only to avoid the imperative try/catch, but also to promote safe exception handling and functional programming in Java.
@@ -5,6 +13,28 @@ Maybe for Java is not a replacement of `java.util.Optional`. Instead, it leverag
 ## Requirements
 
 > The only requirement to use this librarary is Java 8 or higher.
+
+## Install
+
+[![Maven Central](https://img.shields.io/maven-central/v/com.github.joselion/maybe.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22com.github.joselion%22%20AND%20a:%22maybe%22)
+
+Maybe is available in [Maven Central](https://mvnrepository.com/artifact/com.github.joselion/maybe). You can checkout the latest version with the badge above.
+
+**Gradle**
+
+```gradle
+implementation(group: 'com.github.joselion', name: 'maybe', version: 'X.X.X-GA')
+```
+
+**Maven**
+
+```xml
+<dependency>
+  <groupId>com.github.joselion</groupId>
+  <artifactId>maybe</artifactId>
+  <version>X.X.X-GA</version>
+</dependency>
+```
 
 ## Usage
 
