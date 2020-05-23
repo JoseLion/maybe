@@ -2,7 +2,7 @@ package com.github.joselion.maybe.util;
 
 /**
  * The same as {@link java.lang.Runnable Runnable}, but the lambda expression
- * throws an {@code E} checked exception.
+ * throws an {@code E} exception.
  * 
  * This is a functional interface whose functional method is
  * {@link #runChecked()}
@@ -11,12 +11,12 @@ package com.github.joselion.maybe.util;
  * @since v0.1.0
  */
 @FunctionalInterface
-public interface RunnableChecked<E extends Exception> {
+public interface RunnableChecked<E extends Throwable> {
 
   /**
-   * Runs the operation, or throes a checked exception.
+   * Runs the operation, or throws an exception.
    * 
-   * @throws E which extends from {@link Exception}
+   * @throws E which extends from {@link Throwable}
    */
   public void runChecked() throws E;
 }

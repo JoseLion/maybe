@@ -61,10 +61,10 @@ public final class Maybe<T> {
    * @return a {@link ResolveHandler} with either the value resolved or the thrown
    *         exception to be handled
    */
-  public static <T, E extends Exception> ResolveHandler<T, E> resolve(final SupplierChecked<T, E> resolver) {
+  public static <T, E extends Throwable> ResolveHandler<T, E> resolve(final SupplierChecked<T, E> resolver) {
     try {
       return ResolveHandler.withSuccess(resolver.getChecked());
-    } catch (Exception e) {
+    } catch (Throwable e) { //NOSONAR
       @SuppressWarnings("unchecked")
       final E error = (E) e;
 
@@ -82,11 +82,11 @@ public final class Maybe<T> {
    * @return an {@link EffectHandler} with either the thrown exception to be
    *         handled or nothing
    */
-  public static <E extends Exception> EffectHandler<E> runEffect(final RunnableChecked<E> effect) {
+  public static <E extends Throwable> EffectHandler<E> runEffect(final RunnableChecked<E> effect) {
     try {
       effect.runChecked();
       return EffectHandler.withNothing();
-    } catch (Exception e) {
+    } catch (Throwable e) { // NOSONAR
       @SuppressWarnings("unchecked")
       final E error = (E) e;
 
@@ -143,7 +143,7 @@ public final class Maybe<T> {
    * @return a {@link ResolveHandler} with either the value resolved or the thrown
    *         exception to be handled
    */
-  public <U, E extends Exception> ResolveHandler<U, E> thenResolve(final FunctionChecked<T, U, E> resolver) {
+  public <U, E extends Throwable> ResolveHandler<U, E> thenResolve(final FunctionChecked<T, U, E> resolver) {
     if (success.isPresent()) {
       return Maybe.resolve(() -> resolver.applyChecked(success.get()));
     }
@@ -160,7 +160,7 @@ public final class Maybe<T> {
    * @return an {@link EffectHandler} with either the thrown exception to be
    *         handled or nothing
    */
-  public <E extends Exception> EffectHandler<E> thenRunEffect(final ConsumerChecked<T, E> effect) {
+  public <E extends Throwable> EffectHandler<E> thenRunEffect(final ConsumerChecked<T, E> effect) {
     if (success.isPresent()) {
       return Maybe.runEffect(() -> effect.acceptChecked(success.get()));
     }
