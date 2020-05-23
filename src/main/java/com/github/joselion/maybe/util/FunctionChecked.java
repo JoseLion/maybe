@@ -9,18 +9,18 @@ package com.github.joselion.maybe.util;
  * 
  * @param <T> the type of argument passed to the function
  * @param <R> the type of results returned by the function
- * @param <E> the type of checked exception that the function throws
+ * @param <E> the type of exception that the function throws
  * @since v0.1.0
  */
 @FunctionalInterface
-public interface FunctionChecked<T, R, E extends Exception> {
+public interface FunctionChecked<T, R, E extends Throwable> {
 
   /**
-   * Applies this function to the given argument, or throws a checked exception.
+   * Applies this function to the given argument, or throws an exception.
    * 
    * @param t the function argument
    * @return the function result
-   * @throws E which extends from {@link Exception}
+   * @throws E which extends from {@link Throwable}
    */
   public R applyChecked(T t) throws E;
 }

@@ -10,11 +10,17 @@ package com.github.joselion.maybe.util;
  * {@link #acceptChecked(Object)}
  * 
  * @param <T> the type of argument passed to the function
- * @param <E> the type of checked exception that the function throws
+ * @param <E> the type of exception that the function throws
  * @since v0.3.0
  */
 @FunctionalInterface
-public interface ConsumerChecked<T, E extends Exception> {
+public interface ConsumerChecked<T, E extends Throwable> {
   
+  /**
+   * Accepts this function with the given argument, or throws an exception.
+   * 
+   * @param t the consumer argument
+   * @throws E which extends from {@link Throwable}
+   */
   public void acceptChecked(T t) throws E;
 }

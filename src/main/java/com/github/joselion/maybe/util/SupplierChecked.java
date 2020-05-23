@@ -2,7 +2,7 @@ package com.github.joselion.maybe.util;
 
 /**
  * The same as {@link java.util.function.Supplier Supplier}, but the lambda
- * expression throws an {@code E} checked exception.
+ * expression throws an {@code E} exception.
  * 
  * This is a functional interface whose functional method is
  * {@link #getChecked()}
@@ -12,13 +12,13 @@ package com.github.joselion.maybe.util;
  * @since v0.1.0
  */
 @FunctionalInterface
-public interface SupplierChecked<T, E extends Exception> {
+public interface SupplierChecked<T, E extends Throwable> {
 
   /**
-   * Gets a result or throws a checked exception.
+   * Gets a result or throws an exception.
    * 
    * @return a result
-   * @throws E which extends from {@link Exception}
+   * @throws E which extends from {@link Throwable}
    */
   public T getChecked() throws E;
 }

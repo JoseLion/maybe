@@ -13,7 +13,7 @@ import java.util.function.Function;
  * 
  * @since v0.3.2
  */
-public final class ResolveHandler<T, E extends Exception> {
+public final class ResolveHandler<T, E extends Throwable> {
 
   private final Optional<T> success;
   
@@ -24,15 +24,15 @@ public final class ResolveHandler<T, E extends Exception> {
     this.error = Optional.ofNullable(error);
   }
 
-  protected static <T, E extends Exception> ResolveHandler<T, E> withSuccess(final T success) {
+  protected static <T, E extends Throwable> ResolveHandler<T, E> withSuccess(final T success) {
     return new ResolveHandler<>(success, null);
   }
 
-  protected static <T, E extends Exception> ResolveHandler<T, E> withError(final E error) {
+  protected static <T, E extends Throwable> ResolveHandler<T, E> withError(final E error) {
     return new ResolveHandler<>(null, error);
   }
 
-  protected static <T, E extends Exception> ResolveHandler<T, E> withNothing() {
+  protected static <T, E extends Throwable> ResolveHandler<T, E> withNothing() {
     return new ResolveHandler<>(null, null);
   }
 

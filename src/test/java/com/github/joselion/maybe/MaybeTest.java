@@ -208,7 +208,7 @@ public class MaybeTest {
           .contains("OK");
 
         assertThat(handler)
-          .extracting(ERROR, optional(Exception.class))
+          .extracting(ERROR, optional(Throwable.class))
           .isEmpty();
       }
     }
@@ -220,7 +220,7 @@ public class MaybeTest {
       void the_then_operation_is_not_called() {
         final ResolveHandler<?, ?> handler = Maybe.nothing()
           .thenResolve(value -> {
-            throw new Exception("The then operation should not be executed");
+            throw new AssertionError("The then operation should not be executed");
           });
 
         assertThat(handler)
@@ -228,7 +228,7 @@ public class MaybeTest {
           .isEmpty();
 
         assertThat(handler)
-          .extracting(ERROR, optional(Exception.class))
+          .extracting(ERROR, optional(Throwable.class))
           .isEmpty();
       }
     }
@@ -246,7 +246,7 @@ public class MaybeTest {
           .contains("OKOKOK");
 
         assertThat(handler)
-          .extracting(ERROR, optional(Exception.class))
+          .extracting(ERROR, optional(Throwable.class))
           .isEmpty();
       }
     }
@@ -300,13 +300,13 @@ public class MaybeTest {
 
       @Test
       void the_then_operation_is_not_called() {
-        final EffectHandler<Exception> handler = Maybe.nothing()
+        final EffectHandler<AssertionError> handler = Maybe.nothing()
           .thenRunEffect(value -> {
-            throw new Exception("The then operation should not be executed");
+            throw new AssertionError("The then operation should not be executed");
           });
 
         assertThat(handler)
-          .extracting(ERROR, optional(Exception.class))
+          .extracting(ERROR, optional(Throwable.class))
           .isEmpty();
       }
     }
@@ -322,7 +322,7 @@ public class MaybeTest {
           });
 
         assertThat(handler)
-          .extracting(ERROR, optional(Exception.class))
+          .extracting(ERROR, optional(Throwable.class))
           .isEmpty();
       }
     }
