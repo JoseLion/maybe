@@ -13,14 +13,14 @@ package com.github.joselion.maybe.util;
  * @since v0.1.0
  */
 @FunctionalInterface
-public interface FunctionChecked<T, R, E extends Throwable> {
+public interface FunctionChecked<T, R, E extends Exception> {
 
   /**
    * Applies this function to the given argument, or throws an exception.
    * 
    * @param t the function argument
    * @return the function result
-   * @throws E which extends from {@link Throwable}
+   * @throws E which extends from {@link Exception}
    */
   public R applyChecked(T t) throws E;
 }

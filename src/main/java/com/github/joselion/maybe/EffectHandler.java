@@ -6,7 +6,7 @@ import java.util.function.Function;
 
 import com.github.joselion.maybe.util.Helpers;
 
-public final class EffectHandler<E extends Throwable> {
+public final class EffectHandler<E extends Exception> {
 
   private final Optional<E> error;
 
@@ -14,11 +14,11 @@ public final class EffectHandler<E extends Throwable> {
     this.error = Optional.ofNullable(error);
   }
 
-  protected static <E extends Throwable> EffectHandler<E> withError(final E error) {
+  protected static <E extends Exception> EffectHandler<E> withError(final E error) {
     return new EffectHandler<>(error);
   }
 
-  protected static <E extends Throwable> EffectHandler<E> withNothing() {
+  protected static <E extends Exception> EffectHandler<E> withNothing() {
     return new EffectHandler<>(null);
   }
 

@@ -14,13 +14,13 @@ package com.github.joselion.maybe.util;
  * @since v0.3.0
  */
 @FunctionalInterface
-public interface ConsumerChecked<T, E extends Throwable> {
+public interface ConsumerChecked<T, E extends Exception> {
   
   /**
    * Accepts this function with the given argument, or throws an exception.
    * 
    * @param t the consumer argument
-   * @throws E which extends from {@link Throwable}
+   * @throws E which extends from {@link Exception}
    */
   public void acceptChecked(T t) throws E;
 }
