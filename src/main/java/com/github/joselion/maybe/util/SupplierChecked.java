@@ -12,13 +12,13 @@ package com.github.joselion.maybe.util;
  * @since v0.1.0
  */
 @FunctionalInterface
-public interface SupplierChecked<T, E extends Throwable> {
+public interface SupplierChecked<T, E extends Exception> {
 
   /**
    * Gets a result or throws an exception.
    * 
    * @return a result
-   * @throws E which extends from {@link Throwable}
+   * @throws E which extends from {@link Exception}
    */
   public T getChecked() throws E;
 }

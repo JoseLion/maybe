@@ -78,7 +78,7 @@ public class MaybeTest {
     class when_the_operation_fails {
 
       @Test
-      void returns_a_handler_with_the_value() {
+      void returns_a_handler_with_the_error() {
         final IOException exception = new IOException("FAIL");
         final ResolveHandler<?, IOException> handler = Maybe.resolve(() -> { throw exception; });
 
@@ -208,7 +208,7 @@ public class MaybeTest {
           .contains("OK");
 
         assertThat(handler)
-          .extracting(ERROR, optional(Throwable.class))
+          .extracting(ERROR, optional(Exception.class))
           .isEmpty();
       }
     }
@@ -228,7 +228,7 @@ public class MaybeTest {
           .isEmpty();
 
         assertThat(handler)
-          .extracting(ERROR, optional(Throwable.class))
+          .extracting(ERROR, optional(Exception.class))
           .isEmpty();
       }
     }
@@ -246,7 +246,7 @@ public class MaybeTest {
           .contains("OKOKOK");
 
         assertThat(handler)
-          .extracting(ERROR, optional(Throwable.class))
+          .extracting(ERROR, optional(Exception.class))
           .isEmpty();
       }
     }
@@ -300,13 +300,13 @@ public class MaybeTest {
 
       @Test
       void the_then_operation_is_not_called() {
-        final EffectHandler<AssertionError> handler = Maybe.nothing()
+        final EffectHandler<RuntimeException> handler = Maybe.nothing()
           .thenRunEffect(value -> {
             throw new AssertionError("The then operation should not be executed");
           });
 
         assertThat(handler)
-          .extracting(ERROR, optional(Throwable.class))
+          .extracting(ERROR, optional(Exception.class))
           .isEmpty();
       }
     }
@@ -322,7 +322,7 @@ public class MaybeTest {
           });
 
         assertThat(handler)
-          .extracting(ERROR, optional(Throwable.class))
+          .extracting(ERROR, optional(Exception.class))
           .isEmpty();
       }
     }

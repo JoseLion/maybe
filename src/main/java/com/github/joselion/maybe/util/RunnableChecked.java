@@ -11,12 +11,12 @@ package com.github.joselion.maybe.util;
  * @since v0.1.0
  */
 @FunctionalInterface
-public interface RunnableChecked<E extends Throwable> {
+public interface RunnableChecked<E extends Exception> {
 
   /**
    * Runs the operation, or throws an exception.
    * 
-   * @throws E which extends from {@link Throwable}
+   * @throws E which extends from {@link Exception}
    */
   public void runChecked() throws E;
 }
