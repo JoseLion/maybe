@@ -5,7 +5,7 @@ executors:
     working_directory: ~/repo/maybe
 
     docker:
-      - image: circleci/openjdk:13-jdk-buster
+      - image: circleci/openjdk:15-jdk-buster
         environment:
           JVM_OPTS: -Xmx4096m
           TERM: dumb

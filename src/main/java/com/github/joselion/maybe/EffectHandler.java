@@ -6,6 +6,15 @@ import java.util.function.Function;
 
 import com.github.joselion.maybe.util.Helpers;
 
+/**
+ * EffectHandler is an API to handle the posible error of a {@link Maybe}'s
+ * effect operation. It can return back to maybe to continue linking operations,
+ * or use termimal methods to return a safe value.
+ * 
+ * @param <E> the type of exception that the resolve operation may throw
+ * 
+ * @since v0.3.2
+ */
 public final class EffectHandler<E extends Exception> {
 
   private final Optional<E> error;
@@ -14,10 +23,24 @@ public final class EffectHandler<E extends Exception> {
     this.error = Optional.ofNullable(error);
   }
 
+  /**
+   * Internal use method to instanciate a EffectHandler with an error value
+   * 
+   * @param <E> the type of the possible exception
+   * @param error the error to instanciate the EffectHandler
+   * @return a EffectHandler instance with an error value
+   */
   protected static <E extends Exception> EffectHandler<E> withError(final E error) {
     return new EffectHandler<>(error);
   }
 
+  /**
+   * Internal use method to instanciate a EffectHandler neither with a success
+   * nor with an error value
+   * 
+   * @param <E> the type of the possible exception
+   * @return a EffectHandler with neither the success nor the error value
+   */
   protected static <E extends Exception> EffectHandler<E> withNothing() {
     return new EffectHandler<>(null);
   }
