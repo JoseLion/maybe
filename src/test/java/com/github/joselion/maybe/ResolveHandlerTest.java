@@ -20,8 +20,10 @@ public class ResolveHandlerTest {
 
   private final String ERROR = "error";
 
+  private final static IOException FAIL_EXCEPTION = new IOException("FAIL");
+
   private final SupplierChecked<String, IOException> throwingOp = () -> {
-    throw new IOException("FAIL");
+    throw FAIL_EXCEPTION;
   };
 
   private final SupplierChecked<String, RuntimeException> okOp = () -> "OK";
@@ -120,8 +122,7 @@ public class ResolveHandlerTest {
   
           assertThat(handler)
             .extracting(ERROR, optional(IOException.class))
-            .containsInstanceOf(IOException.class)
-            .withFailMessage("FAIL");
+            .contains(FAIL_EXCEPTION);
         }
       }
     }
@@ -246,6 +247,26 @@ public class ResolveHandlerTest {
         )
         .isExactlyInstanceOf(EOFException.class)
         .hasMessage("FAIL - OTHER ERROR");
+      }
+    }
+  }
+
+  @Nested
+  class toOptional {
+
+    @Nested
+    class when_the_value_is_present {
+      @Test
+      void returns_the_value_wrapped_in_an_optinal() {
+        assertThat(Maybe.resolve(okOp).toOptional()).contains("OK");
+      }
+    }
+
+    @Nested
+    class when_the_value_is_NOT_present {
+      @Test
+      void returns_an_empty_optional() {
+        assertThat(Maybe.resolve(throwingOp).toOptional()).isEmpty();
       }
     }
   }
