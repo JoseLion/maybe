@@ -24,14 +24,38 @@ public final class ResolveHandler<T, E extends Exception> {
     this.error = Optional.ofNullable(error);
   }
 
+  /**
+   * Internal use method to instanciate a ResolveHandler with a success value
+   * 
+   * @param <T> the type of the success value
+   * @param <E> the type of the possible exception
+   * @param success the success value to instantiate the ResolveHandler
+   * @return a ResolveHandler instance with a success value
+   */
   protected static <T, E extends Exception> ResolveHandler<T, E> withSuccess(final T success) {
     return new ResolveHandler<>(success, null);
   }
 
+  /**
+   * Internal use method to instanciate a ResolveHandler with an error value
+   * 
+   * @param <T> the type of the success value
+   * @param <E> the type of the possible exception
+   * @param error the error to instanciate the ResolveHandler
+   * @return a ResolveHandler instance with an error value
+   */
   protected static <T, E extends Exception> ResolveHandler<T, E> withError(final E error) {
     return new ResolveHandler<>(null, error);
   }
 
+  /**
+   * Internal use method to instanciate a ResolveHandler neither with a success
+   * nor with an error value
+   * 
+   * @param <T> the type of the success value
+   * @param <E> the type of the possible exception
+   * @return a ResolveHandler with neither the success nor the error value
+   */
   protected static <T, E extends Exception> ResolveHandler<T, E> withNothing() {
     return new ResolveHandler<>(null, null);
   }
