@@ -21,8 +21,10 @@ public class EffectHandlerTest {
 
   private final String SUCCESS = "success";
 
+  private final static IOException FAIL_EXCEPTION = new IOException("FAIL");
+
   private final RunnableChecked<IOException> throwingOp = () -> {
-    throw new IOException("FAIL");
+    throw FAIL_EXCEPTION;
   };
 
   private final RunnableChecked<RuntimeException> noOp = () -> { };
@@ -101,8 +103,7 @@ public class EffectHandlerTest {
               })
           )
           .extracting(ERROR, optional(IOException.class))
-          .containsInstanceOf(IOException.class)
-          .withFailMessage("FAIL");
+          .contains(FAIL_EXCEPTION);
         }
       }
     }

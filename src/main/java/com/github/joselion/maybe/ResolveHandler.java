@@ -146,4 +146,15 @@ public final class ResolveHandler<T, E extends Exception> {
 
     throw errorMapper.apply(error.orElseThrow());
   }
+
+/**
+ * Transforms the handler to an {@link Optional}. If the value was resolved,
+ * the {@link Optional} will contain it. It will be {@code empty} otherwise.
+ * 
+ * @return the resolved value as an {@link Optional}. {@code Optinal.empty()}
+ *         otherwise.
+ */
+  public Optional<T> toOptional() {
+    return this.success;
+  }
 }
