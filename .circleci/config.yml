@@ -50,26 +50,29 @@ jobs:
           command: ./gradlew lintGradle
 
       - run:
-          name: Compile and build
-          command: ./gradlew build -x test
+          name: Compile
+          command: ./gradlew compileJava compileTestJava
+
+      - run:
+          name: SonarLint
+          command: ./gradlew sonarlintMain sonarlintTest
 
       - run:
           name: Test
           command: ./gradlew test
 
       - run:
-          name: Coverage
-          command: ./gradlew jacocoTestReport
+          name: Build
+          command:  ./gradlew build
 
       - run:
-          name: Quality Gate
-          command: ./gradlew sonarqube
+          name: Coverage
+          command: ./gradlew jacocoTestReport
 
       - save_cache:
           paths:
             - ~/repo/maybe/.gradle
             - ~/.gradle
-            - ~/.sonar/cache
           key: v3-dependencies-{{ .Branch }}-{{ checksum "gradle.lock" }}
 
       - deploy:
@@ -106,8 +109,7 @@ jobs:
 workflows:
   main:
     jobs:
-      - build:
-          context: SonarCloud
+      - build
 
       - publish-snapshot:
           requires:
