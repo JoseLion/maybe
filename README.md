@@ -1,10 +1,6 @@
 [![Maven Central](https://img.shields.io/maven-central/v/com.github.joselion/maybe.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22com.github.joselion%22%20AND%20a:%22maybe%22)
 [![JoseLion](https://circleci.com/gh/JoseLion/maybe.svg?style=svg)](https://app.circleci.com/pipelines/github/JoseLion/maybe)
 [![codecov](https://codecov.io/gh/JoseLion/maybe/branch/master/graph/badge.svg)](https://codecov.io/gh/JoseLion/maybe)
-[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=JoseLion_maybe&metric=alert_status)](https://sonarcloud.io/dashboard?id=JoseLion_maybe)
-[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=JoseLion_maybe&metric=sqale_rating)](https://sonarcloud.io/dashboard?id=JoseLion_maybe)
-[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=JoseLion_maybe&metric=reliability_rating)](https://sonarcloud.io/dashboard?id=JoseLion_maybe)
-[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=JoseLion_maybe&metric=security_rating)](https://sonarcloud.io/dashboard?id=JoseLion_maybe)
 
 # Maybe for Java
 

@@ -441,8 +441,9 @@ public class MaybeTest {
       void returns_true() {
         final Maybe<Integer> maybe = Maybe.just(3);
         final Object other = maybe;
+        final boolean isEqual = maybe.equals(other);
 
-        assertThat(maybe.equals(other)).isTrue();
+        assertThat(isEqual).isTrue();
       }
     }
 
@@ -453,8 +454,9 @@ public class MaybeTest {
       void returns_true() {
         final Maybe<String> maybe = Maybe.just("OK");
         final Maybe<String> other = Maybe.just("OK");
+        final boolean isEqual = maybe.equals(other);
 
-        assertThat(maybe.equals(other)).isTrue();
+        assertThat(isEqual).isTrue();
       }
     }
 
@@ -465,10 +467,9 @@ public class MaybeTest {
       void returns_false() {
         final Maybe<String> maybe = Maybe.just("OK");
         final Maybe<String> other = Maybe.just("OTHER");
-        final Object obj = "OK";
+        final boolean isEqualToOther = maybe.equals(other);
 
-        assertThat(maybe.equals(obj)).isFalse();
-        assertThat(maybe.equals(other)).isFalse();
+        assertThat(isEqualToOther).isFalse();
       }
     }
   }
@@ -482,7 +483,7 @@ public class MaybeTest {
       void returns_the_hash_code_of_the_value() {
         final Maybe<String> maybe = Maybe.just("OK");
   
-        assertThat(maybe.hashCode()).isEqualTo("OK".hashCode());
+        assertThat(maybe).hasSameHashCodeAs("OK");
       }
     }
 
@@ -493,7 +494,7 @@ public class MaybeTest {
       void returns_zero() {
         final Maybe<?> maybe = Maybe.nothing();
 
-        assertThat(maybe.hashCode()).isEqualTo(0);
+        assertThat(maybe.hashCode()).isZero();
       }
     }
   }
@@ -507,7 +508,7 @@ public class MaybeTest {
       void returns_the_string_representation_of_the_value() {
         final Maybe<String> maybe = Maybe.just("OK");
   
-        assertThat(maybe.toString()).isEqualTo("Maybe[OK]");
+        assertThat(maybe).hasToString("Maybe[OK]");
       }
     }
 
@@ -518,7 +519,7 @@ public class MaybeTest {
       void returns_the_string_representation_of_nothing() {
         final Maybe<?> maybe = Maybe.nothing();
 
-        assertThat(maybe.toString()).isEqualTo("Maybe.nothing");
+        assertThat(maybe).hasToString("Maybe.nothing");
       }
     }
   }
