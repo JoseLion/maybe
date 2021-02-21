@@ -3,6 +3,8 @@ package com.github.joselion.maybe;
 import java.util.Optional;
 import java.util.function.Function;
 
+import org.eclipse.jdt.annotation.Nullable;
+
 /**
  * ResolveHandler is an API to handle the posible error of a {@link Maybe}'s
  * resolve operation. It can return back to maybe to continue linking operations,
@@ -19,7 +21,7 @@ public final class ResolveHandler<T, E extends Exception> {
 
   private final Optional<E> error;
 
-  private ResolveHandler(final T success, final E error) {
+  private ResolveHandler(final @Nullable T success, final @Nullable E error) {
     this.success = Optional.ofNullable(success);
     this.error = Optional.ofNullable(error);
   }

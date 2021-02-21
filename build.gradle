@@ -12,6 +12,7 @@ plugins {
   id 'signing'
 
   id 'com.github.joselion.pretty-jupiter' version '1.3.2'
+  id 'com.github.joselion.strict-null-check' version '1.1.0'
   id 'io.codearte.nexus-staging' version '0.22.0'
   id 'name.remal.sonarlint' version '1.2.2'
   id 'nebula.lint' version '16.17.0'
@@ -57,6 +58,12 @@ gradleLint {
     'archaic-wrapper',
     'duplicate-dependency-class'
   ]
+}
+
+sonarlint {
+  excludes {
+    message 'java:S4032' // Allow packages only containing `package-info.java`
+  }
 }
 
 checkstyle {

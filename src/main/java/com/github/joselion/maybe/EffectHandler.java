@@ -6,6 +6,8 @@ import java.util.function.Function;
 
 import com.github.joselion.maybe.util.Helpers;
 
+import org.eclipse.jdt.annotation.Nullable;
+
 /**
  * EffectHandler is an API to handle the posible error of a {@link Maybe}'s
  * effect operation. It can return back to maybe to continue linking operations,
@@ -19,7 +21,7 @@ public final class EffectHandler<E extends Exception> {
 
   private final Optional<E> error;
 
-  private EffectHandler(final E error) {
+  private EffectHandler(final @Nullable E error) {
     this.error = Optional.ofNullable(error);
   }
 
