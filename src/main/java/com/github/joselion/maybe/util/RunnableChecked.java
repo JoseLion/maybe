@@ -18,5 +18,5 @@ public interface RunnableChecked<E extends Exception> {
    * 
    * @throws E which extends from {@link Exception}
    */
-  public void runChecked() throws E;
+  void runChecked() throws E;
 }

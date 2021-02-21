@@ -5,6 +5,7 @@ buildscript {
 }
 
 plugins {
+  id 'checkstyle'
   id 'jacoco'
   id 'java-library'
   id 'maven-publish'
@@ -44,6 +45,11 @@ gradleLint {
     'archaic-wrapper',
     'duplicate-dependency-class'
   ]
+}
+
+checkstyle {
+  toolVersion = '8.40'
+  sourceSets = sourceSets
 }
 
 repositories {

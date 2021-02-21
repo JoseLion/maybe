@@ -29,14 +29,9 @@ public class EffectHandlerTest {
 
   private final RunnableChecked<RuntimeException> noOp = () -> { };
 
-  @Nested
-  class onError {
-    
-    @Nested
-    class when_the_error_is_present {
-
-      @Test
-      void the_handler_is_applied() {
+  @Nested class onError {
+    @Nested class when_the_error_is_present {
+      @Test void the_handler_is_applied() {
         assertThat(
           Maybe.runEffect(throwingOp)
             .onError(error -> {
@@ -50,11 +45,8 @@ public class EffectHandlerTest {
       }
     }
 
-    @Nested
-    class when_the_error_is_NOT_present {
-
-      @Test
-      void the_handler_is_NOT_applied() {
+    @Nested class when_the_error_is_NOT_present {
+      @Test void the_handler_is_NOT_applied() {
         assertThat(
           Maybe.runEffect(noOp)
             .onError(error -> {
@@ -67,17 +59,10 @@ public class EffectHandlerTest {
     }
   }
 
-  @Nested
-  class catchError {
-
-    @Nested
-    class when_the_error_is_present {
-
-      @Nested
-      class and_is_instance_of_the_errorType_argument {
-
-        @Test
-        void catches_the_error_and_the_handler_is_applied() {
+  @Nested class catchError {
+    @Nested class when_the_error_is_present {
+      @Nested class and_is_instance_of_the_errorType_argument {
+        @Test void catches_the_error_and_the_handler_is_applied() {
           assertThat(
             Maybe.runEffect(throwingOp)
               .catchError(IOException.class, error -> {
@@ -91,11 +76,8 @@ public class EffectHandlerTest {
         }
       }
 
-      @Nested
-      class and_is_NOT_instance_of_the_errorType_argument {
-
-        @Test
-        void the_error_is_NOT_catched_and_the_handler_is_not_applied() {
+      @Nested class and_is_NOT_instance_of_the_errorType_argument {
+        @Test void the_error_is_NOT_catched_and_the_handler_is_not_applied() {
           assertThat(
             Maybe.runEffect(throwingOp)
               .catchError(EOFException.class, error -> {
@@ -108,11 +90,8 @@ public class EffectHandlerTest {
       }
     }
 
-    @Nested
-    class when_the_error_is_NOT_present {
-
-      @Test
-      void the_handler_is_NOT_applied() {
+    @Nested class when_the_error_is_NOT_present {
+      @Test void the_handler_is_NOT_applied() {
         assertThat(
           Maybe.runEffect(noOp)
             .catchError(RuntimeException.class, error -> {
@@ -125,14 +104,9 @@ public class EffectHandlerTest {
     }
   }
 
-  @Nested
-  class and {
-    
-    @Nested
-    class when_the_error_is_present {
-  
-      @Test
-      void returns_a_maybe_with_nothing() {
+  @Nested class and {
+    @Nested class when_the_error_is_present {
+      @Test void returns_a_maybe_with_nothing() {
         assertThat(
           Maybe.runEffect(throwingOp).and()
         )
@@ -141,11 +115,8 @@ public class EffectHandlerTest {
       }
     }
 
-    @Nested
-    class when_the_error_is_NOT_present {
-
-      @Test
-      void returns_a_maybe_with_a_proxy_instance_of_Void() {
+    @Nested class when_the_error_is_NOT_present {
+      @Test void returns_a_maybe_with_a_proxy_instance_of_Void() {
         assertThat(
           Maybe.runEffect(noOp).and()
         )
@@ -156,14 +127,9 @@ public class EffectHandlerTest {
     }
   }
 
-  @Nested
-  class onErrorThrow {
-
-    @Nested
-    class when_the_error_is_present {
-
-      @Test
-      void throws_an_exception() {
+  @Nested class onErrorThrow {
+    @Nested class when_the_error_is_present {
+      @Test void throws_an_exception() {
         final EffectHandler<IOException> handler = Maybe.runEffect(throwingOp);
 
         assertThat(
@@ -183,11 +149,8 @@ public class EffectHandlerTest {
       }
     }
 
-    @Nested
-    class when_the_error_is_NOT_present {
-
-      @Test
-      void no_exception_is_thrown() {
+    @Nested class when_the_error_is_NOT_present {
+      @Test void no_exception_is_thrown() {
         final EffectHandler<RuntimeException> handler = Maybe.runEffect(noOp);
 
         assertThatCode(handler::onErrorThrow).doesNotThrowAnyException();

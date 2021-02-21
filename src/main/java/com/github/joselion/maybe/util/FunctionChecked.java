@@ -22,5 +22,5 @@ public interface FunctionChecked<T, R, E extends Exception> {
    * @return the function result
    * @throws E which extends from {@link Exception}
    */
-  public R applyChecked(T t) throws E;
+  R applyChecked(T t) throws E;
 }
