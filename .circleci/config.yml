@@ -46,16 +46,20 @@ jobs:
       - setup-env
 
       - run:
+          name: Compile
+          command: ./gradlew compileJava compileTestJava
+      
+      - run:
           name: Lint Gradle
           command: ./gradlew lintGradle
 
       - run:
-          name: Compile
-          command: ./gradlew compileJava compileTestJava
-
-      - run:
           name: SonarLint
           command: ./gradlew sonarlintMain sonarlintTest
+
+      - run:
+          name: Checkstyle
+          command: ./gradlew checkstyleMain checkstyleTest
 
       - run:
           name: Test

@@ -16,7 +16,7 @@ import java.util.function.Function;
 public final class ResolveHandler<T, E extends Exception> {
 
   private final Optional<T> success;
-  
+
   private final Optional<E> error;
 
   private ResolveHandler(final T success, final E error) {
@@ -72,7 +72,7 @@ public final class ResolveHandler<T, E extends Exception> {
     if (error.isPresent()) {
       return withSuccess(handler.apply(error.get()));
     }
-    
+
     return this;
   }
 

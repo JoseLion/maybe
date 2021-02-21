@@ -27,15 +27,10 @@ public class ResolveHandlerTest {
   };
 
   private final SupplierChecked<String, RuntimeException> okOp = () -> "OK";
-  
-  @Nested
-  class onError {
-    
-    @Nested
-    class when_the_error_is_present {
-      
-      @Test
-      void applies_the_handler_function() {
+
+  @Nested class onError {
+    @Nested class when_the_error_is_present {
+      @Test void applies_the_handler_function() {
         final ResolveHandler<String, IOException> handler = Maybe.resolve(throwingOp)
           .onError(error -> {
             assertThat(error)
@@ -55,11 +50,8 @@ public class ResolveHandlerTest {
       }
     }
 
-    @Nested
-    class when_the_error_is_NOT_present {
-
-      @Test
-      void the_error_handler_is_not_executed() {
+    @Nested class when_the_error_is_NOT_present {
+      @Test void the_error_handler_is_not_executed() {
         final ResolveHandler<String, RuntimeException> handler = Maybe.resolve(okOp)
           .onError(error -> {
             throw new AssertionError("The handler should not be executed");
@@ -76,17 +68,10 @@ public class ResolveHandlerTest {
     }
   }
 
-  @Nested
-  class catchError {
-
-    @Nested
-    class when_the_error_is_present {
-
-      @Nested
-      class and_is_instance_of_the_errorType_argument {
-
-        @Test
-        void catches_the_error_and_the_handler_is_applied() {
+  @Nested class catchError {
+    @Nested class when_the_error_is_present {
+      @Nested class and_is_instance_of_the_errorType_argument {
+        @Test void catches_the_error_and_the_handler_is_applied() {
           final ResolveHandler<String, IOException> handler = Maybe.resolve(throwingOp)
             .catchError(IOException.class, error -> {
               assertThat(error)
@@ -99,18 +84,15 @@ public class ResolveHandlerTest {
           assertThat(handler)
             .extracting(SUCCESS, optional(String.class))
             .contains("OK");
-  
+
           assertThat(handler)
             .extracting(ERROR, optional(IOException.class))
             .isEmpty();
         }
       }
 
-      @Nested
-      class and_is_NOT_instance_of_the_errorType_argument {
-
-        @Test
-        void the_error_is_NOT_catched_and_the_handler_is_not_applied() {
+      @Nested class and_is_NOT_instance_of_the_errorType_argument {
+        @Test void the_error_is_NOT_catched_and_the_handler_is_not_applied() {
           final ResolveHandler<String, IOException> handler = Maybe.resolve(throwingOp)
             .catchError(EOFException.class, error -> {
               throw new AssertionError("The handler should not be executed");
@@ -119,7 +101,7 @@ public class ResolveHandlerTest {
           assertThat(handler)
             .extracting(SUCCESS, optional(String.class))
             .isEmpty();
-  
+
           assertThat(handler)
             .extracting(ERROR, optional(IOException.class))
             .contains(FAIL_EXCEPTION);
@@ -127,11 +109,8 @@ public class ResolveHandlerTest {
       }
     }
 
-    @Nested
-    class when_the_error_is_NOT_present {
-
-      @Test
-      void the_error_handler_is_not_executed() {
+    @Nested class when_the_error_is_NOT_present {
+      @Test void the_error_handler_is_not_executed() {
         final ResolveHandler<String, RuntimeException> handler = Maybe.resolve(okOp)
           .catchError(RuntimeException.class, error -> {
             throw new AssertionError("The handler should not be executed");
@@ -148,14 +127,9 @@ public class ResolveHandlerTest {
     }
   }
 
-  @Nested
-  class and {
-    
-    @Nested
-    class when_the_value_is_present {
-
-      @Test
-      void returns_a_maybe_with_the_value() {
+  @Nested class and {
+    @Nested class when_the_value_is_present {
+      @Test void returns_a_maybe_with_the_value() {
         assertThat(
           Maybe.resolve(okOp).and()
         )
@@ -164,10 +138,8 @@ public class ResolveHandlerTest {
       }
     }
 
-    @Nested
-    class when_the_value_is_NOT_present {
-      @Test
-      void returns_a_maybe_with_nothing() {
+    @Nested class when_the_value_is_NOT_present {
+      @Test void returns_a_maybe_with_nothing() {
         assertThat(
           Maybe.resolve(throwingOp).and()
         )
@@ -177,14 +149,9 @@ public class ResolveHandlerTest {
     }
   }
 
-  @Nested
-  class orDefault {
-    
-    @Nested
-    class when_the_value_is_present {
-
-      @Test
-      void returns_the_value() {
+  @Nested class orDefault {
+    @Nested class when_the_value_is_present {
+      @Test void returns_the_value() {
         assertThat(
           Maybe.resolve(okOp)
             .orDefault("OTHER")
@@ -193,11 +160,8 @@ public class ResolveHandlerTest {
       }
     }
 
-    @Nested
-    class when_the_value_is_NOT_present {
-
-      @Test
-      void returns_the_default_value() {
+    @Nested class when_the_value_is_NOT_present {
+      @Test void returns_the_default_value() {
         assertThat(
           Maybe.resolve(throwingOp)
             .orDefault("OTHER")
@@ -207,13 +171,9 @@ public class ResolveHandlerTest {
     }
   }
 
-  @Nested
-  class orThrow {
-    @Nested
-    class when_the_value_is_present {
-  
-      @Test
-      void returns_the_value() throws EOFException {
+  @Nested class orThrow {
+    @Nested class when_the_value_is_present {
+      @Test void returns_the_value() throws EOFException {
         assertThat(
           Maybe.resolve(okOp).orThrow()
         )
@@ -226,11 +186,8 @@ public class ResolveHandlerTest {
       }
     }
 
-    @Nested
-    class when_the_value_is_NOT_present {
-
-      @Test
-      void throws_the_error() {
+    @Nested class when_the_value_is_NOT_present {
+      @Test void throws_the_error() {
         final ResolveHandler<?, IOException> handler = Maybe.resolve(throwingOp);
 
         assertThat(
@@ -251,21 +208,15 @@ public class ResolveHandlerTest {
     }
   }
 
-  @Nested
-  class toOptional {
-
-    @Nested
-    class when_the_value_is_present {
-      @Test
-      void returns_the_value_wrapped_in_an_optinal() {
+  @Nested class toOptional {
+    @Nested class when_the_value_is_present {
+      @Test void returns_the_value_wrapped_in_an_optinal() {
         assertThat(Maybe.resolve(okOp).toOptional()).contains("OK");
       }
     }
 
-    @Nested
-    class when_the_value_is_NOT_present {
-      @Test
-      void returns_an_empty_optional() {
+    @Nested class when_the_value_is_NOT_present {
+      @Test void returns_an_empty_optional() {
         assertThat(Maybe.resolve(throwingOp).toOptional()).isEmpty();
       }
     }

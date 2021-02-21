@@ -13,5 +13,5 @@ import org.junit.jupiter.api.DisplayNameGenerator;
 @Target(TYPE)
 @DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
 public @interface UnitTest {
-  
+
 }

@@ -20,5 +20,5 @@ public interface SupplierChecked<T, E extends Exception> {
    * @return a result
    * @throws E which extends from {@link Exception}
    */
-  public T getChecked() throws E;
+  T getChecked() throws E;
 }

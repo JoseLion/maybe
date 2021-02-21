@@ -178,7 +178,7 @@ public final class Maybe<T> {
    * @return a new {@code Maybe} with the cast value if it can be cast,
    *         {@link #nothing()} otherwise
    */
-  public <U> Maybe<U> cast(Class<U> type) {
+  public <U> Maybe<U> cast(final Class<U> type) {
     try {
       final T value = success.orElseThrow();
       final U newValue = type.cast(value);
@@ -231,7 +231,7 @@ public final class Maybe<T> {
    *         {@code false} otherwise
    */
   @Override
-  public boolean equals(Object obj) {
+  public boolean equals(final Object obj) {
     if (this == obj) {
       return true;
     }
