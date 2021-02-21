@@ -11,8 +11,7 @@ plugins {
   id 'maven-publish'
   id 'signing'
 
-  id 'com.github.joselion.pretty-jupiter' version '1.3.1'
-  id 'com.jfrog.bintray' version '1.8.5'
+  id 'com.github.joselion.pretty-jupiter' version '1.3.2'
   id 'io.codearte.nexus-staging' version '0.22.0'
   id 'name.remal.sonarlint' version '1.2.2'
   id 'nebula.lint' version '16.17.0'
@@ -32,8 +31,21 @@ java {
   withSourcesJar()
 }
 
-dependencyLocking {
-  lockAllConfigurations()
+javadoc {
+  if(JavaVersion.current().isJava9Compatible()) {
+    options.addBooleanOption('html5', true)
+  }
+
+  options.addStringOption('Xwerror', '-quiet')
+}
+
+jar {
+  manifest {
+    attributes(
+      'Implementation-Title': project.name,
+      'Implementation-Version': project.version
+    )
+  }
 }
 
 gradleLint {
@@ -52,6 +64,10 @@ checkstyle {
   sourceSets = sourceSets
 }
 
+dependencyLocking {
+  lockAllConfigurations()
+}
+
 repositories {
   jcenter()
   mavenCentral()
@@ -60,17 +76,17 @@ repositories {
 def jupiterVersion = '5.7.1'
 
 dependencies {
-  testImplementation(group: 'org.assertj', name: 'assertj-core', version: '3.19.0')
-  testImplementation(group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: "$jupiterVersion")
+  testImplementation('org.assertj:assertj-core:3.19.0')
+  testImplementation("org.junit.jupiter:junit-jupiter-api:$jupiterVersion")
 
-  testRuntimeOnly(group: 'org.junit.jupiter', name: 'junit-jupiter-engine', version: "$jupiterVersion")
+  testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$jupiterVersion")
 }
 
 test {
   useJUnitPlatform()
 
   reports {
-    junitXml.destination = file("${buildDir}/test-results/junit")
+    junitXml.destination = file("$buildDir/test-results/junit")
   }
 }
 
@@ -78,13 +94,8 @@ prettyJupiter {
   duration.threshold = 150
 }
 
-jar {
-  manifest {
-    attributes(
-      'Implementation-Title': project.name,
-      'Implementation-Version': project.version
-    )
-  }
+jacoco {
+  toolVersion = '0.8.6'
 }
 
 jacocoTestReport {
@@ -92,10 +103,6 @@ jacocoTestReport {
     xml.enabled(true)
     html.enabled(true)
   }
-}
-
-tasks.withType(Javadoc) {
-  options.addStringOption('Xwerror', '-quiet')
 }
 
 publishing {
@@ -154,12 +161,6 @@ publishing {
 
 signing {
   sign publishing.publications.mavenJava
-}
-
-javadoc {
-  if(JavaVersion.current().isJava9Compatible()) {
-    options.addBooleanOption('html5', true)
-  }
 }
 
 nexusStaging {
