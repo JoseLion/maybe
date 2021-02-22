@@ -19,10 +19,11 @@ plugins {
 }
 
 def isRelease = project.hasProperty('releaseVersion')
-def versionType = isRelease ? 'GA' : 'SNAPSHOT'
+def snapshotSuffix = '-SNAPSHOT'
+def suffix = isRelease ? '' : snapshotSuffix
 
 group = 'com.github.joselion'
-version = "1.0.2-${versionType}"
+version = "1.0.2$suffix"
 
 sourceCompatibility = JavaVersion.VERSION_1_8
 targetCompatibility = JavaVersion.VERSION_1_8
@@ -165,7 +166,7 @@ publishing {
       def releasesRepoUrl = 'https://oss.sonatype.org/service/local/staging/deploy/maven2/'
       def snapshotsRepoUrl = 'https://oss.sonatype.org/content/repositories/snapshots/'
 
-      url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
+      url = version.endsWith(snapshotSuffix) ? snapshotsRepoUrl : releasesRepoUrl
       credentials(PasswordCredentials) {
         username = ossrhUsername
         password = ossrhPassword

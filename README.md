@@ -19,7 +19,7 @@ Maybe is available in [Maven Central](https://mvnrepository.com/artifact/com.git
 **Gradle**
 
 ```gradle
-implementation(group: 'com.github.joselion', name: 'maybe', version: 'X.X.X-GA')
+implementation(group: 'com.github.joselion', name: 'maybe', version: 'X.X.X')
 ```
 
 **Maven**
@@ -28,7 +28,7 @@ implementation(group: 'com.github.joselion', name: 'maybe', version: 'X.X.X-GA')
 <dependency>
   <groupId>com.github.joselion</groupId>
   <artifactId>maybe</artifactId>
-  <version>X.X.X-GA</version>
+  <version>X.X.X</version>
 </dependency>
 ```
 
