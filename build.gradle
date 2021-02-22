@@ -42,6 +42,7 @@ javadoc {
 }
 
 jar {
+  from sourceSets.main.allSource
   manifest {
     attributes(
       'Implementation-Title': project.name,
