@@ -8,6 +8,8 @@ import com.github.joselion.maybe.util.FunctionChecked;
 import com.github.joselion.maybe.util.RunnableChecked;
 import com.github.joselion.maybe.util.SupplierChecked;
 
+import org.eclipse.jdt.annotation.Nullable;
+
 /**
  * Maybe is a container object (monad) that may contain a value. Its API allows
  * to process throwing operations in a functional way leveraging
@@ -22,7 +24,7 @@ public final class Maybe<T> {
 
   private final Optional<T> success;
 
-  private Maybe(final T success) {
+  private Maybe(final @Nullable T success) {
     this.success = Optional.ofNullable(success);
   }
 
