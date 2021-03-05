@@ -48,6 +48,15 @@
 
     <!-- Imports -->
     <module name="AvoidStarImport" />
+    <module name="ImportOrder">
+      <property name="groups" value="/^java\./,javax,com,org"/>
+      <property name="ordered" value="true"/>
+      <property name="separated" value="true"/>
+      <property name="sortStaticImportsAlphabetically" value="true"/>
+      <property name="option" value="top"/>
+    </module>
+    <module name="RedundantImport"/>
+    <module name="UnusedImports"/>
 
     <!-- Miscellaneous -->
     <module name="FinalParameters" />

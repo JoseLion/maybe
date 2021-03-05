@@ -6,7 +6,6 @@ import static org.assertj.core.api.InstanceOfAssertFactories.optional;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.EOFException;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import com.github.joselion.maybe.helpers.UnitTest;
