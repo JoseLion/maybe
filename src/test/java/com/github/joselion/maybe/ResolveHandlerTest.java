@@ -30,23 +30,49 @@ public class ResolveHandlerTest {
 
   @Nested class onError {
     @Nested class when_the_error_is_present {
-      @Test void applies_the_handler_function() {
-        final ResolveHandler<String, IOException> handler = Maybe.resolve(throwingOp)
-          .onError(error -> {
-            assertThat(error)
-              .isInstanceOf(IOException.class)
-              .hasMessage("FAIL");
+      @Nested class and_the_error_is_instance_of_the_checked_exception {
+        @Test void applies_the_handler_function() {
+          final ResolveHandler<String, IOException> handler = Maybe.resolve(throwingOp)
+            .onError(error -> {
+              assertThat(error)
+                .isInstanceOf(IOException.class)
+                .hasMessage("FAIL");
 
-            return "OK";
-          });
+              return "OK";
+            });
 
-        assertThat(handler)
-          .extracting(SUCCESS, optional(String.class))
-          .contains("OK");
+          assertThat(handler)
+            .extracting(SUCCESS, optional(String.class))
+            .contains("OK");
 
-        assertThat(handler)
-          .extracting(ERROR, optional(IOException.class))
-          .isEmpty();
+          assertThat(handler)
+            .extracting(ERROR, optional(IOException.class))
+            .isEmpty();
+        }
+      }
+
+      @Nested class and_the_error_is_NOT_instance_of_the_checked_exception {
+        @Test void applies_the_handler_function() {
+          final SupplierChecked<String, IOException> failingOp = () -> {
+            throw new UnsupportedOperationException("ERROR");
+          };
+          final ResolveHandler<String, IOException> handler = Maybe.resolve(failingOp)
+            .onError(error -> {
+              assertThat(error)
+                .isInstanceOf(UnsupportedOperationException.class)
+                .hasMessage("ERROR");
+
+              return "OK";
+            });
+
+          assertThat(handler)
+            .extracting(SUCCESS, optional(String.class))
+            .contains("OK");
+
+          assertThat(handler)
+            .extracting(ERROR, optional(IOException.class))
+            .isEmpty();
+        }
       }
     }
 

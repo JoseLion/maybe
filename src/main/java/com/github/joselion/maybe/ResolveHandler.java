@@ -70,7 +70,7 @@ public final class ResolveHandler<T, E extends Exception> {
    * @return a new handler with the new value if error is present. The same
    *         handler instance otherwise
    */
-  public ResolveHandler<T, E> onError(final Function<E, T> handler) {
+  public ResolveHandler<T, E> onError(final Function<? super Throwable, T> handler) {
     if (error.isPresent()) {
       return withSuccess(handler.apply(error.get()));
     }
