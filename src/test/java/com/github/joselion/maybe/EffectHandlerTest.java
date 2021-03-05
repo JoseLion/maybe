@@ -6,6 +6,7 @@ import static org.assertj.core.api.InstanceOfAssertFactories.optional;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.EOFException;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import com.github.joselion.maybe.helpers.UnitTest;
@@ -31,17 +32,37 @@ public class EffectHandlerTest {
 
   @Nested class onError {
     @Nested class when_the_error_is_present {
-      @Test void the_handler_is_applied() {
-        assertThat(
-          Maybe.runEffect(throwingOp)
-            .onError(error -> {
-              assertThat(error)
-                .isInstanceOf(IOException.class)
-                .hasMessageContaining("FAIL");
-            })
-        )
-        .extracting(ERROR, optional(IOException.class))
-        .isEmpty();
+      @Nested class and_the_error_is_instance_of_the_checked_exception {
+        @Test void the_handler_is_applied() {
+          assertThat(
+            Maybe.runEffect(throwingOp)
+              .onError(error -> {
+                assertThat(error)
+                  .isInstanceOf(IOException.class)
+                  .hasMessageContaining("FAIL");
+              })
+          )
+          .extracting(ERROR, optional(IOException.class))
+          .isEmpty();
+        }
+      }
+
+      @Nested class and_the_error_is_NOT_instance_of_the_checked_exception {
+        @Test void the_handler_is_applied() {
+          final RunnableChecked<IOException> failingOp = () -> {
+            throw new UnsupportedOperationException("ERROR");
+          };
+          assertThat(
+            Maybe.runEffect(failingOp)
+              .onError(error -> {
+                assertThat(error)
+                  .isInstanceOf(UnsupportedOperationException.class)
+                  .hasMessageContaining("ERROR");
+              })
+          )
+          .extracting(ERROR, optional(IOException.class))
+          .isEmpty();
+        }
       }
     }
 

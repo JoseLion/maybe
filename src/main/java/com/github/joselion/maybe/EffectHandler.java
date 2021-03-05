@@ -55,7 +55,7 @@ public final class EffectHandler<E extends Exception> {
    * @return a new handler with nothing if the error is handled. The same handler
    *         instance otherwise
    */
-  public EffectHandler<E> onError(final Consumer<E> handler) {
+  public EffectHandler<E> onError(final Consumer<? super Throwable> handler) {
     if (error.isPresent()) {
       handler.accept(error.get());
       return withNothing();
