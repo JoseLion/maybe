@@ -1,6 +1,7 @@
 package com.github.joselion.maybe;
 
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import org.eclipse.jdt.annotation.Nullable;
@@ -63,8 +64,23 @@ public final class ResolveHandler<T, E extends Exception> {
   }
 
   /**
-   * If an error exits, handle the error and return a new value. The error is
-   * passed in the argunment of to the {@code handler} function.
+   * Run an effect if an error is present. The error is passed in the argunment
+   * of to the {@code effect} consumer.
+   * 
+   * @param effect a consumer with the error passed in the argument
+   * @return The same handler to continue chainning operations
+   */
+  public ResolveHandler<T, E> doOnError(final Consumer<? super Throwable> effect) {
+    if (error.isPresent()) {
+      effect.accept(error.get());
+    }
+
+    return this;
+  }
+
+  /**
+   * If an error is present, handle the error and return a new value. The error
+   * is passed in the argunment of to the {@code handler} function.
    * 
    * @param handler a function that should return a new value in case of error
    * @return a new handler with the new value if error is present. The same
