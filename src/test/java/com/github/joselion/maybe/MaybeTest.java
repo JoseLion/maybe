@@ -353,6 +353,16 @@ public class MaybeTest {
       }
     }
 
+    @Nested class when_the_tested_objectis_NOT_the_same_instance {
+      @Test void returns_false() {
+        final Maybe<Integer> maybe = Maybe.just(3);
+        final Object other = Integer.valueOf(3);
+        final boolean isEqual = maybe.equals(other);
+
+        assertThat(isEqual).isFalse();
+      }
+    }
+
     @Nested class when_both_wrapped_values_are_equal {
       @Test void returns_true() {
         final Maybe<String> maybe = Maybe.just("OK");
