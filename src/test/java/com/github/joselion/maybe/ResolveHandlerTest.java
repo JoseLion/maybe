@@ -6,6 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.EOFException;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.github.joselion.maybe.helpers.UnitTest;
 import com.github.joselion.maybe.util.SupplierChecked;
@@ -22,11 +24,86 @@ public class ResolveHandlerTest {
 
   private final static IOException FAIL_EXCEPTION = new IOException("FAIL");
 
+  private final static UnsupportedOperationException ERROR_EXCEPTION = new UnsupportedOperationException("ERROR");
+
   private final SupplierChecked<String, IOException> throwingOp = () -> {
     throw FAIL_EXCEPTION;
   };
 
+  private final SupplierChecked<String, IOException> errorOp = () -> {
+    throw ERROR_EXCEPTION;
+  };
+
   private final SupplierChecked<String, RuntimeException> okOp = () -> "OK";
+
+  @Nested class doOnError {
+    @Nested class when_the_error_is_present {
+      @Nested class and_the_error_is_instance_of_the_checked_exception {
+        @Test void runs_the_effect() {
+          final List<Integer> counter = new ArrayList<>();
+          final ResolveHandler<String, IOException> handler = Maybe.resolve(throwingOp)
+            .doOnError(error -> {
+              assertThat(error)
+                .isInstanceOf(IOException.class)
+                .hasMessage("FAIL");
+
+              counter.add(1);
+            });
+
+          assertThat(counter).containsExactly(1);
+
+          assertThat(handler)
+            .extracting(SUCCESS, optional(String.class))
+            .isEmpty();
+
+          assertThat(handler)
+            .extracting(ERROR, optional(IOException.class))
+            .contains(FAIL_EXCEPTION);
+        }
+      }
+
+      @Nested class and_the_error_is_NOT_instance_of_the_checked_exception {
+        @Test void runs_the_effect() {
+          final List<Integer> counter = new ArrayList<>();
+          final ResolveHandler<String, IOException> handler = Maybe.resolve(errorOp)
+            .doOnError(error -> {
+              assertThat(error)
+                .isInstanceOf(UnsupportedOperationException.class)
+                .hasMessage("ERROR");
+
+              counter.add(1);
+            });
+
+          assertThat(counter).containsExactly(1);
+
+          assertThat(handler)
+            .extracting(SUCCESS, optional(String.class))
+            .isEmpty();
+
+          assertThat(handler)
+            .extracting(ERROR, optional(UnsupportedOperationException.class))
+            .contains(ERROR_EXCEPTION);
+        }
+      }
+    }
+
+    @Nested class when_the_error_is_NOT_present {
+      @Test void does_NOT_run_the_effect() {
+        final ResolveHandler<String, RuntimeException> handler = Maybe.resolve(okOp)
+          .doOnError(error -> {
+            throw new AssertionError("The handler should not be executed");
+          });
+
+        assertThat(handler)
+          .extracting(SUCCESS, optional(String.class))
+          .contains("OK");
+
+        assertThat(handler)
+          .extracting(ERROR, optional(IOException.class))
+          .isEmpty();
+      }
+    }
+  }
 
   @Nested class onError {
     @Nested class when_the_error_is_present {
