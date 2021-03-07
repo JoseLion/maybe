@@ -10,6 +10,7 @@ package com.github.joselion.maybe.util;
  * @param <T> the type of argument passed to the function
  * @param <R> the type of results returned by the function
  * @param <E> the type of exception that the function throws
+ * @author Jose Luis Leon
  * @since v0.1.0
  */
 @FunctionalInterface

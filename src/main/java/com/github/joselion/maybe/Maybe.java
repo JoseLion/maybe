@@ -54,8 +54,8 @@ public final class Maybe<T> {
 
   /**
    * Resolves the value of a throwing operation using a {@link SupplierChecked}
-   * expression. Returning then a {@link ResolveHandler} which allows to handle the
-   * possible error and return a safe value.
+   * expression. Returning then a {@link ResolveHandler} which allows to handle
+   * the possible error and return a safe value.
    * 
    * @param <T> the type of the value returned by the {@code resolver}
    * @param <E> the type of exception the {@code resolver} may throw
@@ -94,6 +94,20 @@ public final class Maybe<T> {
 
       return EffectHandler.withError(error);
     }
+  }
+
+  /**
+   * Prepare an {@link AutoCloseable} resource to use in a resolver or effect.
+   * The resource will be automatically closed after the operation is finished,
+   * just like a common try-with-resources statement.
+   * 
+   * @param <R> the type of the resource. Extends from {@link AutoCloseable}
+   * @param resource the {@link AutoCloseable} resource to prepare
+   * @return a {@link ResourceSpec} which let's you choose to resolve a value
+   *         or run an effect using the prepared resource
+   */
+  public static <R extends AutoCloseable> ResourceSpec<R> withResource(final R resource) {
+    return ResourceSpec.from(resource);
   }
 
   /**

@@ -4,7 +4,10 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 
 /**
- * Internal use helpe functions
+ * Internal use helper functions.
+ * 
+ * @author Jose Luis Leon
+ * @since v1.0.0
  */
 public interface Helpers {
 

@@ -17,11 +17,11 @@ import org.junit.jupiter.api.Test;
 @UnitTest
 public class EffectHandlerTest {
 
-  private final String ERROR = "error";
+  private static final String ERROR = "error";
 
-  private final String SUCCESS = "success";
+  private static final String SUCCESS = "success";
 
-  private final static IOException FAIL_EXCEPTION = new IOException("FAIL");
+  private static final IOException FAIL_EXCEPTION = new IOException("FAIL");
 
   private final RunnableChecked<IOException> throwingOp = () -> {
     throw FAIL_EXCEPTION;
