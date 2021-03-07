@@ -9,6 +9,7 @@ package com.github.joselion.maybe.util;
  * 
  * @param <T> the type of results supplied by the supplier
  * @param <E> the type of checked exception that the supplier throws
+ * @author Jose Luis Leon
  * @since v0.1.0
  */
 @FunctionalInterface

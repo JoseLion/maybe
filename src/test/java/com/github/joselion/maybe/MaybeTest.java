@@ -1,21 +1,26 @@
 package com.github.joselion.maybe;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.InstanceOfAssertFactories.INPUT_STREAM;
 import static org.assertj.core.api.InstanceOfAssertFactories.optional;
 
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.github.joselion.maybe.helpers.UnitTest;
 
+import org.assertj.core.api.AutoCloseableSoftAssertions;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 @UnitTest
 public class MaybeTest {
 
-  private final String SUCCESS = "success";
+  private static final String SUCCESS = "success";
 
-  private final String ERROR = "error";
+  private static final String ERROR = "error";
 
   @Nested class just {
     @Nested class when_a_value_is_passed {
@@ -81,7 +86,12 @@ public class MaybeTest {
   @Nested class runEffect {
     @Nested class when_the_operation_success {
       @Test void returns_a_handler_with_nothing() {
-        final EffectHandler<?> handler = Maybe.runEffect(() -> { });
+        final List<Integer> counter = new ArrayList<>();
+        final EffectHandler<?> handler = Maybe.runEffect(() -> {
+          counter.add(1);
+        });
+
+        assertThat(counter).containsExactly(1);
 
         assertThat(handler)
           .extracting(ERROR, optional(RuntimeException.class))
@@ -100,6 +110,21 @@ public class MaybeTest {
           .extracting(ERROR, optional(IOException.class))
           .containsInstanceOf(IOException.class)
           .contains(exception);
+      }
+    }
+  }
+
+  @Nested class withResource {
+    @Test void returns_the_resource_spec_with_the_resource() throws IOException {
+      try (
+        AutoCloseableSoftAssertions softly = new AutoCloseableSoftAssertions();
+        FileInputStream fis = new FileInputStream("./src/test/resources/readTest.txt");
+      ) {
+        softly.assertThat(ResourceSpec.from(fis))
+          .extracting("resource", INPUT_STREAM)
+            .isExactlyInstanceOf(FileInputStream.class)
+            .isEqualTo(fis)
+            .hasContent("foo");
       }
     }
   }

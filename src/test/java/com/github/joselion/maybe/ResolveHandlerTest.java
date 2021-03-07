@@ -18,13 +18,13 @@ import org.junit.jupiter.api.Test;
 @UnitTest
 public class ResolveHandlerTest {
 
-  private final String SUCCESS = "success";
+  private static final String SUCCESS = "success";
 
-  private final String ERROR = "error";
+  private static final String ERROR = "error";
 
-  private final static IOException FAIL_EXCEPTION = new IOException("FAIL");
+  private static final IOException FAIL_EXCEPTION = new IOException("FAIL");
 
-  private final static UnsupportedOperationException ERROR_EXCEPTION = new UnsupportedOperationException("ERROR");
+  private static final UnsupportedOperationException ERROR_EXCEPTION = new UnsupportedOperationException("ERROR");
 
   private final SupplierChecked<String, IOException> throwingOp = () -> {
     throw FAIL_EXCEPTION;

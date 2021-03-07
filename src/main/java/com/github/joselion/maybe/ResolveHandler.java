@@ -14,6 +14,7 @@ import org.eclipse.jdt.annotation.Nullable;
  * @param <T> the type of the value passed through the {@code Maybe}
  * @param <E> the type of exception that the resolve operation may throw
  * 
+ * @author Jose Luis Leon
  * @since v0.3.2
  */
 public final class ResolveHandler<T, E extends Exception> {

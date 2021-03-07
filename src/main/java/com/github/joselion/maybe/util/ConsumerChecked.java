@@ -11,6 +11,7 @@ package com.github.joselion.maybe.util;
  * 
  * @param <T> the type of argument passed to the function
  * @param <E> the type of exception that the function throws
+ * @author Jose Luis Leon
  * @since v0.3.0
  */
 @FunctionalInterface

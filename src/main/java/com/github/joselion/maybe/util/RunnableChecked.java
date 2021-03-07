@@ -8,6 +8,7 @@ package com.github.joselion.maybe.util;
  * {@link #runChecked()}
  * 
  * @param <E> the type of checked exception that the runnable throws
+ * @author Jose Luis Leon
  * @since v0.1.0
  */
 @FunctionalInterface
