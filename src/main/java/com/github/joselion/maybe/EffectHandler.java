@@ -4,8 +4,6 @@ import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import com.github.joselion.maybe.util.Helpers;
-
 import org.eclipse.jdt.annotation.Nullable;
 
 /**
@@ -91,14 +89,9 @@ public final class EffectHandler<E extends Exception> {
    * Allows the EffectHandler API to go back to the Maybe API. This is useful to
    * continue chaining more Maybe operations.
    * 
-   * @return a Maybe with the error if present. A Maybe with nothing otherwise
+   * @return a Maybe with nothing
    */
   public Maybe<Void> and() {
-    if (error.isEmpty()) {
-      final Void shallowVoid = Helpers.shallowInstance(Void.class);
-      return Maybe.just(shallowVoid);
-    }
-
     return Maybe.nothing();
   }
 
