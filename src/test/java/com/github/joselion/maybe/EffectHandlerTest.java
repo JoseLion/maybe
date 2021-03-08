@@ -125,25 +125,12 @@ public class EffectHandlerTest {
   }
 
   @Nested class and {
-    @Nested class when_the_error_is_present {
-      @Test void returns_a_maybe_with_nothing() {
-        assertThat(
-          Maybe.runEffect(throwingOp).and()
-        )
-        .extracting(SUCCESS, optional(Void.class))
-        .isEmpty();
-      }
-    }
-
-    @Nested class when_the_error_is_NOT_present {
-      @Test void returns_a_maybe_with_a_proxy_instance_of_Void() {
-        assertThat(
-          Maybe.runEffect(noOp).and()
-        )
-        .extracting(SUCCESS, optional(Void.class))
-        .containsInstanceOf(Void.class)
-        .isPresent();
-      }
+    @Test void returns_a_maybe_with_nothing() {
+      assertThat(
+        Maybe.runEffect(throwingOp).and()
+      )
+      .extracting(SUCCESS, optional(Void.class))
+      .isEmpty();
     }
   }
 
