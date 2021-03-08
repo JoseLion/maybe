@@ -120,7 +120,7 @@ public class MaybeTest {
         AutoCloseableSoftAssertions softly = new AutoCloseableSoftAssertions();
         FileInputStream fis = new FileInputStream("./src/test/resources/readTest.txt");
       ) {
-        softly.assertThat(ResourceSpec.from(fis))
+        softly.assertThat(Maybe.withResource(fis))
           .extracting("resource", INPUT_STREAM)
             .isExactlyInstanceOf(FileInputStream.class)
             .isEqualTo(fis)
