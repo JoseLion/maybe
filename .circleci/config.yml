@@ -1,7 +1,7 @@
 version: 2.1
 
 executors:
-  common-env:
+  default-jvm:
     working_directory: ~/repo/maybe
 
     docker:
@@ -11,39 +11,42 @@ executors:
           TERM: dumb
 
 commands:
-  setup-env:
-    description: "Setup the common environment to run tasks on CI"
+  setup:
+    description: "Setup the environment to run tasks on CI"
 
     steps:
       - checkout:
           path: ~/repo/maybe
 
       - run:
-          name: Generate gradle.lock
-          command: |
-            cat gradle/wrapper/gradle-wrapper.properties gradle/dependency-locks/* > gradle.lock
-            echo "All lock files were merged into gradle.lock file"
-
-      - run:
-          name: Provide Credentials
+          name: Provisioning
           command: |
             cp gradle.properties.sample gradle.properties
             sed -i "s/<SIGNING_PASSWORD>/$SIGNING_PASSWORD/g" gradle.properties
             sed -i "s/<OSSRH_PASSWORD>/$OSSRH_PASSWORD/g" gradle.properties
-            echo "All credentials were provisioned to gradle.properties file"
 
       - restore_cache:
           keys:
-            - v3-dependencies-{{ .Branch }}-{{ checksum "gradle.lock" }}
-            - v3-dependencies-{{ .Branch }}-
-            - v3-dependencies-
+            - v4-dependencies-{{ checksum "buildscript-gradle.lockfile" }}-{{ checksum "gradle.lockfile" }}
+            - v4-dependencies-{{ checksum "buildscript-gradle.lockfile" }}-
+            - v4-dependencies-
+
+  store-cache:
+    description: "Store Gradle configuration and dependendies in cache"
+
+    steps:
+      - save_cache:
+          paths:
+            - ~/repo/maybe/.gradle
+            - ~/.gradle
+          key: v4-dependencies-{{ checksum "buildscript-gradle.lockfile" }}-{{ checksum "gradle.lockfile" }}
 
 jobs:
   build:
-    executor: common-env
+    executor: default-jvm
 
     steps:
-      - setup-env
+      - setup
 
       - run:
           name: Compile
@@ -73,13 +76,9 @@ jobs:
           name: Coverage
           command: ./gradlew jacocoTestReport
 
-      - save_cache:
-          paths:
-            - ~/repo/maybe/.gradle
-            - ~/.gradle
-          key: v3-dependencies-{{ .Branch }}-{{ checksum "gradle.lock" }}
+      - store-cache
 
-      - deploy:
+      - run:
           name: Upload reports
           command: bash <(curl -s https://codecov.io/bash)
 
@@ -87,28 +86,32 @@ jobs:
           path: build/test-results
 
   publish-snapshot:
-    executor: common-env
+    executor: default-jvm
 
     steps:
-      - setup-env
+      - setup
 
-      - deploy:
+      - run:
           name: Publish to Sonatype Snapshot OSSRH
           command: ./gradlew publish
 
+      - store-cache
+
   publish-release:
-    executor: common-env
+    executor: default-jvm
 
     steps:
-      - setup-env
+      - setup
 
-      - deploy:
+      - run:
           name: Upload to Sonatype Release OSSRH
           command: ./gradlew -PreleaseVersion publish
 
-      - deploy:
+      - run:
           name: Close and Release to Maven Central
           command: ./gradlew -PreleaseVersion closeAndReleaseRepository
+
+      - store-cache
 
 workflows:
   main:
