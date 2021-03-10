@@ -124,16 +124,6 @@ public class EffectHandlerTest {
     }
   }
 
-  @Nested class and {
-    @Test void returns_a_maybe_with_nothing() {
-      assertThat(
-        Maybe.runEffect(throwingOp).and()
-      )
-      .extracting(SUCCESS, optional(Void.class))
-      .isEmpty();
-    }
-  }
-
   @Nested class onErrorThrow {
     @Nested class when_the_error_is_present {
       @Test void throws_an_exception() {
@@ -167,6 +157,16 @@ public class EffectHandlerTest {
         })
         .doesNotThrowAnyException();
       }
+    }
+  }
+
+  @Nested class toMaybe {
+    @Test void returns_a_maybe_with_nothing() {
+      assertThat(
+        Maybe.runEffect(throwingOp).toMaybe()
+      )
+      .extracting(SUCCESS, optional(Void.class))
+      .isEmpty();
     }
   }
 }
