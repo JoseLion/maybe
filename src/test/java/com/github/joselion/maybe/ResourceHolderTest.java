@@ -16,7 +16,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 @UnitTest
-public class ResourceSpecTest {
+public class ResourceHolderTest {
 
   private static final String SUCCESS = "success";
 

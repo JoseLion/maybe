@@ -12,11 +12,11 @@ import com.github.joselion.maybe.util.FunctionChecked;
  * @author Jose Luis Leon
  * @since v1.3.0
  */
-public class ResourceSpec<R extends AutoCloseable> {
+public class ResourceHolder<R extends AutoCloseable> {
 
   private final R resource;
 
-  private ResourceSpec(final R resource) {
+  private ResourceHolder(final R resource) {
     this.resource = resource;
   }
 
@@ -27,8 +27,8 @@ public class ResourceSpec<R extends AutoCloseable> {
    * @param resource the resource to instantiate the ResourceSpec with
    * @return a new instance of ResourceSpec with the give resource
    */
-  protected static <R extends AutoCloseable> ResourceSpec<R> from(final R resource) {
-    return new ResourceSpec<>(resource);
+  protected static <R extends AutoCloseable> ResourceHolder<R> from(final R resource) {
+    return new ResourceHolder<>(resource);
   }
 
   /**
