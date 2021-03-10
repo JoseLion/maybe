@@ -35,7 +35,7 @@ public class EffectHandlerTest {
         @Test void the_handler_is_applied() {
           assertThat(
             Maybe.runEffect(throwingOp)
-              .onError(error -> {
+              .doOnError(error -> {
                 assertThat(error)
                   .isInstanceOf(IOException.class)
                   .hasMessageContaining("FAIL");
@@ -53,7 +53,7 @@ public class EffectHandlerTest {
           };
           assertThat(
             Maybe.runEffect(failingOp)
-              .onError(error -> {
+              .doOnError(error -> {
                 assertThat(error)
                   .isInstanceOf(UnsupportedOperationException.class)
                   .hasMessageContaining("ERROR");
@@ -69,7 +69,7 @@ public class EffectHandlerTest {
       @Test void the_handler_is_NOT_applied() {
         assertThat(
           Maybe.runEffect(noOp)
-            .onError(error -> {
+            .doOnError(error -> {
               throw new AssertionError("The handler should not be executed");
             })
         )
