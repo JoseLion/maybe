@@ -254,7 +254,7 @@ public class MaybeTest {
           .thenRunEffect(value -> {
             assertThat(value).isEqualTo(1);
           })
-          .and()
+          .toMaybe()
           .thenRunEffect(none -> {
             assertThat(none).isExactlyInstanceOf(Void.class);
           });

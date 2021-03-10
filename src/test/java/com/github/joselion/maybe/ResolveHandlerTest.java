@@ -230,28 +230,6 @@ public class ResolveHandlerTest {
     }
   }
 
-  @Nested class and {
-    @Nested class when_the_value_is_present {
-      @Test void returns_a_maybe_with_the_value() {
-        assertThat(
-          Maybe.resolve(okOp).and()
-        )
-        .extracting(SUCCESS, optional(String.class))
-        .contains("OK");
-      }
-    }
-
-    @Nested class when_the_value_is_NOT_present {
-      @Test void returns_a_maybe_with_nothing() {
-        assertThat(
-          Maybe.resolve(throwingOp).and()
-        )
-        .extracting(SUCCESS, optional(String.class))
-        .isEmpty();
-      }
-    }
-  }
-
   @Nested class orDefault {
     @Nested class when_the_value_is_present {
       @Test void returns_the_value() {
@@ -307,6 +285,28 @@ public class ResolveHandlerTest {
         )
         .isExactlyInstanceOf(EOFException.class)
         .hasMessage("FAIL - OTHER ERROR");
+      }
+    }
+  }
+
+  @Nested class toMaybe {
+    @Nested class when_the_value_is_present {
+      @Test void returns_a_maybe_with_the_value() {
+        assertThat(
+          Maybe.resolve(okOp).toMaybe()
+        )
+        .extracting(SUCCESS, optional(String.class))
+        .contains("OK");
+      }
+    }
+
+    @Nested class when_the_value_is_NOT_present {
+      @Test void returns_a_maybe_with_nothing() {
+        assertThat(
+          Maybe.resolve(throwingOp).toMaybe()
+        )
+        .extracting(SUCCESS, optional(String.class))
+        .isEmpty();
       }
     }
   }

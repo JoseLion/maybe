@@ -86,16 +86,6 @@ public final class EffectHandler<E extends Exception> {
   }
 
   /**
-   * Allows the EffectHandler API to go back to the Maybe API. This is useful to
-   * continue chaining more Maybe operations.
-   * 
-   * @return a Maybe with nothing
-   */
-  public Maybe<Void> and() {
-    return Maybe.nothing();
-  }
-
-  /**
    * Throws the error if present. Does nothing otherwise.
    * 
    * @throws E the error thrown by the {@code runEffect} operation
@@ -118,5 +108,15 @@ public final class EffectHandler<E extends Exception> {
     if (error.isPresent()) {
       throw errorMapper.apply(error.get());
     }
+  }
+
+  /**
+   * Transforms the handler to a {@link Maybe}. Since there's nothing to
+   * resolve, the {@link Maybe} will always have {@code nothing}.
+   * 
+   * @return a Maybe with {@code nothing}
+   */
+  public Maybe<Void> toMaybe() {
+    return Maybe.nothing();
   }
 }

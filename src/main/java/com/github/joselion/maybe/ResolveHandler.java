@@ -116,20 +116,6 @@ public final class ResolveHandler<T, E extends Exception> {
   }
 
   /**
-   * Allows the ResolveHandler API to go back to the Maybe API. This is useful
-   * to continue chaining more Maybe operations.
-   * 
-   * @return a Maybe with the success value if present. A Maybe with nothing otherwise
-   */
-  public Maybe<T> and() {
-    if (success.isPresent()) {
-      return Maybe.just(success.get());
-    }
-
-    return Maybe.nothing();
-  }
-
-  /**
    * Returns the value resolved/handled if present. A default value otherwise.
    * 
    * @param defaultValue the value to return if {@code resolve} failed and/or
@@ -166,13 +152,28 @@ public final class ResolveHandler<T, E extends Exception> {
     throw errorMapper.apply(error.orElseThrow());
   }
 
-/**
- * Transforms the handler to an {@link Optional}. If the value was resolved,
- * the {@link Optional} will contain it. It will be {@code empty} otherwise.
- * 
- * @return the resolved value as an {@link Optional}. {@code Optinal.empty()}
- *         otherwise.
- */
+  /**
+   * Transforms the handler to a {@link Maybe}. If the value was resolved, the
+   * {@link Maybe} will contain it. It will be have {@code nothing} otherwise.
+   * 
+   * @return the resolved value wrapped in a {@link Maybe} if present. A
+   *         {@link Maybe} with nothing otherwise
+   */
+  public Maybe<T> toMaybe() {
+    if (success.isPresent()) {
+      return Maybe.just(success.get());
+    }
+
+    return Maybe.nothing();
+  }
+
+  /**
+   * Transforms the handler to an {@link Optional}. If the value was resolved,
+   * the {@link Optional} will contain it. It will be {@code empty} otherwise.
+   * 
+   * @return the resolved value wrapped in an {@link Optional} if present. An
+   *         {@code empty} {@link Optional} otherwise.
+   */
   public Optional<T> toOptional() {
     return this.success;
   }
