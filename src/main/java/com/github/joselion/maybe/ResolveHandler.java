@@ -177,4 +177,29 @@ public final class ResolveHandler<T, E extends Exception> {
   public Optional<T> toOptional() {
     return this.success;
   }
+
+  /**
+   * Map the value to an {@link AutoCloseable} resource to use it in another
+   * {@code resolve} or {@code runEffect} that will close the resource at the
+   * end of the operation.
+   * <p>
+   * If the value is not present, the {@link ResourceHolder} returned will be
+   * empty. This means that further {@code resolve} or {@code runEffect}
+   * operations will not beexecuted either.
+   * 
+   * @param <R> the type of the {@link AutoCloseable} resource
+   * @param mapper the function to map the value to a resource
+   * @return a {@link ResourceHolder} with the mapped resource if the value is
+   *         present. An empty {@link ResourceHolder} otherwise
+   * 
+   * @see ResourceHolder#resolve(FunctionChecked)
+   * @see ResourceHolder#runEffect(ConsumerChecked)
+   */
+  public <R extends AutoCloseable> ResourceHolder<R> mapToResource(final Function<T, R> mapper) {
+    return ResourceHolder.from(
+      this.success.isPresent()
+        ? mapper.apply(this.success.get())
+        : null
+    );
+  }
 }
