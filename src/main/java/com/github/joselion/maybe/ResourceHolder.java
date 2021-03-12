@@ -36,13 +36,15 @@ public class ResourceHolder<R extends AutoCloseable> {
   }
 
   /**
-   * Resolves the value of a throwing operation using a {@link FunctionChecked}
-   * expression which has the previously prepared resource in the argument. The
-   * resource is automatically closed after the operation finishes, just like a
-   * common try-with-resources statement.
+   * If the resource is present, resolves the value of a throwing operation
+   * using a {@link FunctionChecked} expression which has the previously
+   * prepared resource in the argument. The resource is automatically closed
+   * after the operation finishes, just like a common try-with-resources
+   * statement.
    * <p>
    * Returs a {@link ResolveHandler} which allows to handle the possible error
-   * and return a safe value.
+   * and return a safe value. The returned handler has {@code nothing} if the
+   * resource is not present.
    * 
    * @param <T> the type of the value returned by the {@code resolver}
    * @param <E> the type of exception the {@code resolver} may throw
@@ -66,13 +68,15 @@ public class ResourceHolder<R extends AutoCloseable> {
   }
 
   /**
-   * Runs an effect that may throw an exception using a {@link ConsumerChecked}
-   * expression which has the previously prepared resource in the argument. The
-   * resource is automatically closed after the operation finishes, just like a
-   * common try-with-resources statement.
+   * If the resource is present, runs an effect that may throw an exception
+   * using a {@link ConsumerChecked} expression which has the previously
+   * prepared resource in the argument. The resource is automatically closed
+   * after the operation finishes, just like a common try-with-resources
+   * statement.
    * <p>
    * Returning then an {@link EffectHandler} which allows to handle the possible
-   * error.
+   * error. The returned handler has {@code nothing} if the resource is not
+   * present.
    * 
    * @param <E> the type of exception the {@code effect} may throw
    * @param effect the checked consumer operation to execute

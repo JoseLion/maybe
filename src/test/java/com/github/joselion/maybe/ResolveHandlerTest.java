@@ -1,13 +1,17 @@
 package com.github.joselion.maybe;
 
+import static org.assertj.core.api.Assertions.as;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.InstanceOfAssertFactories.INPUT_STREAM;
 import static org.assertj.core.api.InstanceOfAssertFactories.optional;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.EOFException;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 
 import com.github.joselion.maybe.helpers.UnitTest;
 import com.github.joselion.maybe.util.SupplierChecked;
@@ -21,6 +25,8 @@ public class ResolveHandlerTest {
   private static final String SUCCESS = "success";
 
   private static final String ERROR = "error";
+
+  private static final String RESOURCE = "resource";
 
   private static final IOException FAIL_EXCEPTION = new IOException("FAIL");
 
@@ -321,6 +327,34 @@ public class ResolveHandlerTest {
     @Nested class when_the_value_is_NOT_present {
       @Test void returns_an_empty_optional() {
         assertThat(Maybe.resolve(throwingOp).toOptional()).isEmpty();
+      }
+    }
+  }
+
+  @Nested class mapToResource {
+    @Nested class when_the_value_is_present {
+      @Test void returns_a_resource_holder_with_the_mapped_value() {
+        final ResourceHolder<FileInputStream> resHolder = Maybe.just("./src/test/resources/readTest.txt")
+          .thenResolve(FileInputStream::new)
+          .mapToResource(Function.identity());
+
+        assertThat(resHolder)
+          .extracting(RESOURCE, optional(FileInputStream.class))
+          .containsInstanceOf(FileInputStream.class)
+          .get(as(INPUT_STREAM))
+          .hasContent("foo");
+      }
+    }
+
+    @Nested class when_the_error_is_NOT_present {
+      @Test void returns_an_empty_resource_holder() {
+        final ResourceHolder<FileInputStream> resHolder = Maybe.just("invalidFile.txt")
+          .thenResolve(FileInputStream::new)
+          .mapToResource(Function.identity());
+
+        assertThat(resHolder)
+          .extracting(RESOURCE, optional(FileInputStream.class))
+          .isEmpty();
       }
     }
   }
