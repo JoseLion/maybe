@@ -1,7 +1,11 @@
 package com.github.joselion.maybe;
 
+import java.util.Optional;
+
 import com.github.joselion.maybe.util.ConsumerChecked;
 import com.github.joselion.maybe.util.FunctionChecked;
+
+import org.eclipse.jdt.annotation.Nullable;
 
 /**
  * ResourceSpec is a "middle step" API that allows to resolve or run an effect
@@ -14,10 +18,10 @@ import com.github.joselion.maybe.util.FunctionChecked;
  */
 public class ResourceHolder<R extends AutoCloseable> {
 
-  private final R resource;
+  private final Optional<R> resource;
 
-  private ResourceHolder(final R resource) {
-    this.resource = resource;
+  private ResourceHolder(final @Nullable R resource) {
+    this.resource = Optional.ofNullable(resource);
   }
 
   /**
@@ -27,7 +31,7 @@ public class ResourceHolder<R extends AutoCloseable> {
    * @param resource the resource to instantiate the ResourceSpec with
    * @return a new instance of ResourceSpec with the give resource
    */
-  protected static <R extends AutoCloseable> ResourceHolder<R> from(final R resource) {
+  protected static <R extends AutoCloseable> ResourceHolder<R> from(final @Nullable R resource) {
     return new ResourceHolder<>(resource);
   }
 
@@ -47,7 +51,11 @@ public class ResourceHolder<R extends AutoCloseable> {
    *         exception to be handled
    */
   public <T, E extends Exception> ResolveHandler<T, E> resolve(final FunctionChecked<R, T, E> resolver) {
-    try (R resArg = this.resource) {
+    if (this.resource.isEmpty()) {
+      return ResolveHandler.withNothing();
+    }
+
+    try (R resArg = this.resource.get()) {
       return ResolveHandler.withSuccess(resolver.applyChecked(resArg));
     } catch (Exception e) {
       @SuppressWarnings("unchecked")
@@ -72,7 +80,11 @@ public class ResourceHolder<R extends AutoCloseable> {
    *         handled or nothing
    */
   public <E extends Exception> EffectHandler<E> runEffect(final ConsumerChecked<R, E> effect) {
-    try (R resArg = this.resource) {
+    if (this.resource.isEmpty()) {
+      return EffectHandler.withNothing();
+    }
+
+    try (R resArg = this.resource.get()) {
       effect.acceptChecked(resArg);
       return EffectHandler.withNothing();
     } catch (Exception e) {

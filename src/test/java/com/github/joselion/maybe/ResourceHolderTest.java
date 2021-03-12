@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.InstanceOfAssertFactories.optional;
 
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,8 +25,8 @@ public class ResourceHolderTest {
 
   @Nested class resolve {
     @Nested class when_the_operation_success {
-      @Test void returns_a_handler_with_the_value() throws FileNotFoundException {
-        final FileInputStream fis = new FileInputStream(FILE_PATH);
+      @Test void returns_a_handler_with_the_value() {
+        final FileInputStream fis = getFIS();
         final ResolveHandler<String, ?> handler = Maybe.withResource(fis)
           .resolve(res -> {
             assertThat(res)
@@ -51,8 +50,8 @@ public class ResourceHolderTest {
     }
 
     @Nested class when_the_operation_fails {
-      @Test void returns_a_handler_with_the_error() throws FileNotFoundException {
-        final FileInputStream fis = new FileInputStream(FILE_PATH);
+      @Test void returns_a_handler_with_the_error() {
+        final FileInputStream fis = getFIS();
         final IOException exception = new IOException("FAIL");
         final ResolveHandler<?, IOException> handler = Maybe.withResource(fis)
           .resolve(res -> {
@@ -80,9 +79,9 @@ public class ResourceHolderTest {
 
   @Nested class runEffect {
     @Nested class when_the_operation_success {
-      @Test void returns_a_handler_with_nothing() throws FileNotFoundException {
+      @Test void returns_a_handler_with_nothing() {
         final List<Integer> counter = new ArrayList<>();
-        final FileInputStream fis = new FileInputStream(FILE_PATH);
+        final FileInputStream fis = getFIS();
         final EffectHandler<?> handler = Maybe.withResource(fis)
           .runEffect(res -> {
             assertThat(res)
@@ -104,8 +103,8 @@ public class ResourceHolderTest {
     }
 
     @Nested class when_the_operation_fails {
-      @Test void returns_a_handler_with_the_error() throws FileNotFoundException {
-        final FileInputStream fis = new FileInputStream(FILE_PATH);
+      @Test void returns_a_handler_with_the_error() {
+        final FileInputStream fis = getFIS();
         final IOException exception = new IOException("FAIL");
         final EffectHandler<IOException> handler = Maybe.withResource(fis)
           .runEffect(res -> {
@@ -125,5 +124,11 @@ public class ResourceHolderTest {
           .hasMessage("Stream Closed");
       }
     }
+  }
+
+  private FileInputStream getFIS() {
+    return Maybe.just(FILE_PATH)
+      .thenResolve(FileInputStream::new)
+      .orThrow(Error::new);
   }
 }
