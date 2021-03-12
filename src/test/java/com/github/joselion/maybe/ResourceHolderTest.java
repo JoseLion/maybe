@@ -24,104 +24,138 @@ public class ResourceHolderTest {
   private static final String FILE_PATH = "./src/test/resources/readTest.txt";
 
   @Nested class resolve {
-    @Nested class when_the_operation_success {
-      @Test void returns_a_handler_with_the_value() {
-        final FileInputStream fis = getFIS();
-        final ResolveHandler<String, ?> handler = Maybe.withResource(fis)
+    @Nested class when_the_resource_is_NOT_present {
+      @Test void returns_a_handler_with_nothing() {
+        final ResolveHandler<AutoCloseable, Exception> handler = ResourceHolder.from(null)
           .resolve(res -> {
-            assertThat(res)
-              .isEqualTo(fis)
-              .hasContent("foo");
-            return "OK";
+            throw new AssertionError("The handler should not be executed!");
           });
 
         assertThat(handler)
-          .extracting(SUCCESS, optional(String.class))
-          .contains("OK");
-
-        assertThat(handler)
-          .extracting(ERROR, optional(RuntimeException.class))
+          .extracting(SUCCESS, optional(AutoCloseable.class))
           .isEmpty();
 
-        assertThatThrownBy(fis::read)
-          .isExactlyInstanceOf(IOException.class)
-          .hasMessage("Stream Closed");
+        assertThat(handler)
+          .extracting(ERROR, optional(Exception.class))
+          .isEmpty();
       }
     }
 
-    @Nested class when_the_operation_fails {
-      @Test void returns_a_handler_with_the_error() {
-        final FileInputStream fis = getFIS();
-        final IOException exception = new IOException("FAIL");
-        final ResolveHandler<?, IOException> handler = Maybe.withResource(fis)
-          .resolve(res -> {
-            assertThat(res)
-              .isEqualTo(fis)
-              .hasContent("foo");
-            throw exception;
-          });
+    @Nested class when_the_resource_is_present {
+      @Nested class when_the_operation_success {
+        @Test void returns_a_handler_with_the_value() {
+          final FileInputStream fis = getFIS();
+          final ResolveHandler<String, ?> handler = Maybe.withResource(fis)
+            .resolve(res -> {
+              assertThat(res)
+                .isEqualTo(fis)
+                .hasContent("foo");
+              return "OK";
+            });
 
-        assertThat(handler)
-          .extracting(SUCCESS, optional(Object.class))
-          .isEmpty();
+          assertThat(handler)
+            .extracting(SUCCESS, optional(String.class))
+            .contains("OK");
 
-        assertThat(handler)
-          .extracting(ERROR, optional(IOException.class))
-          .containsInstanceOf(IOException.class)
-          .contains(exception);
+          assertThat(handler)
+            .extracting(ERROR, optional(RuntimeException.class))
+            .isEmpty();
 
-        assertThatThrownBy(fis::read)
-          .isExactlyInstanceOf(IOException.class)
-          .hasMessage("Stream Closed");
+          assertThatThrownBy(fis::read)
+            .isExactlyInstanceOf(IOException.class)
+            .hasMessage("Stream Closed");
+        }
+      }
+
+      @Nested class when_the_operation_fails {
+        @Test void returns_a_handler_with_the_error() {
+          final FileInputStream fis = getFIS();
+          final IOException exception = new IOException("FAIL");
+          final ResolveHandler<?, IOException> handler = Maybe.withResource(fis)
+            .resolve(res -> {
+              assertThat(res)
+                .isEqualTo(fis)
+                .hasContent("foo");
+              throw exception;
+            });
+
+          assertThat(handler)
+            .extracting(SUCCESS, optional(Object.class))
+            .isEmpty();
+
+          assertThat(handler)
+            .extracting(ERROR, optional(IOException.class))
+            .containsInstanceOf(IOException.class)
+            .contains(exception);
+
+          assertThatThrownBy(fis::read)
+            .isExactlyInstanceOf(IOException.class)
+            .hasMessage("Stream Closed");
+        }
       }
     }
   }
 
   @Nested class runEffect {
-    @Nested class when_the_operation_success {
+    @Nested class when_the_resource_is_NOT_present {
       @Test void returns_a_handler_with_nothing() {
-        final List<Integer> counter = new ArrayList<>();
-        final FileInputStream fis = getFIS();
-        final EffectHandler<?> handler = Maybe.withResource(fis)
+        final EffectHandler<Exception> handler = ResourceHolder.from(null)
           .runEffect(res -> {
-            assertThat(res)
-              .isEqualTo(fis)
-              .hasContent("foo");
-            counter.add(1);
+            throw new AssertionError("The handler should not be executed!");
           });
 
-        assertThat(counter).containsExactly(1);
-
         assertThat(handler)
-          .extracting(ERROR, optional(RuntimeException.class))
+          .extracting(ERROR, optional(Exception.class))
           .isEmpty();
-
-        assertThatThrownBy(fis::read)
-          .isExactlyInstanceOf(IOException.class)
-          .hasMessage("Stream Closed");
       }
     }
 
-    @Nested class when_the_operation_fails {
-      @Test void returns_a_handler_with_the_error() {
-        final FileInputStream fis = getFIS();
-        final IOException exception = new IOException("FAIL");
-        final EffectHandler<IOException> handler = Maybe.withResource(fis)
-          .runEffect(res -> {
-            assertThat(res)
-              .isEqualTo(fis)
-              .hasContent("foo");
-            throw exception;
-          });
+    @Nested class when_the_resource_is_present {
+      @Nested class when_the_operation_success {
+        @Test void returns_a_handler_with_nothing() {
+          final List<Integer> counter = new ArrayList<>();
+          final FileInputStream fis = getFIS();
+          final EffectHandler<?> handler = Maybe.withResource(fis)
+            .runEffect(res -> {
+              assertThat(res)
+                .isEqualTo(fis)
+                .hasContent("foo");
+              counter.add(1);
+            });
 
-        assertThat(handler)
-          .extracting(ERROR, optional(IOException.class))
-          .containsInstanceOf(IOException.class)
-          .contains(exception);
+          assertThat(counter).containsExactly(1);
 
-        assertThatThrownBy(fis::read)
-          .isExactlyInstanceOf(IOException.class)
-          .hasMessage("Stream Closed");
+          assertThat(handler)
+            .extracting(ERROR, optional(RuntimeException.class))
+            .isEmpty();
+
+          assertThatThrownBy(fis::read)
+            .isExactlyInstanceOf(IOException.class)
+            .hasMessage("Stream Closed");
+        }
+      }
+
+      @Nested class when_the_operation_fails {
+        @Test void returns_a_handler_with_the_error() {
+          final FileInputStream fis = getFIS();
+          final IOException exception = new IOException("FAIL");
+          final EffectHandler<IOException> handler = Maybe.withResource(fis)
+            .runEffect(res -> {
+              assertThat(res)
+                .isEqualTo(fis)
+                .hasContent("foo");
+              throw exception;
+            });
+
+          assertThat(handler)
+            .extracting(ERROR, optional(IOException.class))
+            .containsInstanceOf(IOException.class)
+            .contains(exception);
+
+          assertThatThrownBy(fis::read)
+            .isExactlyInstanceOf(IOException.class)
+            .hasMessage("Stream Closed");
+        }
       }
     }
   }
