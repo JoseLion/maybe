@@ -1,7 +1,6 @@
 package com.github.joselion.maybe;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.InstanceOfAssertFactories.INPUT_STREAM;
 import static org.assertj.core.api.InstanceOfAssertFactories.optional;
 
 import java.io.FileInputStream;
@@ -115,16 +114,20 @@ public class MaybeTest {
   }
 
   @Nested class withResource {
-    @Test void returns_the_resource_spec_with_the_resource() throws IOException {
+    @Test void returns_the_resource_spec_with_the_resource() {
       try (
         AutoCloseableSoftAssertions softly = new AutoCloseableSoftAssertions();
-        FileInputStream fis = new FileInputStream("./src/test/resources/readTest.txt");
+        FileInputStream fis = Maybe.just("./src/test/resources/readTest.txt")
+          .thenResolve(FileInputStream::new)
+          .orThrow(Error::new);
       ) {
         softly.assertThat(Maybe.withResource(fis))
-          .extracting("resource", INPUT_STREAM)
-            .isExactlyInstanceOf(FileInputStream.class)
-            .isEqualTo(fis)
-            .hasContent("foo");
+          .extracting("resource", optional(FileInputStream.class))
+            .isPresent()
+            .containsInstanceOf(FileInputStream.class)
+            .containsSame(fis);
+      } catch (Exception error) {
+        throw new Error(error);
       }
     }
   }
