@@ -52,7 +52,7 @@ public class ResourceHolder<R extends AutoCloseable> {
    * @return a {@link ResolveHandler} with either the value resolved or the thrown
    *         exception to be handled
    */
-  public <T, E extends Exception> ResolveHandler<T, E> resolve(final FunctionChecked<R, T, E> resolver) {
+  public <T, E extends Exception> ResolveHandler<T, E> resolveClosing(final FunctionChecked<R, T, E> resolver) {
     if (this.resource.isEmpty()) {
       return ResolveHandler.withNothing();
     }
@@ -83,7 +83,7 @@ public class ResourceHolder<R extends AutoCloseable> {
    * @return an {@link EffectHandler} with either the thrown exception to be
    *         handled or nothing
    */
-  public <E extends Exception> EffectHandler<E> runEffect(final ConsumerChecked<R, E> effect) {
+  public <E extends Exception> EffectHandler<E> runEffectClosing(final ConsumerChecked<R, E> effect) {
     if (this.resource.isEmpty()) {
       return EffectHandler.withNothing();
     }

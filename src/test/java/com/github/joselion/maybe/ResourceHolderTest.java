@@ -23,11 +23,11 @@ public class ResourceHolderTest {
 
   private static final String FILE_PATH = "./src/test/resources/readTest.txt";
 
-  @Nested class resolve {
+  @Nested class resolveClosing {
     @Nested class when_the_resource_is_NOT_present {
       @Test void returns_a_handler_with_nothing() {
         final ResolveHandler<AutoCloseable, Exception> handler = ResourceHolder.from(null)
-          .resolve(res -> {
+          .resolveClosing(res -> {
             throw new AssertionError("The handler should not be executed!");
           });
 
@@ -46,7 +46,7 @@ public class ResourceHolderTest {
         @Test void returns_a_handler_with_the_value() {
           final FileInputStream fis = getFIS();
           final ResolveHandler<String, ?> handler = Maybe.withResource(fis)
-            .resolve(res -> {
+            .resolveClosing(res -> {
               assertThat(res)
                 .isEqualTo(fis)
                 .hasContent("foo");
@@ -72,7 +72,7 @@ public class ResourceHolderTest {
           final FileInputStream fis = getFIS();
           final IOException exception = new IOException("FAIL");
           final ResolveHandler<?, IOException> handler = Maybe.withResource(fis)
-            .resolve(res -> {
+            .resolveClosing(res -> {
               assertThat(res)
                 .isEqualTo(fis)
                 .hasContent("foo");
@@ -96,11 +96,11 @@ public class ResourceHolderTest {
     }
   }
 
-  @Nested class runEffect {
+  @Nested class runEffectClosing {
     @Nested class when_the_resource_is_NOT_present {
       @Test void returns_a_handler_with_nothing() {
         final EffectHandler<Exception> handler = ResourceHolder.from(null)
-          .runEffect(res -> {
+          .runEffectClosing(res -> {
             throw new AssertionError("The handler should not be executed!");
           });
 
@@ -116,7 +116,7 @@ public class ResourceHolderTest {
           final List<Integer> counter = new ArrayList<>();
           final FileInputStream fis = getFIS();
           final EffectHandler<?> handler = Maybe.withResource(fis)
-            .runEffect(res -> {
+            .runEffectClosing(res -> {
               assertThat(res)
                 .isEqualTo(fis)
                 .hasContent("foo");
@@ -140,7 +140,7 @@ public class ResourceHolderTest {
           final FileInputStream fis = getFIS();
           final IOException exception = new IOException("FAIL");
           final EffectHandler<IOException> handler = Maybe.withResource(fis)
-            .runEffect(res -> {
+            .runEffectClosing(res -> {
               assertThat(res)
                 .isEqualTo(fis)
                 .hasContent("foo");
