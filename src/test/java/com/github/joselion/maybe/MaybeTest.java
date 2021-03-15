@@ -17,6 +17,8 @@ import org.junit.jupiter.api.Test;
 @UnitTest
 public class MaybeTest {
 
+  private static final String VALUE = "value";
+
   private static final String SUCCESS = "success";
 
   private static final String ERROR = "error";
@@ -26,7 +28,9 @@ public class MaybeTest {
       @Test void returns_the_monad_with_the_value() {
         final Maybe<String> maybe = Maybe.just("foo");
 
-        assertThat(maybe).extracting(SUCCESS, optional(String.class)).contains("foo");
+        assertThat(maybe)
+          .extracting(VALUE, optional(String.class))
+          .contains("foo");
       }
     }
 
@@ -34,7 +38,9 @@ public class MaybeTest {
       @Test void there_is_nothing_in_the_monad() {
         final Maybe<Object> maybe = Maybe.just(null);
 
-        assertThat(maybe).extracting(SUCCESS, optional(Object.class)).isEmpty();
+        assertThat(maybe)
+          .extracting(VALUE, optional(Object.class))
+          .isEmpty();
       }
     }
   }
@@ -44,7 +50,9 @@ public class MaybeTest {
     @Test void there_is_nothing_in_the_monad() {
       Maybe<Object> maybe = Maybe.nothing();
 
-      assertThat(maybe).extracting(SUCCESS, optional(Object.class)).isEmpty();
+      assertThat(maybe)
+      .extracting(VALUE, optional(Object.class))
+      .isEmpty();
     }
   }
 
@@ -138,7 +146,7 @@ public class MaybeTest {
         final Maybe<Integer> maybe = Maybe.just("OK").map(String::length);
 
         assertThat(maybe)
-          .extracting(SUCCESS, optional(Integer.class))
+          .extracting(VALUE, optional(Integer.class))
             .containsInstanceOf(Integer.class)
             .contains(2);
       }
@@ -149,7 +157,7 @@ public class MaybeTest {
         Maybe<Integer> maybe = Maybe.<String>nothing().map(String::length);
 
         assertThat(maybe)
-          .extracting(SUCCESS, optional(IOException.class))
+          .extracting(VALUE, optional(IOException.class))
           .isEmpty();
       }
     }
@@ -161,7 +169,7 @@ public class MaybeTest {
         final Maybe<Integer> maybe = Maybe.just("OK").flatMap(str -> Maybe.just(str.length()));
 
         assertThat(maybe)
-          .extracting(SUCCESS, optional(Integer.class))
+          .extracting(VALUE, optional(Integer.class))
           .containsInstanceOf(Integer.class)
           .contains(2);
       }
@@ -173,7 +181,7 @@ public class MaybeTest {
           .flatMap(str -> Maybe.just(str.length()));
 
         assertThat(maybe)
-          .extracting(SUCCESS, optional(Integer.class))
+          .extracting(VALUE, optional(Integer.class))
           .isEmpty();
       }
     }
@@ -316,7 +324,7 @@ public class MaybeTest {
         final Maybe<Number> maybe = Maybe.<Number>just(3);
 
         assertThat(maybe.cast(Integer.class))
-          .extracting(SUCCESS, optional(Integer.class))
+          .extracting(VALUE, optional(Integer.class))
           .containsInstanceOf(Integer.class)
           .contains(3);
       }
@@ -327,7 +335,7 @@ public class MaybeTest {
         final Maybe<String> maybe = Maybe.just("3");
 
         assertThat(maybe.cast(Integer.class))
-          .extracting(SUCCESS, optional(Integer.class))
+          .extracting(VALUE, optional(Integer.class))
           .isEmpty();
       }
     }
