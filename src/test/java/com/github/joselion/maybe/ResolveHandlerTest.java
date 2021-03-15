@@ -26,6 +26,8 @@ public class ResolveHandlerTest {
 
   private static final String ERROR = "error";
 
+  private static final String VALUE = "value";
+
   private static final String RESOURCE = "resource";
 
   private static final IOException FAIL_EXCEPTION = new IOException("FAIL");
@@ -301,7 +303,7 @@ public class ResolveHandlerTest {
         assertThat(
           Maybe.resolve(okOp).toMaybe()
         )
-        .extracting(SUCCESS, optional(String.class))
+        .extracting(VALUE, optional(String.class))
         .contains("OK");
       }
     }
@@ -311,7 +313,7 @@ public class ResolveHandlerTest {
         assertThat(
           Maybe.resolve(throwingOp).toMaybe()
         )
-        .extracting(SUCCESS, optional(String.class))
+        .extracting(VALUE, optional(String.class))
         .isEmpty();
       }
     }

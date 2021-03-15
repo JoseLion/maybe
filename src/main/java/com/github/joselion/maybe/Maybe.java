@@ -22,10 +22,10 @@ import org.eclipse.jdt.annotation.Nullable;
  */
 public final class Maybe<T> {
 
-  private final Optional<T> success;
+  private final Optional<T> value;
 
-  private Maybe(final @Nullable T success) {
-    this.success = Optional.ofNullable(success);
+  private Maybe(final @Nullable T value) {
+    this.value = Optional.ofNullable(value);
   }
 
   /**
@@ -111,38 +111,40 @@ public final class Maybe<T> {
   }
 
   /**
-   * Maps the current success value of the monad to another value using the
-   * provided {@link Function} mapper.
+   * Maps the value of the monad, if present, to another value using the
+   * provided {@link Function} mapper. Otherwise, ignores the mapper and
+   * returns {@link #nothing()}.
    * 
-   * @param <U>    the type the success value will be mapped to
+   * @param <U>    the type the value will be mapped to
    * @param mapper the mapper function
-   * @return a {@code Maybe} with the mapped value if success is present,
+   * @return a {@code Maybe} with the mapped value if present,
    *         {@link #nothing()} otherwise
    */
   public <U> Maybe<U> map(final Function<T, U> mapper) {
-    if (success.isPresent()) {
-      return Maybe.just(mapper.apply(success.get()));
+    if (value.isPresent()) {
+      return Maybe.just(mapper.apply(value.get()));
     }
 
     return nothing();
   }
 
   /**
-   * Maps the current success value of the monad to another value using the
-   * provided {@link Function} mapper.
+   * Maps the value of the monad, if present, to another value using the
+   * provided {@link Function} mapper. Otherwise, ignores the mapper and
+   * returns {@link #nothing()}.
    * 
    * This method is similar to {@link #map(Function)}, but the mapping function is
    * one whose result is already a {@code Maybe}, and if invoked, flatMap does not
    * wrap it within an additional {@code Maybe}.
    * 
-   * @param <U>    the type the success value will be mapped to
+   * @param <U>    the type the value will be mapped to
    * @param mapper the mapper function
-   * @return a {@code Maybe} with the mapped value if success is present,
+   * @return a {@code Maybe} with the mapped value if present,
    *         {@link #nothing()} otherwise
    */
   public <U> Maybe<U> flatMap(final Function<T, Maybe<U>> mapper) {
-    if (success.isPresent()) {
-      return mapper.apply(success.get());
+    if (value.isPresent()) {
+      return mapper.apply(value.get());
     }
 
     return nothing();
@@ -160,8 +162,8 @@ public final class Maybe<T> {
    *         exception to be handled
    */
   public <U, E extends Exception> ResolveHandler<U, E> thenResolve(final FunctionChecked<T, U, E> resolver) {
-    if (success.isPresent()) {
-      return Maybe.resolve(() -> resolver.applyChecked(success.get()));
+    if (value.isPresent()) {
+      return Maybe.resolve(() -> resolver.applyChecked(value.get()));
     }
 
     return ResolveHandler.withNothing();
@@ -177,8 +179,8 @@ public final class Maybe<T> {
    *         handled or nothing
    */
   public <E extends Exception> EffectHandler<E> thenRunEffect(final ConsumerChecked<T, E> effect) {
-    if (success.isPresent()) {
-      return Maybe.runEffect(() -> effect.acceptChecked(success.get()));
+    if (value.isPresent()) {
+      return Maybe.runEffect(() -> effect.acceptChecked(value.get()));
     }
 
     return EffectHandler.withNothing();
@@ -196,8 +198,8 @@ public final class Maybe<T> {
    */
   public <U> Maybe<U> cast(final Class<U> type) {
     try {
-      final T value = success.orElseThrow();
-      final U newValue = type.cast(value);
+      final T finalValue = this.value.orElseThrow();
+      final U newValue = type.cast(finalValue);
 
       return Maybe.just(newValue);
     } catch (RuntimeException e) {
@@ -208,20 +210,19 @@ public final class Maybe<T> {
   /**
    * Checks if the {@code Maybe} has a value.
    * 
-   * @return true if a value is present, false otherwise
+   * @return true if the value is present, false otherwise
    */
   public boolean hasValue() {
-    return success.isPresent();
+    return value.isPresent();
   }
 
   /**
    * Checks if the {@code Maybe} has nothing. That is, when no value is present.
    * 
-   * @return true if both success value and failure exception are not present,
-   *         false otherwise
+   * @return true if the value is NOT present, false otherwise
    */
   public boolean hasNothing() {
-    return success.isEmpty();
+    return value.isEmpty();
   }
 
   /**
@@ -231,7 +232,7 @@ public final class Maybe<T> {
    * @return an {@code Optional} with the value of the monad, if preset.
    */
   public Optional<T> toOptional() {
-    return success;
+    return value;
   }
 
   /**
@@ -254,7 +255,7 @@ public final class Maybe<T> {
 
     if (obj instanceof Maybe) {
       final Maybe<?> other = (Maybe<?>) obj;
-      return other.toOptional().equals(success);
+      return other.toOptional().equals(value);
     }
 
     return false;
@@ -268,7 +269,7 @@ public final class Maybe<T> {
    */
   @Override
   public int hashCode() {
-    return success.hashCode();
+    return value.hashCode();
   }
 
   /**
@@ -280,8 +281,8 @@ public final class Maybe<T> {
    */
   @Override
   public String toString() {
-    return success.isPresent()
-      ? String.format("Maybe[%s]", success.get())
+    return value.isPresent()
+      ? String.format("Maybe[%s]", value.get())
       : "Maybe.nothing";
   }
 }
