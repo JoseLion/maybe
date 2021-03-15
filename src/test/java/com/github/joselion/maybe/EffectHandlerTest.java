@@ -19,7 +19,7 @@ public class EffectHandlerTest {
 
   private static final String ERROR = "error";
 
-  private static final String SUCCESS = "success";
+  private static final String VALUE = "value";
 
   private static final IOException FAIL_EXCEPTION = new IOException("FAIL");
 
@@ -165,7 +165,7 @@ public class EffectHandlerTest {
       assertThat(
         Maybe.runEffect(throwingOp).toMaybe()
       )
-      .extracting(SUCCESS, optional(Void.class))
+      .extracting(VALUE, optional(Void.class))
       .isEmpty();
     }
   }
