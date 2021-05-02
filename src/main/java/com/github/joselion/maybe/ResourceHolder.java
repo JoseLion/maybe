@@ -8,10 +8,10 @@ import com.github.joselion.maybe.util.FunctionChecked;
 import org.eclipse.jdt.annotation.Nullable;
 
 /**
- * ResourceSpec is a "middle step" API that allows to resolve or run an effect
+ * ResourceHolder is a "middle step" API that allows to resolve or run an effect
  * usinga previously passed {@link AutoCloseable} resource. This resource will
- * be automatically closed after the {@code resolve} or the {@code runEffect}
- * operation is finished.
+ * be automatically closed after the {@code resolveClosing} or the
+ * {@code runEffectClosing} operations are finished.
  * 
  * @author Jose Luis Leon
  * @since v1.3.0
@@ -25,11 +25,11 @@ public class ResourceHolder<R extends AutoCloseable> {
   }
 
   /**
-   * Internal use method to instatiate a ResourceSpec froma given resource.
+   * Internal use method to instatiate a ResourceHolder froma given resource.
    * 
    * @param <R> the type of the resource
-   * @param resource the resource to instantiate the ResourceSpec with
-   * @return a new instance of ResourceSpec with the give resource
+   * @param resource the resource to instantiate the ResourceHolder with
+   * @return a new instance of ResourceHolder with the give resource
    */
   protected static <R extends AutoCloseable> ResourceHolder<R> from(final @Nullable R resource) {
     return new ResourceHolder<>(resource);
