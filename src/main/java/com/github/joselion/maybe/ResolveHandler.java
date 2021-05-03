@@ -3,6 +3,7 @@ package com.github.joselion.maybe;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 import org.eclipse.jdt.annotation.Nullable;
 
@@ -123,12 +124,41 @@ public final class ResolveHandler<T, E extends Exception> {
    * If neither the value nor the error is present, it returns an empty handler.
    * 
    * @param <U> the type the value will be mapped to
-   * @param mapper a function to map the current value to another (if present)
-   * @return a new handler with the mapped value, the previous error, or nothing
+   * @param mapper a function to map the value to another (if present)
+   * @return a new handler with either the mapped value, the previous error, or
+   *         nothing
    */
   public <U> ResolveHandler<U, E> map(final Function<T, U> mapper) {
     if (success.isPresent()) {
       return withSuccess(mapper.apply(success.get()));
+    }
+
+    if (error.isPresent()) {
+      return withError(error.get());
+    }
+
+    return withNothing();
+  }
+
+  /**
+   * If a value is present, and the value matches the given {@code predicate},
+   * returns a new handler with the value, otherwise returns an empty handler.
+   * If the error is present, the {@code predicate} is never applied and, the
+   * next handler will still contain the error.
+   * <p>
+   * If neither the value nor the error is present, it returns an empty handler.
+   * 
+   * @param predicate a predicate to apply to the value (if present)
+   * @return a new handler with either the value if it matched the predicate,
+   *         the previous error, or nothing
+   */
+  public ResolveHandler<T, E> filter(final Predicate<T> predicate) {
+    if (success.isPresent()) {
+      final T value = success.get();
+
+      return predicate.test(value)
+        ? withSuccess(value)
+        : withNothing();
     }
 
     if (error.isPresent()) {

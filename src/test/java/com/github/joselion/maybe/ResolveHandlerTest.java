@@ -11,6 +11,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Function;
 
 import com.github.joselion.maybe.helpers.UnitTest;
@@ -240,7 +241,7 @@ import org.junit.jupiter.api.Test;
   @Nested class map {
     @Nested class when_the_value_is_present {
       @Test void returns_a_new_handler_applying_the_mapper_function() {
-        final ResolveHandler<Integer, Exception> handler = ResolveHandler.withSuccess("Hello world!")
+        final ResolveHandler<Integer, ?> handler = ResolveHandler.withSuccess("Hello world!")
           .map(String::length);
 
         assertThat(handler)
@@ -272,6 +273,70 @@ import org.junit.jupiter.api.Test;
       @Test void returns_an_empty_handler() {
         final ResolveHandler<?, ?> handler = ResolveHandler.withNothing()
           .map(Object::toString);
+
+        assertThat(handler)
+          .extracting(SUCCESS, optional(String.class))
+          .isEmpty();
+
+        assertThat(handler)
+          .extracting(ERROR, optional(Exception.class))
+          .isEmpty();
+      }
+    }
+  }
+
+  @Nested class filter {
+    @Nested class when_the_value_is_present {
+      @Nested class and_the_predicate_matches {
+        @Test void returns_a_new_handler_with_the_value() {
+          final ResolveHandler<String, ?> handler = ResolveHandler.withSuccess("Hello world!")
+            .filter(it -> it.contains("world"));
+
+          assertThat(handler)
+            .extracting(SUCCESS, optional(String.class))
+            .contains("Hello world!");
+
+          assertThat(handler)
+            .extracting(ERROR, optional(Exception.class))
+            .isEmpty();
+        }
+      }
+
+      @Nested class and_the_predicate_does_NOT_match {
+        @Test void returns_an_empty_handler() {
+          final ResolveHandler<String, ?> handler = ResolveHandler.withSuccess("Hello world!")
+            .filter(it -> it.contains("planet"));
+
+          assertThat(handler)
+            .extracting(SUCCESS, optional(String.class))
+            .isEmpty();
+
+          assertThat(handler)
+            .extracting(ERROR, optional(Exception.class))
+            .isEmpty();
+        }
+      }
+    }
+
+    @Nested class when_the_error_is_present {
+      @Test void returns_a_new_handler_with_the_previous_error() {
+        final ResolveHandler<?, IOException> handler = ResolveHandler.withError(FAIL_EXCEPTION)
+          .filter(Objects::isNull);
+
+        assertThat(handler)
+          .extracting(SUCCESS, optional(String.class))
+          .isEmpty();
+
+        assertThat(handler)
+          .extracting(ERROR, optional(IOException.class))
+          .contains(FAIL_EXCEPTION);
+      }
+    }
+
+    @Nested class when_neither_the_value_nor_the_error_is_present {
+      @Test void returns_an_empty_handler() {
+        final ResolveHandler<?, ?> handler = ResolveHandler.withNothing()
+          .filter(Objects::isNull);
 
         assertThat(handler)
           .extracting(SUCCESS, optional(String.class))
