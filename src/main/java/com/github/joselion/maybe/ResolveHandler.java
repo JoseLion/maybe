@@ -116,6 +116,29 @@ public final class ResolveHandler<T, E extends Exception> {
   }
 
   /**
+   * If the value is present, map it to another value through the {@code mapper}
+   * function. If the error is present, the {@code mapper} is never applied and,
+   * the next handler will still contain the error.
+   * <p>
+   * If neither the value nor the error is present, it returns an empty handler.
+   * 
+   * @param <U> the type the value will be mapped to
+   * @param mapper a function to map the current value to another (if present)
+   * @return a new handler with the mapped value, the previous error, or nothing
+   */
+  public <U> ResolveHandler<U, E> map(final Function<T, U> mapper) {
+    if (success.isPresent()) {
+      return withSuccess(mapper.apply(success.get()));
+    }
+
+    if (error.isPresent()) {
+      return withError(error.get());
+    }
+
+    return withNothing();
+  }
+
+  /**
    * Returns the value resolved/handled if present. A default value otherwise.
    * 
    * @param defaultValue the value to return if {@code resolve} failed and/or

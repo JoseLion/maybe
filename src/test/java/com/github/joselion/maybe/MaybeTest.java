@@ -14,8 +14,7 @@ import org.assertj.core.api.AutoCloseableSoftAssertions;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-@UnitTest
-public class MaybeTest {
+@UnitTest class MaybeTest {
 
   private static final String VALUE = "value";
 
