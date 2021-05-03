@@ -255,10 +255,11 @@ import org.junit.jupiter.api.Test;
 
     @Nested class when_the_error_is_present {
       @Test void returns_a_new_handler_with_the_previous_error() {
-        final ResolveHandler<?, IOException> handler = ResolveHandler.withError(FAIL_EXCEPTION);
+        final ResolveHandler<?, IOException> handler = ResolveHandler.withError(FAIL_EXCEPTION)
+          .map(Object::toString);
 
         assertThat(handler)
-          .extracting(SUCCESS, optional(Object.class))
+          .extracting(SUCCESS, optional(String.class))
           .isEmpty();
 
         assertThat(handler)
@@ -269,10 +270,11 @@ import org.junit.jupiter.api.Test;
 
     @Nested class when_neither_the_value_nor_the_error_is_present {
       @Test void returns_an_empty_handler() {
-        final ResolveHandler<?, ?> handler = ResolveHandler.withNothing();
+        final ResolveHandler<?, ?> handler = ResolveHandler.withNothing()
+          .map(Object::toString);
 
         assertThat(handler)
-          .extracting(SUCCESS, optional(Object.class))
+          .extracting(SUCCESS, optional(String.class))
           .isEmpty();
 
         assertThat(handler)
