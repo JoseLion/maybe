@@ -14,8 +14,7 @@ import com.github.joselion.maybe.util.RunnableChecked;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-@UnitTest
-public class EffectHandlerTest {
+@UnitTest class EffectHandlerTest {
 
   private static final String ERROR = "error";
 

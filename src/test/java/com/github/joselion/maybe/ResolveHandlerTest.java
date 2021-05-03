@@ -19,8 +19,7 @@ import com.github.joselion.maybe.util.SupplierChecked;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-@UnitTest
-public class ResolveHandlerTest {
+@UnitTest class ResolveHandlerTest {
 
   private static final String SUCCESS = "success";
 
@@ -233,6 +232,51 @@ public class ResolveHandlerTest {
 
         assertThat(handler)
           .extracting(ERROR, optional(IOException.class))
+          .isEmpty();
+      }
+    }
+  }
+
+  @Nested class map {
+    @Nested class when_the_value_is_present {
+      @Test void returns_a_new_handler_applying_the_mapper_function() {
+        final ResolveHandler<Integer, Exception> handler = ResolveHandler.withSuccess("Hello world!")
+          .map(String::length);
+
+        assertThat(handler)
+          .extracting(SUCCESS, optional(Integer.class))
+          .contains(12);
+
+        assertThat(handler)
+          .extracting(ERROR, optional(Exception.class))
+          .isEmpty();
+      }
+    }
+
+    @Nested class when_the_error_is_present {
+      @Test void returns_a_new_handler_with_the_previous_error() {
+        final ResolveHandler<?, IOException> handler = ResolveHandler.withError(FAIL_EXCEPTION);
+
+        assertThat(handler)
+          .extracting(SUCCESS, optional(Object.class))
+          .isEmpty();
+
+        assertThat(handler)
+          .extracting(ERROR, optional(IOException.class))
+          .contains(FAIL_EXCEPTION);
+      }
+    }
+
+    @Nested class when_neither_the_value_nor_the_error_is_present {
+      @Test void returns_an_empty_handler() {
+        final ResolveHandler<?, ?> handler = ResolveHandler.withNothing();
+
+        assertThat(handler)
+          .extracting(SUCCESS, optional(Object.class))
+          .isEmpty();
+
+        assertThat(handler)
+          .extracting(ERROR, optional(Exception.class))
           .isEmpty();
       }
     }

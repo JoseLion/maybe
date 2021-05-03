@@ -14,8 +14,7 @@ import com.github.joselion.maybe.helpers.UnitTest;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-@UnitTest
-public class ResourceHolderTest {
+@UnitTest class ResourceHolderTest {
 
   private static final String SUCCESS = "success";
 
