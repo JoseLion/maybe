@@ -5,6 +5,8 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+import com.github.joselion.maybe.exceptions.WrappingException;
+
 import org.eclipse.jdt.annotation.Nullable;
 
 /**
@@ -163,6 +165,37 @@ public final class ResolveHandler<T, E extends Exception> {
 
     if (error.isPresent()) {
       return withError(error.get());
+    }
+
+    return withNothing();
+  }
+
+  /**
+   * If the value is present, cast the value to anoter type. If the cast fails
+   * or if the error is present, it returns a new handler which contains a
+   * {@link WrappingException} instance. The type of the wrapped exception will
+   * be a {@link ClassCastException} if the cast operation failed, or the
+   * previous expection type {@link E} given it was present.
+   * <p>
+   * If neither the value nor the error is present, it returns an empty handler.
+   * 
+   * @param <U> the type the value will be cast to
+   * @param type the class instance of the type to cast
+   * @return a new handler with either the cast value, a {@link WrappingException},
+   *         or nothing
+   */
+  public <U> ResolveHandler<U, WrappingException> cast(final Class<U> type) {
+    if (success.isPresent()) {
+      try {
+        final U newValue = type.cast(success.get());
+        return withSuccess(newValue);
+      } catch (ClassCastException e) {
+        return withError(WrappingException.of(e));
+      }
+    }
+
+    if (error.isPresent()) {
+      return withError(WrappingException.of(error.get()));
     }
 
     return withNothing();
