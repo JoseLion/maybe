@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 
+import com.github.joselion.maybe.exceptions.WrappingException;
 import com.github.joselion.maybe.helpers.UnitTest;
 import com.github.joselion.maybe.util.SupplierChecked;
 
@@ -337,6 +338,77 @@ import org.junit.jupiter.api.Test;
       @Test void returns_an_empty_handler() {
         final ResolveHandler<?, ?> handler = ResolveHandler.withNothing()
           .filter(Objects::isNull);
+
+        assertThat(handler)
+          .extracting(SUCCESS, optional(String.class))
+          .isEmpty();
+
+        assertThat(handler)
+          .extracting(ERROR, optional(Exception.class))
+          .isEmpty();
+      }
+    }
+  }
+
+  @Nested class cast {
+    @Nested class when_the_value_is_present {
+      @Nested class and_the_object_can_be_cast {
+        @Test void returns_a_new_handler_with_the_cast_value() {
+          final Object anyValue = "Hello";
+          final ResolveHandler<String, WrappingException> handler = ResolveHandler.withSuccess(anyValue)
+            .cast(String.class);
+
+          assertThat(handler)
+            .extracting(SUCCESS, optional(String.class))
+            .containsInstanceOf(String.class)
+            .contains("Hello");
+
+          assertThat(handler)
+            .extracting(ERROR, optional(WrappingException.class))
+            .isEmpty();
+        }
+      }
+
+      @Nested class and_the_object_can_NOT_be_cast {
+        @Test void returns_a_new_handler_with_the_cast_exception() {
+          final Object anyValue = 3;
+          final ResolveHandler<String, WrappingException> handler = ResolveHandler.withSuccess(anyValue)
+            .cast(String.class);
+
+          assertThat(handler)
+            .extracting(SUCCESS, optional(String.class))
+            .isEmpty();
+
+          assertThat(handler)
+            .extracting(ERROR, optional(WrappingException.class))
+            .map(WrappingException::getCause)
+            .containsInstanceOf(ClassCastException.class)
+            .isNotEmpty();
+        }
+      }
+    }
+
+    @Nested class when_the_error_is_present {
+      @Test void returns_a_new_handler_with_a_cast_exception() {
+        final ResolveHandler<String, WrappingException> handler = ResolveHandler.withError(FAIL_EXCEPTION)
+            .cast(String.class);
+
+        assertThat(handler)
+          .extracting(SUCCESS, optional(String.class))
+          .isEmpty();
+
+        assertThat(handler)
+          .extracting(ERROR, optional(WrappingException.class))
+          .map(WrappingException::getCause)
+          .containsInstanceOf(IOException.class)
+          .isNotEmpty();
+      }
+    }
+
+    @Nested class when_neither_the_value_nor_the_error_is_present {
+      @Test void returns_an_empty_handler() {
+        final ResolveHandler<?, ?> handler = ResolveHandler.withNothing()
+          .cast(String.class);
 
         assertThat(handler)
           .extracting(SUCCESS, optional(String.class))

@@ -192,7 +192,7 @@ public final class Maybe<T> {
    * returned.
    * 
    * @param <U>  the type that the value will be cast to
-   * @param type a class instance of the type to cast
+   * @param type the class instance of the type to cast
    * @return a new {@code Maybe} with the cast value if it can be cast,
    *         {@link #nothing()} otherwise
    */
