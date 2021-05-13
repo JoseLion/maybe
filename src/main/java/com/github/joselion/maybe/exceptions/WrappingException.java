@@ -6,6 +6,9 @@ package com.github.joselion.maybe.exceptions;
  * more than one type of exception. The wrapped exception can be retrieved from
  * either the {@link #wrapped()} or the {@link #getCause()} method.
  * 
+ * The goal of this class is for users to know that the exception has changed
+ * types, and now it's wrapped to preserve it's information.
+ * 
  * @author Jose Luis Leon
  * @since v1.6.0
  */
