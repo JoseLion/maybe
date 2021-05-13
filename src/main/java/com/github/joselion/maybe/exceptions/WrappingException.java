@@ -11,22 +11,34 @@ package com.github.joselion.maybe.exceptions;
  */
 public class WrappingException extends Exception {
 
+  /**
+   * The exception this class is wrapping
+   */
   private final Throwable wrapped;
 
   private WrappingException(final Throwable wrapped) {
+    super(wrapped);
     this.wrapped = wrapped;
   }
 
+  /**
+   * Creates a new {@link WrappingException} instance using the provided
+   * exception.
+   * 
+   * @param wrapped the exception to wrap in the new instance
+   * @return a new {@link WrappingException} instance with the passed exception
+   */
   public static WrappingException of(final Throwable wrapped) {
     return new WrappingException(wrapped);
   }
 
+  /**
+   * Returns the wrapped exception of this instance. The same result can be
+   * obtained by using the inherited method {@link #getCause()}.
+   * 
+   * @return the wrapped expection of this instance
+   */
   public final Throwable wrapped() {
-    return this.wrapped;
-  }
-
-  @Override
-  public synchronized Throwable getCause() {
     return this.wrapped;
   }
 }
