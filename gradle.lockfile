@@ -1,14 +1,13 @@
 # This is a Gradle generated file for dependency locking.
 # Manual edits can break the build and are not advised.
 # This file is expected to be part of source control.
-antlr:antlr:2.7.7=checkstyle
 com.google.code.findbugs:jsr305:3.0.2=checkstyle,compileClasspath,sonarlint
 com.google.errorprone:error_prone_annotations:2.5.1=checkstyle
 com.google.guava:failureaccess:1.0.1=checkstyle
 com.google.guava:guava:30.1.1-jre=checkstyle
 com.google.guava:listenablefuture:9999.0-empty-to-avoid-conflict-with-guava=checkstyle
 com.google.j2objc:j2objc-annotations:1.3=checkstyle
-com.puppycrawl.tools:checkstyle:8.45.1=checkstyle
+com.puppycrawl.tools:checkstyle:9.0=checkstyle
 commons-beanutils:commons-beanutils:1.9.4=checkstyle
 commons-collections:commons-collections:3.2.2=checkstyle
 commons-lang:commons-lang:2.6=sonarlint

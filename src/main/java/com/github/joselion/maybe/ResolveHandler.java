@@ -120,7 +120,7 @@ public final class ResolveHandler<T, E extends Exception> {
 
   /**
    * If the value is present, map it to another value through the {@code mapper}
-   * function. If the error is present, the {@code mapper} is never applied and,
+   * function. If the error is present, the {@code mapper} is never applied and
    * the next handler will still contain the error.
    * <p>
    * If neither the value nor the error is present, it returns an empty handler.
