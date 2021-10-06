@@ -1,15 +1,15 @@
 package com.github.joselion.maybe;
 
-import com.github.joselion.maybe.util.ConsumerChecked;
-import com.github.joselion.maybe.util.FunctionChecked;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 import com.github.joselion.maybe.exceptions.WrappingException;
+import com.github.joselion.maybe.util.ConsumerChecked;
+import com.github.joselion.maybe.util.FunctionChecked;
 
-import java.util.function.Supplier;
 import org.eclipse.jdt.annotation.Nullable;
 
 /**
