@@ -443,6 +443,28 @@ import org.junit.jupiter.api.Test;
     }
   }
 
+  @Nested class orSupplyDefault {
+    @Nested class when_the_value_is_present {
+      @Test void returns_the_value() {
+        assertThat(
+            Maybe.resolve(okOp)
+                .orSupplyDefault(() -> "OTHER")
+        )
+            .isEqualTo("OK");
+      }
+    }
+
+    @Nested class when_the_value_is_NOT_present {
+      @Test void returns_the_default_value() {
+        assertThat(
+            Maybe.resolve(throwingOp)
+                .orSupplyDefault(() -> "OTHER")
+        )
+            .isEqualTo("OTHER");
+      }
+    }
+  }
+
   @Nested class orThrow {
     @Nested class when_the_value_is_present {
       @Test void returns_the_value() throws EOFException {

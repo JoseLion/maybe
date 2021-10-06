@@ -4,15 +4,18 @@ import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 import com.github.joselion.maybe.exceptions.WrappingException;
+import com.github.joselion.maybe.util.ConsumerChecked;
+import com.github.joselion.maybe.util.FunctionChecked;
 
 import org.eclipse.jdt.annotation.Nullable;
 
 /**
- * ResolveHandler is an API to handle the posible error of a {@link Maybe}'s
+ * ResolveHandler is an API to handle the possible error of a {@link Maybe}'s
  * resolve operation. It can return back to maybe to continue linking operations,
- * or use termimal methods to return a safe value.
+ * or use terminal methods to return a safe value.
  * 
  * @param <T> the type of the value passed through the {@code Maybe}
  * @param <E> the type of exception that the resolve operation may throw
@@ -32,7 +35,7 @@ public final class ResolveHandler<T, E extends Exception> {
   }
 
   /**
-   * Internal use method to instanciate a ResolveHandler with a success value
+   * Internal use method to instantiate a ResolveHandler with a success value
    * 
    * @param <T> the type of the success value
    * @param <E> the type of the possible exception
@@ -44,11 +47,11 @@ public final class ResolveHandler<T, E extends Exception> {
   }
 
   /**
-   * Internal use method to instanciate a ResolveHandler with an error value
+   * Internal use method to instantiate a ResolveHandler with an error value
    * 
    * @param <T> the type of the success value
    * @param <E> the type of the possible exception
-   * @param error the error to instanciate the ResolveHandler
+   * @param error the error to instantiate the ResolveHandler
    * @return a ResolveHandler instance with an error value
    */
   protected static <T, E extends Exception> ResolveHandler<T, E> withError(final E error) {
@@ -56,7 +59,7 @@ public final class ResolveHandler<T, E extends Exception> {
   }
 
   /**
-   * Internal use method to instanciate a ResolveHandler neither with a success
+   * Internal use method to instantiate a ResolveHandler neither with a success
    * nor with an error value
    * 
    * @param <T> the type of the success value
@@ -75,9 +78,7 @@ public final class ResolveHandler<T, E extends Exception> {
    * @return The same handler to continue chainning operations
    */
   public ResolveHandler<T, E> doOnError(final Consumer<? super Throwable> effect) {
-    if (error.isPresent()) {
-      effect.accept(error.get());
-    }
+    error.ifPresent(effect);
 
     return this;
   }
@@ -213,6 +214,17 @@ public final class ResolveHandler<T, E extends Exception> {
   }
 
   /**
+   * Returns the value resolved/handled if present. A default value supplied otherwise.
+   *
+   * @param defaultValueSupplier the supplier to be called to supply default value if
+   *                            {@code resolve} failed and/or the error was not handled.
+   * @return the resolved/handled value if present. A default value otherwise
+   */
+  public T orSupplyDefault(final Supplier<T> defaultValueSupplier) {
+    return success.orElse(defaultValueSupplier.get());
+  }
+
+  /**
    * Returns the value resolved/handled if present. Throws the error otherwise.
    * 
    * @return the resolved/handled value if present
@@ -231,26 +243,20 @@ public final class ResolveHandler<T, E extends Exception> {
    * @throws X a mapped exception
    */
   public <X extends Throwable> T orThrow(final Function<E, X> errorMapper) throws X {
-    if (success.isPresent()) {
-      return success.get();
-    }
-
-    throw errorMapper.apply(error.orElseThrow());
+    return success.orElseThrow(() -> errorMapper.apply(error.orElseThrow()));
   }
 
   /**
    * Transforms the handler to a {@link Maybe}. If the value was resolved, the
-   * {@link Maybe} will contain it. It will be have {@code nothing} otherwise.
+   * {@link Maybe} will contain it. It will have {@code nothing} otherwise.
    * 
    * @return the resolved value wrapped in a {@link Maybe} if present. A
    *         {@link Maybe} with nothing otherwise
    */
   public Maybe<T> toMaybe() {
-    if (success.isPresent()) {
-      return Maybe.just(success.get());
-    }
-
-    return Maybe.nothing();
+    return success
+        .map(Maybe::just)
+        .orElseGet(Maybe::nothing);
   }
 
   /**
@@ -282,10 +288,9 @@ public final class ResolveHandler<T, E extends Exception> {
    * @see ResourceHolder#runEffectClosing(ConsumerChecked)
    */
   public <R extends AutoCloseable> ResourceHolder<R> mapToResource(final Function<T, R> mapper) {
-    return ResourceHolder.from(
-      this.success.isPresent()
-        ? mapper.apply(this.success.get())
-        : null
-    );
+    return this.success
+        .map(mapper)
+        .map(ResourceHolder::from)
+        .orElseGet(() -> ResourceHolder.from(null));
   }
 }
