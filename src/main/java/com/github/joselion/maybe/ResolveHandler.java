@@ -1,5 +1,7 @@
 package com.github.joselion.maybe;
 
+import com.github.joselion.maybe.util.ConsumerChecked;
+import com.github.joselion.maybe.util.FunctionChecked;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -7,6 +9,7 @@ import java.util.function.Predicate;
 
 import com.github.joselion.maybe.exceptions.WrappingException;
 
+import java.util.function.Supplier;
 import org.eclipse.jdt.annotation.Nullable;
 
 /**
@@ -210,6 +213,17 @@ public final class ResolveHandler<T, E extends Exception> {
    */
   public T orDefault(final T defaultValue) {
     return success.orElse(defaultValue);
+  }
+
+  /**
+   * Returns the value resolved/handled if present. A default value supplied otherwise.
+   *
+   * @param defaultValueSupplier the supplier to be called to supply default value if
+   *                            {@code resolve} failed and/or the error was not handled.
+   * @return the resolved/handled value if present. A default value otherwise
+   */
+  public T orSupplyDefault(final Supplier<T> defaultValueSupplier) {
+    return success.orElse(defaultValueSupplier.get());
   }
 
   /**
