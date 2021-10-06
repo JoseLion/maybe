@@ -156,16 +156,17 @@ public Properties parsePropertiesFile(final String filePath) {
 
 ### ResolveHandler
 
-| Method                            | Description |
-| --------------------------------- | ----------- |
-| `.doOnError(handler)`             | Run an effect if an error is present. The error is passed in the argument of to the `effect` consumer. |
-| `.onError(handler)`               | If an error is present, handle the error and return a new value. The error is passed in the argument of to the `handler` function. |
-| `.catchError(errorType, handler)` | Catch an error if it's instance of the `errorType` passed, then handle the error and return a new value. The caught error is passed in the argument of the `handler` function. |
-| `.and()`                          | Allows the ResolveHandler API to go back to the Maybe API. This is useful to continue chaining more Maybe operations. |
-| `.orDefault(defaultValue)`        | Returns the value resolved/handled if present. A default value otherwise. |
-| `.orThrow()`                      | Returns the value resolved/handled if present. Throws the error otherwise. |
-| `.orThrow(errorMapper)`           | Returns the value resolved/handled if present. Throws another error otherwise. |
-| `.mapToResource(mapper)`          | Maps the value to an `AutoCloseable` resource if present, returning a [ResourceHolder](#ResourceHolder) with the mapped value. Otherwise, returns an empty [ResourceHolder](#ResourceHolder).
+| Method                                   | Description |
+| ---------------------------------------- | ----------- |
+| `.doOnError(handler)`                    | Run an effect if an error is present. The error is passed in the argument of to the `effect` consumer. |
+| `.onError(handler)`                      | If an error is present, handle the error and return a new value. The error is passed in the argument of to the `handler` function. |
+| `.catchError(errorType, handler)`        | Catch an error if it's instance of the `errorType` passed, then handle the error and return a new value. The caught error is passed in the argument of the `handler` function. |
+| `.and()`                                 | Allows the ResolveHandler API to go back to the Maybe API. This is useful to continue chaining more Maybe operations. |
+| `.orDefault(defaultValue)`               | Returns the value resolved/handled if present. A default value otherwise. |
+| `.orSupplyDefault(defaultValueSupplier)` | Returns the value resolved/handled if present. A default value otherwise supplied by the supplier. |
+| `.orThrow()`                             | Returns the value resolved/handled if present. Throws the error otherwise. |
+| `.orThrow(errorMapper)`                  | Returns the value resolved/handled if present. Throws another error otherwise. |
+| `.mapToResource(mapper)`                 | Maps the value to an `AutoCloseable` resource if present, returning a [ResourceHolder](#ResourceHolder) with the mapped value. Otherwise, returns an empty [ResourceHolder](#ResourceHolder).
 
 ### EffectHandler
 
