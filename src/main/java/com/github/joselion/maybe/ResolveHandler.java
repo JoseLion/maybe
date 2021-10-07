@@ -214,10 +214,12 @@ public final class ResolveHandler<T, E extends Exception> {
   }
 
   /**
-   * Returns the value resolved/handled if present. A default value supplied otherwise.
+   * Returns the value resolved/handled if present. A default value supplied
+   * otherwise.
    *
-   * @param defaultValueSupplier the supplier to be called to supply default value if
-   *                            {@code resolve} failed and/or the error was not handled.
+   * @param defaultValueSupplier the supplier to be called to supply default
+   *                             value if {@code resolve} failed and/or the
+   *                             error was not handled.
    * @return the resolved/handled value if present. A default value otherwise
    */
   public T orSupplyDefault(final Supplier<T> defaultValueSupplier) {
@@ -255,8 +257,8 @@ public final class ResolveHandler<T, E extends Exception> {
    */
   public Maybe<T> toMaybe() {
     return success
-        .map(Maybe::just)
-        .orElseGet(Maybe::nothing);
+      .map(Maybe::just)
+      .orElseGet(Maybe::nothing);
   }
 
   /**
@@ -289,8 +291,8 @@ public final class ResolveHandler<T, E extends Exception> {
    */
   public <R extends AutoCloseable> ResourceHolder<R> mapToResource(final Function<T, R> mapper) {
     return this.success
-        .map(mapper)
-        .map(ResourceHolder::from)
-        .orElseGet(() -> ResourceHolder.from(null));
+      .map(mapper)
+      .map(ResourceHolder::from)
+      .orElseGet(() -> ResourceHolder.from(null));
   }
 }

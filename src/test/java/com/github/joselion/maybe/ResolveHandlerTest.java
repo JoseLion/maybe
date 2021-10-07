@@ -447,20 +447,20 @@ import org.junit.jupiter.api.Test;
     @Nested class when_the_value_is_present {
       @Test void returns_the_value() {
         assertThat(
-            Maybe.resolve(okOp)
-                .orSupplyDefault(() -> "OTHER")
+          Maybe.resolve(okOp)
+            .orSupplyDefault(() -> "OTHER")
         )
-            .isEqualTo("OK");
+        .isEqualTo("OK");
       }
     }
 
     @Nested class when_the_value_is_NOT_present {
       @Test void returns_the_default_value() {
         assertThat(
-            Maybe.resolve(throwingOp)
-                .orSupplyDefault(() -> "OTHER")
+          Maybe.resolve(throwingOp)
+            .orSupplyDefault(() -> "OTHER")
         )
-            .isEqualTo("OTHER");
+        .isEqualTo("OTHER");
       }
     }
   }
