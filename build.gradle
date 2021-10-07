@@ -168,8 +168,8 @@ publishing {
 
       url = version.endsWith(snapshotSuffix) ? snapshotsRepoUrl : releasesRepoUrl
       credentials(PasswordCredentials) {
-        username = ossrhUsername
-        password = ossrhPassword
+        username = project.findProperty('ossrhUsername')
+        password = project.findProperty('ossrhPassword')
       }
     }
   }
@@ -180,6 +180,6 @@ signing {
 }
 
 nexusStaging {
-  username = ossrhUsername
-  password = ossrhPassword
+  username = project.findProperty('ossrhUsername')
+  password = project.findProperty('ossrhPassword')
 }
