@@ -37,6 +37,10 @@ build
 # VSCode
 .vscode
 
+# IDEA
+.idea
+*.iml
+
 # Gradle Wrapper
 !gradle/wrapper/gradle-wrapper.jar
 
