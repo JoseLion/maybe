@@ -29,7 +29,7 @@ public final class Maybe<T> {
   }
 
   /**
-   * Returns a {@code Maybe} monad wrapping the given value. If the value is
+   * Returns a {@code Maybe} monadic wrapper of the given value. If the value is
    * {@code null}, it returns a {@link #nothing()}.
    * 
    * @param <T>   the type of the value
@@ -42,7 +42,7 @@ public final class Maybe<T> {
   }
 
   /**
-   * Returns a {@code Maybe} monad with nothing on it. This means the monad does
+   * Returns a {@code Maybe} monadic wrapper with nothing on it. This means the monad does
    * not contains a value because an exception may have occurred.
    * 
    * @param <T> the type of the value
@@ -63,7 +63,7 @@ public final class Maybe<T> {
    * @return a {@link ResolveHandler} with either the value resolved or the thrown
    *         exception to be handled
    */
-  public static <T, E extends Exception> ResolveHandler<T, E> resolve(final SupplierChecked<T, E> resolver) {
+  public static <T, E extends Exception> ResolveHandler<T, E> fromSupplier(final SupplierChecked<T, E> resolver) {
     try {
       return ResolveHandler.withSuccess(resolver.get());
     } catch (Exception e) {
@@ -84,7 +84,7 @@ public final class Maybe<T> {
    * @return an {@link EffectHandler} with either the thrown exception to be
    *         handled or nothing
    */
-  public static <E extends Exception> EffectHandler<E> runEffect(final RunnableChecked<E> effect) {
+  public static <E extends Exception> EffectHandler<E> fromRunnable(final RunnableChecked<E> effect) {
     try {
       effect.run();
       return EffectHandler.withNothing();
@@ -161,9 +161,9 @@ public final class Maybe<T> {
    * @return a {@link ResolveHandler} with either the value resolved or the thrown
    *         exception to be handled
    */
-  public <U, E extends Exception> ResolveHandler<U, E> thenResolve(final FunctionChecked<T, U, E> resolver) {
+  public <U, E extends Exception> ResolveHandler<U, E> resolve(final FunctionChecked<T, U, E> resolver) {
     if (value.isPresent()) {
-      return Maybe.resolve(() -> resolver.apply(value.get()));
+      return Maybe.fromSupplier(() -> resolver.apply(value.get()));
     }
 
     return ResolveHandler.withNothing();
@@ -178,9 +178,9 @@ public final class Maybe<T> {
    * @return an {@link EffectHandler} with either the thrown exception to be
    *         handled or nothing
    */
-  public <E extends Exception> EffectHandler<E> thenRunEffect(final ConsumerChecked<T, E> effect) {
+  public <E extends Exception> EffectHandler<E> runEffect(final ConsumerChecked<T, E> effect) {
     if (value.isPresent()) {
-      return Maybe.runEffect(() -> effect.accept(value.get()));
+      return Maybe.fromRunnable(() -> effect.accept(value.get()));
     }
 
     return EffectHandler.withNothing();

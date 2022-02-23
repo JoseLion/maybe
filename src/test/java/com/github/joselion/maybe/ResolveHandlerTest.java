@@ -50,7 +50,7 @@ import org.junit.jupiter.api.Test;
       @Nested class and_the_error_is_instance_of_the_checked_exception {
         @Test void runs_the_effect() {
           final List<Integer> counter = new ArrayList<>();
-          final ResolveHandler<String, IOException> handler = Maybe.resolve(throwingOp)
+          final ResolveHandler<String, IOException> handler = Maybe.fromSupplier(throwingOp)
             .doOnError(error -> {
               assertThat(error)
                 .isInstanceOf(IOException.class)
@@ -74,7 +74,7 @@ import org.junit.jupiter.api.Test;
       @Nested class and_the_error_is_NOT_instance_of_the_checked_exception {
         @Test void runs_the_effect() {
           final List<Integer> counter = new ArrayList<>();
-          final ResolveHandler<String, IOException> handler = Maybe.resolve(errorOp)
+          final ResolveHandler<String, IOException> handler = Maybe.fromSupplier(errorOp)
             .doOnError(error -> {
               assertThat(error)
                 .isInstanceOf(UnsupportedOperationException.class)
@@ -98,7 +98,7 @@ import org.junit.jupiter.api.Test;
 
     @Nested class when_the_error_is_NOT_present {
       @Test void does_NOT_run_the_effect() {
-        final ResolveHandler<String, RuntimeException> handler = Maybe.resolve(okOp)
+        final ResolveHandler<String, RuntimeException> handler = Maybe.fromSupplier(okOp)
           .doOnError(error -> {
             throw new AssertionError("The handler should not be executed");
           });
@@ -118,7 +118,7 @@ import org.junit.jupiter.api.Test;
     @Nested class when_the_error_is_present {
       @Nested class and_the_error_is_instance_of_the_checked_exception {
         @Test void applies_the_handler_function() {
-          final ResolveHandler<String, IOException> handler = Maybe.resolve(throwingOp)
+          final ResolveHandler<String, IOException> handler = Maybe.fromSupplier(throwingOp)
             .onError(error -> {
               assertThat(error)
                 .isInstanceOf(IOException.class)
@@ -142,7 +142,7 @@ import org.junit.jupiter.api.Test;
           final SupplierChecked<String, IOException> failingOp = () -> {
             throw new UnsupportedOperationException("ERROR");
           };
-          final ResolveHandler<String, IOException> handler = Maybe.resolve(failingOp)
+          final ResolveHandler<String, IOException> handler = Maybe.fromSupplier(failingOp)
             .onError(error -> {
               assertThat(error)
                 .isInstanceOf(UnsupportedOperationException.class)
@@ -164,7 +164,7 @@ import org.junit.jupiter.api.Test;
 
     @Nested class when_the_error_is_NOT_present {
       @Test void the_error_handler_is_not_executed() {
-        final ResolveHandler<String, RuntimeException> handler = Maybe.resolve(okOp)
+        final ResolveHandler<String, RuntimeException> handler = Maybe.fromSupplier(okOp)
           .onError(error -> {
             throw new AssertionError("The handler should not be executed");
           });
@@ -184,7 +184,7 @@ import org.junit.jupiter.api.Test;
     @Nested class when_the_error_is_present {
       @Nested class and_is_instance_of_the_errorType_argument {
         @Test void catches_the_error_and_the_handler_is_applied() {
-          final ResolveHandler<String, IOException> handler = Maybe.resolve(throwingOp)
+          final ResolveHandler<String, IOException> handler = Maybe.fromSupplier(throwingOp)
             .catchError(IOException.class, error -> {
               assertThat(error)
                 .isInstanceOf(IOException.class)
@@ -205,7 +205,7 @@ import org.junit.jupiter.api.Test;
 
       @Nested class and_is_NOT_instance_of_the_errorType_argument {
         @Test void the_error_is_NOT_catched_and_the_handler_is_not_applied() {
-          final ResolveHandler<String, IOException> handler = Maybe.resolve(throwingOp)
+          final ResolveHandler<String, IOException> handler = Maybe.fromSupplier(throwingOp)
             .catchError(EOFException.class, error -> {
               throw new AssertionError("The handler should not be executed");
             });
@@ -223,7 +223,7 @@ import org.junit.jupiter.api.Test;
 
     @Nested class when_the_error_is_NOT_present {
       @Test void the_error_handler_is_not_executed() {
-        final ResolveHandler<String, RuntimeException> handler = Maybe.resolve(okOp)
+        final ResolveHandler<String, RuntimeException> handler = Maybe.fromSupplier(okOp)
           .catchError(RuntimeException.class, error -> {
             throw new AssertionError("The handler should not be executed");
           });
@@ -425,7 +425,7 @@ import org.junit.jupiter.api.Test;
     @Nested class when_the_value_is_present {
       @Test void returns_the_value() {
         assertThat(
-          Maybe.resolve(okOp)
+          Maybe.fromSupplier(okOp)
             .orDefault("OTHER")
         )
         .isEqualTo("OK");
@@ -435,7 +435,7 @@ import org.junit.jupiter.api.Test;
     @Nested class when_the_value_is_NOT_present {
       @Test void returns_the_default_value() {
         assertThat(
-          Maybe.resolve(throwingOp)
+          Maybe.fromSupplier(throwingOp)
             .orDefault("OTHER")
         )
         .isEqualTo("OTHER");
@@ -447,7 +447,7 @@ import org.junit.jupiter.api.Test;
     @Nested class when_the_value_is_present {
       @Test void returns_the_value() {
         assertThat(
-          Maybe.resolve(okOp)
+          Maybe.fromSupplier(okOp)
             .orSupplyDefault(() -> "OTHER")
         )
         .isEqualTo("OK");
@@ -457,7 +457,7 @@ import org.junit.jupiter.api.Test;
     @Nested class when_the_value_is_NOT_present {
       @Test void returns_the_default_value() {
         assertThat(
-          Maybe.resolve(throwingOp)
+          Maybe.fromSupplier(throwingOp)
             .orSupplyDefault(() -> "OTHER")
         )
         .isEqualTo("OTHER");
@@ -469,12 +469,12 @@ import org.junit.jupiter.api.Test;
     @Nested class when_the_value_is_present {
       @Test void returns_the_value() throws EOFException {
         assertThat(
-          Maybe.resolve(okOp).orThrow()
+          Maybe.fromSupplier(okOp).orThrow()
         )
         .isEqualTo("OK");
 
         assertThat(
-          Maybe.resolve(okOp).orThrow(error -> new EOFException(error.getMessage()))
+          Maybe.fromSupplier(okOp).orThrow(error -> new EOFException(error.getMessage()))
         )
         .isEqualTo("OK");
       }
@@ -482,7 +482,7 @@ import org.junit.jupiter.api.Test;
 
     @Nested class when_the_value_is_NOT_present {
       @Test void throws_the_error() {
-        final ResolveHandler<?, IOException> handler = Maybe.resolve(throwingOp);
+        final ResolveHandler<?, IOException> handler = Maybe.fromSupplier(throwingOp);
 
         assertThat(
           assertThrows(IOException.class, handler::orThrow)
@@ -506,7 +506,7 @@ import org.junit.jupiter.api.Test;
     @Nested class when_the_value_is_present {
       @Test void returns_a_maybe_with_the_value() {
         assertThat(
-          Maybe.resolve(okOp).toMaybe()
+          Maybe.fromSupplier(okOp).toMaybe()
         )
         .extracting(VALUE, optional(String.class))
         .contains("OK");
@@ -516,7 +516,7 @@ import org.junit.jupiter.api.Test;
     @Nested class when_the_value_is_NOT_present {
       @Test void returns_a_maybe_with_nothing() {
         assertThat(
-          Maybe.resolve(throwingOp).toMaybe()
+          Maybe.fromSupplier(throwingOp).toMaybe()
         )
         .extracting(VALUE, optional(String.class))
         .isEmpty();
@@ -527,13 +527,13 @@ import org.junit.jupiter.api.Test;
   @Nested class toOptional {
     @Nested class when_the_value_is_present {
       @Test void returns_the_value_wrapped_in_an_optinal() {
-        assertThat(Maybe.resolve(okOp).toOptional()).contains("OK");
+        assertThat(Maybe.fromSupplier(okOp).toOptional()).contains("OK");
       }
     }
 
     @Nested class when_the_value_is_NOT_present {
       @Test void returns_an_empty_optional() {
-        assertThat(Maybe.resolve(throwingOp).toOptional()).isEmpty();
+        assertThat(Maybe.fromSupplier(throwingOp).toOptional()).isEmpty();
       }
     }
   }
@@ -542,7 +542,7 @@ import org.junit.jupiter.api.Test;
     @Nested class when_the_value_is_present {
       @Test void returns_a_resource_holder_with_the_mapped_value() {
         final ResourceHolder<FileInputStream> resHolder = Maybe.just("./src/test/resources/readTest.txt")
-          .thenResolve(FileInputStream::new)
+          .resolve(FileInputStream::new)
           .mapToResource(Function.identity());
 
         assertThat(resHolder)
@@ -556,7 +556,7 @@ import org.junit.jupiter.api.Test;
     @Nested class when_the_error_is_NOT_present {
       @Test void returns_an_empty_resource_holder() {
         final ResourceHolder<FileInputStream> resHolder = Maybe.just("invalidFile.txt")
-          .thenResolve(FileInputStream::new)
+          .resolve(FileInputStream::new)
           .mapToResource(Function.identity());
 
         assertThat(resHolder)

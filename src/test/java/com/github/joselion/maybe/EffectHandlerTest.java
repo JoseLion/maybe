@@ -33,7 +33,7 @@ import org.junit.jupiter.api.Test;
       @Nested class and_the_error_is_instance_of_the_checked_exception {
         @Test void the_handler_is_applied() {
           assertThat(
-            Maybe.runEffect(throwingOp)
+            Maybe.fromRunnable(throwingOp)
               .doOnError(error -> {
                 assertThat(error)
                   .isInstanceOf(IOException.class)
@@ -51,7 +51,7 @@ import org.junit.jupiter.api.Test;
             throw new UnsupportedOperationException("ERROR");
           };
           assertThat(
-            Maybe.runEffect(failingOp)
+            Maybe.fromRunnable(failingOp)
               .doOnError(error -> {
                 assertThat(error)
                   .isInstanceOf(UnsupportedOperationException.class)
@@ -67,7 +67,7 @@ import org.junit.jupiter.api.Test;
     @Nested class when_the_error_is_NOT_present {
       @Test void the_handler_is_NOT_applied() {
         assertThat(
-          Maybe.runEffect(noOp)
+          Maybe.fromRunnable(noOp)
             .doOnError(error -> {
               throw new AssertionError("The handler should not be executed");
             })
@@ -83,7 +83,7 @@ import org.junit.jupiter.api.Test;
       @Nested class and_is_instance_of_the_errorType_argument {
         @Test void catches_the_error_and_the_handler_is_applied() {
           assertThat(
-            Maybe.runEffect(throwingOp)
+            Maybe.fromRunnable(throwingOp)
               .catchError(IOException.class, error -> {
                 assertThat(error)
                   .isInstanceOf(IOException.class)
@@ -98,7 +98,7 @@ import org.junit.jupiter.api.Test;
       @Nested class and_is_NOT_instance_of_the_errorType_argument {
         @Test void the_error_is_NOT_catched_and_the_handler_is_not_applied() {
           assertThat(
-            Maybe.runEffect(throwingOp)
+            Maybe.fromRunnable(throwingOp)
               .catchError(EOFException.class, error -> {
                 throw new AssertionError("The handler should not be executed");
               })
@@ -112,7 +112,7 @@ import org.junit.jupiter.api.Test;
     @Nested class when_the_error_is_NOT_present {
       @Test void the_handler_is_NOT_applied() {
         assertThat(
-          Maybe.runEffect(noOp)
+          Maybe.fromRunnable(noOp)
             .catchError(RuntimeException.class, error -> {
               throw new AssertionError("The handler should not be executed");
             })
@@ -126,7 +126,7 @@ import org.junit.jupiter.api.Test;
   @Nested class onErrorThrow {
     @Nested class when_the_error_is_present {
       @Test void throws_an_exception() {
-        final EffectHandler<IOException> handler = Maybe.runEffect(throwingOp);
+        final EffectHandler<IOException> handler = Maybe.fromRunnable(throwingOp);
 
         assertThat(
           assertThrows(IOException.class, handler::onErrorThrow)
@@ -147,7 +147,7 @@ import org.junit.jupiter.api.Test;
 
     @Nested class when_the_error_is_NOT_present {
       @Test void no_exception_is_thrown() {
-        final EffectHandler<RuntimeException> handler = Maybe.runEffect(noOp);
+        final EffectHandler<RuntimeException> handler = Maybe.fromRunnable(noOp);
 
         assertThatCode(handler::onErrorThrow).doesNotThrowAnyException();
 
@@ -162,7 +162,7 @@ import org.junit.jupiter.api.Test;
   @Nested class toMaybe {
     @Test void returns_a_maybe_with_nothing() {
       assertThat(
-        Maybe.runEffect(throwingOp).toMaybe()
+        Maybe.fromRunnable(throwingOp).toMaybe()
       )
       .extracting(VALUE, optional(Void.class))
       .isEmpty();

@@ -11,7 +11,7 @@ import org.eclipse.jdt.annotation.Nullable;
  * effect operation. It can return back to maybe to continue linking operations,
  * or use termimal methods to return a safe value.
  * 
- * @param <E> the type of exception that the resolve operation may throw
+ * @param <E> the type of exception that the effect may throw
  * 
  * @author Jose Luis Leon
  * @since v0.3.2
@@ -88,7 +88,7 @@ public final class EffectHandler<E extends Exception> {
   /**
    * Throws the error if present. Does nothing otherwise.
    * 
-   * @throws E the error thrown by the {@code runEffect} operation
+   * @throws E the error thrown by the {@code effect} operation
    */
   public void onErrorThrow() throws E {
     if (error.isPresent()) {

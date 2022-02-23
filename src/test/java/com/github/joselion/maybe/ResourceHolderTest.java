@@ -161,7 +161,7 @@ import org.junit.jupiter.api.Test;
 
   private FileInputStream getFIS() {
     return Maybe.just(FILE_PATH)
-      .thenResolve(FileInputStream::new)
+      .resolve(FileInputStream::new)
       .orThrow(Error::new);
   }
 }
