@@ -5,7 +5,7 @@ package com.github.joselion.maybe.util;
  * expression throws an {@code E} checked exception.
  * 
  * This is a functional interface whose functional method is
- * {@link #applyChecked(Object)}
+ * {@link #apply(Object)}
  * 
  * @param <T> the type of argument passed to the function
  * @param <R> the type of results returned by the function
@@ -23,5 +23,5 @@ public interface FunctionChecked<T, R, E extends Exception> {
    * @return the function result
    * @throws E which extends from {@link Exception}
    */
-  R applyChecked(T t) throws E;
+  R apply(T t) throws E;
 }

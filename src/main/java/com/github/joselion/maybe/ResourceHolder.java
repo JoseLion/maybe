@@ -58,7 +58,7 @@ public class ResourceHolder<R extends AutoCloseable> {
     }
 
     try (R resArg = this.resource.get()) {
-      return ResolveHandler.withSuccess(resolver.applyChecked(resArg));
+      return ResolveHandler.withSuccess(resolver.apply(resArg));
     } catch (Exception e) {
       @SuppressWarnings("unchecked")
       final E error = (E) e;
@@ -89,7 +89,8 @@ public class ResourceHolder<R extends AutoCloseable> {
     }
 
     try (R resArg = this.resource.get()) {
-      effect.acceptChecked(resArg);
+      effect.accept(resArg);
+
       return EffectHandler.withNothing();
     } catch (Exception e) {
       @SuppressWarnings("unchecked")

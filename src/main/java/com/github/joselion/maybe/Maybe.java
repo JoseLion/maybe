@@ -65,7 +65,7 @@ public final class Maybe<T> {
    */
   public static <T, E extends Exception> ResolveHandler<T, E> resolve(final SupplierChecked<T, E> resolver) {
     try {
-      return ResolveHandler.withSuccess(resolver.getChecked());
+      return ResolveHandler.withSuccess(resolver.get());
     } catch (Exception e) {
       @SuppressWarnings("unchecked")
       final E error = (E) e;
@@ -86,7 +86,7 @@ public final class Maybe<T> {
    */
   public static <E extends Exception> EffectHandler<E> runEffect(final RunnableChecked<E> effect) {
     try {
-      effect.runChecked();
+      effect.run();
       return EffectHandler.withNothing();
     } catch (Exception e) {
       @SuppressWarnings("unchecked")
@@ -163,7 +163,7 @@ public final class Maybe<T> {
    */
   public <U, E extends Exception> ResolveHandler<U, E> thenResolve(final FunctionChecked<T, U, E> resolver) {
     if (value.isPresent()) {
-      return Maybe.resolve(() -> resolver.applyChecked(value.get()));
+      return Maybe.resolve(() -> resolver.apply(value.get()));
     }
 
     return ResolveHandler.withNothing();
@@ -180,7 +180,7 @@ public final class Maybe<T> {
    */
   public <E extends Exception> EffectHandler<E> thenRunEffect(final ConsumerChecked<T, E> effect) {
     if (value.isPresent()) {
-      return Maybe.runEffect(() -> effect.acceptChecked(value.get()));
+      return Maybe.runEffect(() -> effect.accept(value.get()));
     }
 
     return EffectHandler.withNothing();
@@ -282,7 +282,7 @@ public final class Maybe<T> {
   @Override
   public String toString() {
     return value.isPresent()
-      ? String.format("Maybe[%s]", value.get())
+      ? String.format("Maybe[%s]", value.get().toString())
       : "Maybe.nothing";
   }
 }
