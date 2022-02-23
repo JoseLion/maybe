@@ -5,7 +5,7 @@ package com.github.joselion.maybe.util;
  * expression throws an {@code E} exception.
  * 
  * This is a functional interface whose functional method is
- * {@link #getChecked()}
+ * {@link #get()}
  * 
  * @param <T> the type of results supplied by the supplier
  * @param <E> the type of checked exception that the supplier throws
@@ -21,5 +21,5 @@ public interface SupplierChecked<T, E extends Exception> {
    * @return a result
    * @throws E which extends from {@link Exception}
    */
-  T getChecked() throws E;
+  T get() throws E;
 }

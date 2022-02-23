@@ -7,7 +7,7 @@ package com.github.joselion.maybe.util;
  * expression throws an {@code E} checked exception.
  * 
  * This is a functional interface whose functional method is
- * {@link #acceptChecked(Object)}
+ * {@link #accept(Object)}
  * 
  * @param <T> the type of argument passed to the function
  * @param <E> the type of exception that the function throws
@@ -23,5 +23,5 @@ public interface ConsumerChecked<T, E extends Exception> {
    * @param t the consumer argument
    * @throws E which extends from {@link Exception}
    */
-  void acceptChecked(T t) throws E;
+  void accept(T t) throws E;
 }

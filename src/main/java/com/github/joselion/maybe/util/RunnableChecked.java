@@ -5,7 +5,7 @@ package com.github.joselion.maybe.util;
  * throws an {@code E} exception.
  * 
  * This is a functional interface whose functional method is
- * {@link #runChecked()}
+ * {@link #run()}
  * 
  * @param <E> the type of checked exception that the runnable throws
  * @author Jose Luis Leon
@@ -19,5 +19,5 @@ public interface RunnableChecked<E extends Exception> {
    * 
    * @throws E which extends from {@link Exception}
    */
-  void runChecked() throws E;
+  void run() throws E;
 }
