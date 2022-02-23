@@ -5,8 +5,8 @@
   <property name="fileExtensions" value="java" />
   <property name="severity" value="error" />
 
-  <!-- Javadoc -->
-  <!-- <module name="JavadocPackage" /> -->
+  <!-- Filters -->
+  <module name="SuppressWithPlainTextCommentFilter"/>
 
   <!-- Miscellaneous -->
   <module name="NewlineAtEndOfFile" />
