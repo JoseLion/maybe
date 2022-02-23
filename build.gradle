@@ -23,7 +23,7 @@ def snapshotSuffix = '-SNAPSHOT'
 def suffix = isRelease ? '' : snapshotSuffix
 
 group = 'com.github.joselion'
-version = "1.6.1$suffix"
+version = "2.0.0$suffix"
 
 sourceCompatibility = JavaVersion.VERSION_1_8
 targetCompatibility = JavaVersion.VERSION_1_8
