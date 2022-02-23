@@ -55,10 +55,10 @@ import org.junit.jupiter.api.Test;
     }
   }
 
-  @Nested class resolve {
+  @Nested class fromSupplier {
     @Nested class when_the_operation_success {
       @Test void returns_a_handler_with_the_value() {
-        final ResolveHandler<String, ?> handler = Maybe.resolve(() -> "OK");
+        final ResolveHandler<String, ?> handler = Maybe.fromSupplier(() -> "OK");
 
         assertThat(handler)
           .extracting(SUCCESS, optional(String.class))
@@ -73,7 +73,7 @@ import org.junit.jupiter.api.Test;
     @Nested class when_the_operation_fails {
       @Test void returns_a_handler_with_the_error() {
         final IOException exception = new IOException("FAIL");
-        final ResolveHandler<?, IOException> handler = Maybe.resolve(() -> {
+        final ResolveHandler<?, IOException> handler = Maybe.fromSupplier(() -> {
           throw exception;
         });
 
@@ -89,11 +89,11 @@ import org.junit.jupiter.api.Test;
     }
   }
 
-  @Nested class runEffect {
+  @Nested class fromRunnable {
     @Nested class when_the_operation_success {
       @Test void returns_a_handler_with_nothing() {
         final List<Integer> counter = new ArrayList<>();
-        final EffectHandler<?> handler = Maybe.runEffect(() -> {
+        final EffectHandler<?> handler = Maybe.fromRunnable(() -> {
           counter.add(1);
         });
 
@@ -108,7 +108,7 @@ import org.junit.jupiter.api.Test;
     @Nested class when_the_operation_fails {
       @Test void returns_a_handler_with_the_error() {
         final IOException exception = new IOException("FAIL");
-        final EffectHandler<IOException> handler = Maybe.runEffect(() -> {
+        final EffectHandler<IOException> handler = Maybe.fromRunnable(() -> {
           throw exception;
         });
 
@@ -125,7 +125,7 @@ import org.junit.jupiter.api.Test;
       try (
         AutoCloseableSoftAssertions softly = new AutoCloseableSoftAssertions();
         FileInputStream fis = Maybe.just("./src/test/resources/readTest.txt")
-          .thenResolve(FileInputStream::new)
+          .resolve(FileInputStream::new)
           .orThrow(Error::new);
       ) {
         softly.assertThat(Maybe.withResource(fis))
@@ -186,11 +186,11 @@ import org.junit.jupiter.api.Test;
     }
   }
 
-  @Nested class thenResolve {
+  @Nested class resolve {
     @Nested class when_the_previous_operation_resolves {
       @Test void the_then_operation_is_called_with_the_previous_value() {
         final ResolveHandler<String, ?> handler = Maybe.just(1)
-          .thenResolve(value -> {
+          .resolve(value -> {
             assertThat(value).isEqualTo(1);
             return "OK";
           });
@@ -208,7 +208,7 @@ import org.junit.jupiter.api.Test;
     @Nested class when_the_previous_operation_fails {
       @Test void the_then_operation_is_not_called() {
         final ResolveHandler<?, ?> handler = Maybe.nothing()
-          .thenResolve(value -> {
+          .resolve(value -> {
             throw new AssertionError("The then operation should not be executed");
           });
 
@@ -225,7 +225,7 @@ import org.junit.jupiter.api.Test;
     @Nested class when_the_new_operation_success {
       @Test void returns_the_a_handler_with_the_resolved_value() {
         final ResolveHandler<String, ?> handler = Maybe.just(3)
-          .thenResolve(value -> "OK".repeat(value));
+          .resolve(value -> "OK".repeat(value));
 
         assertThat(handler)
           .extracting(SUCCESS, optional(String.class))
@@ -241,7 +241,7 @@ import org.junit.jupiter.api.Test;
       @Test void returns_a_handler_with_the_error() {
         final IOException exception = new IOException("FAIL");
         final ResolveHandler<?, IOException> handler = Maybe.just(3)
-          .thenResolve(value -> {
+          .resolve(value -> {
             throw exception;
           });
 
@@ -257,15 +257,15 @@ import org.junit.jupiter.api.Test;
     }
   }
 
-  @Nested class thenRunEffect {
+  @Nested class runEffect {
     @Nested class when_the_previous_operation_resolves {
       @Test void the_then_operation_is_called_with_the_previous_value() {
         final EffectHandler<RuntimeException> handler = Maybe.just(1)
-          .thenRunEffect(value -> {
+          .runEffect(value -> {
             assertThat(value).isEqualTo(1);
           })
           .toMaybe()
-          .thenRunEffect(none -> {
+          .runEffect(none -> {
             assertThat(none).isExactlyInstanceOf(Void.class);
           });
 
@@ -278,7 +278,7 @@ import org.junit.jupiter.api.Test;
     @Nested class when_the_previous_operation_fails {
       @Test void the_then_operation_is_not_called() {
         final EffectHandler<RuntimeException> handler = Maybe.nothing()
-          .thenRunEffect(value -> {
+          .runEffect(value -> {
             throw new AssertionError("The then operation should not be executed");
           });
 
@@ -291,7 +291,7 @@ import org.junit.jupiter.api.Test;
     @Nested class when_the_new_operation_success {
       @Test void returns_the_a_handler_with_nothing() {
         final EffectHandler<RuntimeException> handler = Maybe.just(3)
-          .thenRunEffect(value -> {
+          .runEffect(value -> {
             assertThat(value).isEqualTo(3);
           });
 
@@ -305,7 +305,7 @@ import org.junit.jupiter.api.Test;
       @Test void returns_a_handler_with_the_error() {
         final IOException exception = new IOException("FAIL");
         final EffectHandler<IOException> handler = Maybe.just(3)
-          .thenRunEffect(value -> {
+          .runEffect(value -> {
             throw exception;
           });
 

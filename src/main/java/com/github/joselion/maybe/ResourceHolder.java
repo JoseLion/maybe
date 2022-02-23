@@ -10,7 +10,7 @@ import org.eclipse.jdt.annotation.Nullable;
 /**
  * ResourceSpec is a "middle step" API that allows to resolve or run an effect
  * usinga previously passed {@link AutoCloseable} resource. This resource will
- * be automatically closed after the {@code resolve} or the {@code runEffect}
+ * be automatically closed after the {@code resolve} or the {@code effect}
  * operation is finished.
  * 
  * @author Jose Luis Leon
