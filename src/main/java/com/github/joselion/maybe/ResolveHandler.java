@@ -85,7 +85,7 @@ public final class ResolveHandler<T, E extends Exception> {
 
   /**
    * If an error is present, handle the error and return a new value. The error
-   * is passed in the argunment of to the {@code handler} function.
+   * is passed in the argunment of the {@code handler} function.
    * 
    * @param handler a function that should return a new value in case of error
    * @return a new handler with the new value if error is present. The same
@@ -203,27 +203,38 @@ public final class ResolveHandler<T, E extends Exception> {
   }
 
   /**
-   * Returns the value resolved/handled if present. A default value otherwise.
+   * Returns the resolved value if present. Another value otherwise.
    * 
-   * @param defaultValue the value to return if {@code resolve} failed and/or
-   *                     the error was not handled.
-   * @return the resolved/handled value if present. A default value otherwise
+   * @param other the value to return if the operation failed to resolve
+   * @return the resolved value if present. Another value otherwise
    */
-  public T orDefault(final T defaultValue) {
-    return success.orElse(defaultValue);
+  public T orElse(final T other) {
+    return success.orElse(other);
   }
 
   /**
-   * Returns the value resolved/handled if present. A default value supplied
-   * otherwise.
+   * Returns the resolved value if present. Otherwise, the result produced by
+   * the mapping function, which has the error on its argument, and returns
+   * another value.
    *
-   * @param defaultValueSupplier the supplier to be called to supply default
-   *                             value if {@code resolve} failed and/or the
-   *                             error was not handled.
-   * @return the resolved/handled value if present. A default value otherwise
+   * @param mapper the mapping function that produces another value if the
+   *               opration failed to resolve
+   * @return the resolved value if present. Another value otherwise
    */
-  public T orSupplyDefault(final Supplier<T> defaultValueSupplier) {
-    return success.orElse(defaultValueSupplier.get());
+  public T orElse(final Function<E, T> mapper) {
+    return success.orElseGet(() -> mapper.apply(error.get()));
+  }
+
+  /**
+   * Returns the resolved value if present. Otherwise, the result produced by
+   * the supplying function as another value.
+   *
+   * @param supplier the supplying function that produces another value if the
+   *                 opration failed to resolve
+   * @return the resolved value if present. Another value otherwise
+   */
+  public T orElse(final Supplier<T> supplier) {
+    return success.orElseGet(supplier::get);
   }
 
   /**
