@@ -175,15 +175,45 @@ import org.junit.jupiter.api.Test;
     }
   }
 
-  @Nested class onErrorThrow {
+  @Nested class orElse {
     @Nested class when_the_error_is_present {
-      @Test void throws_an_exception() {
+      @Test void calls_the_effect_callback() {
+        final Consumer<FileSystemException> consumerSpy = spyLambda(e -> { });
+        final Runnable runnableSpy = spyLambda(() -> { });
+        final EffectHandler<FileSystemException> handler = Maybe.fromRunnable(throwingOp);
+
+        handler.orElse(consumerSpy);
+        handler.orElse(runnableSpy);
+
+        verify(consumerSpy, times(1)).accept(FAIL_EXCEPTION);
+        verify(runnableSpy, times(1)).run();
+      }
+    }
+
+    @Nested class when_the_error_is_NOT_present {
+      @Test void never_calls_the_effect_callback() {
+        final Consumer<RuntimeException> consumerSpy = spyLambda(e -> { });
+        final Runnable runnableSpy = spyLambda(() -> { });
+        final EffectHandler<RuntimeException> handler = Maybe.fromRunnable(noOp);
+
+        handler.orElse(consumerSpy);
+        handler.orElse(runnableSpy);
+
+        verify(consumerSpy, never()).accept(any());
+        verify(runnableSpy, never()).run();
+      }
+    }
+  }
+
+  @Nested class orThrow {
+    @Nested class when_the_error_is_present {
+      @Test void throws_the_error() {
         final RuntimeException anotherError = new RuntimeException("OTHER");
         final Function<FileSystemException, RuntimeException> functionSpy = spyLambda(err -> anotherError);
         final EffectHandler<FileSystemException> handler = Maybe.fromRunnable(throwingOp);
 
-        assertThatThrownBy(handler::onErrorThrow).isEqualTo(FAIL_EXCEPTION);
-        assertThatThrownBy(() -> handler.onErrorThrow(functionSpy)).isEqualTo(anotherError);
+        assertThatThrownBy(handler::orThrow).isEqualTo(FAIL_EXCEPTION);
+        assertThatThrownBy(() -> handler.orThrow(functionSpy)).isEqualTo(anotherError);
 
         verify(functionSpy, times(1)).apply(FAIL_EXCEPTION);
       }
@@ -194,8 +224,8 @@ import org.junit.jupiter.api.Test;
         final Function<RuntimeException, FileSystemException> functionSpy = spyLambda(err -> FAIL_EXCEPTION);
         final EffectHandler<RuntimeException> handler = Maybe.fromRunnable(noOp);
 
-        assertThatCode(handler::onErrorThrow).doesNotThrowAnyException();
-        assertThatCode(() -> handler.onErrorThrow(functionSpy)).doesNotThrowAnyException();
+        assertThatCode(handler::orThrow).doesNotThrowAnyException();
+        assertThatCode(() -> handler.orThrow(functionSpy)).doesNotThrowAnyException();
 
         verify(functionSpy, never()).apply(any());
       }
