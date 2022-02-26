@@ -15,12 +15,14 @@ import org.junit.jupiter.api.Test;
 
 @UnitTest class MaybeTest {
 
+  private static final String OK = "OK";
+
   @Nested class just {
     @Nested class when_a_value_is_passed {
       @Test void returns_the_monad_with_the_value() {
-        final Maybe<String> maybe = Maybe.just("foo");
+        final Maybe<String> maybe = Maybe.just(OK);
 
-        assertThat(maybe.value()).contains("foo");
+        assertThat(maybe.value()).contains(OK);
       }
     }
 
@@ -45,9 +47,9 @@ import org.junit.jupiter.api.Test;
   @Nested class fromSupplier {
     @Nested class when_the_operation_success {
       @Test void returns_a_handler_with_the_value() {
-        final ResolveHandler<String, ?> handler = Maybe.fromSupplier(() -> "OK");
+        final ResolveHandler<String, ?> handler = Maybe.fromSupplier(() -> OK);
 
-        assertThat(handler.success()).contains("OK");
+        assertThat(handler.success()).contains(OK);
         assertThat(handler.error()).isEmpty();
       }
     }
@@ -111,7 +113,7 @@ import org.junit.jupiter.api.Test;
   @Nested class map {
     @Nested class when_there_is_a_value_in_the_monad {
       @Test void maps_the_value_with_the_passed_function() {
-        final Maybe<Integer> maybe = Maybe.just("OK").map(String::length);
+        final Maybe<Integer> maybe = Maybe.just(OK).map(String::length);
 
         assertThat(maybe.value()).contains(2);
       }
@@ -129,7 +131,7 @@ import org.junit.jupiter.api.Test;
   @Nested class flatMap {
     @Nested class when_there_is_a_value_in_the_monad {
       @Test void maps_the_value_with_the_passed_maybe_function() {
-        final Maybe<Integer> maybe = Maybe.just("OK").flatMap(str -> Maybe.just(str.length()));
+        final Maybe<Integer> maybe = Maybe.just(OK).flatMap(str -> Maybe.just(str.length()));
 
         assertThat(maybe.value()).contains(2);
       }
@@ -151,10 +153,10 @@ import org.junit.jupiter.api.Test;
         final ResolveHandler<String, ?> handler = Maybe.just(1)
           .resolve(value -> {
             assertThat(value).isEqualTo(1);
-            return "OK";
+            return OK;
           });
 
-        assertThat(handler.success()).contains("OK");
+        assertThat(handler.success()).contains(OK);
         assertThat(handler.error()).isEmpty();
       }
     }
@@ -174,7 +176,7 @@ import org.junit.jupiter.api.Test;
     @Nested class when_the_new_operation_success {
       @Test void returns_the_a_handler_with_the_resolved_value() {
         final ResolveHandler<String, ?> handler = Maybe.just(3)
-          .resolve(value -> "OK".repeat(value));
+          .resolve(value -> OK.repeat(value));
 
         assertThat(handler.success()).contains("OKOKOK");
         assertThat(handler.error()).isEmpty();
@@ -267,7 +269,7 @@ import org.junit.jupiter.api.Test;
   @Nested class hasValue {
     @Nested class when_there_is_a_value_in_the_monad {
       @Test void returns_true() {
-        assertThat(Maybe.just("OK").hasValue()).isTrue();
+        assertThat(Maybe.just(OK).hasValue()).isTrue();
       }
     }
 
@@ -287,17 +289,17 @@ import org.junit.jupiter.api.Test;
 
     @Nested class when_there_is_a_value_in_the_monad {
       @Test void returns_false() {
-        assertThat(Maybe.just("OK").hasNothing()).isFalse();
+        assertThat(Maybe.just(OK).hasNothing()).isFalse();
       }
     }
   }
 
   @Nested class toOptional {
     @Test void returns_the_value_of_the_monad_as_optional() {
-      final Maybe<String> maybe = Maybe.just("OK");
+      final Maybe<String> maybe = Maybe.just(OK);
 
       assertThat(maybe.toOptional())
-        .contains("OK");
+        .contains(OK);
     }
   }
 
@@ -324,8 +326,8 @@ import org.junit.jupiter.api.Test;
 
     @Nested class when_both_wrapped_values_are_equal {
       @Test void returns_true() {
-        final Maybe<String> maybe = Maybe.just("OK");
-        final Maybe<String> other = Maybe.just("OK");
+        final Maybe<String> maybe = Maybe.just(OK);
+        final Maybe<String> other = Maybe.just(OK);
         final boolean isEqual = maybe.equals(other);
 
         assertThat(isEqual).isTrue();
@@ -334,7 +336,7 @@ import org.junit.jupiter.api.Test;
 
     @Nested class when_both_wrapped_values_are_NOT_equal {
       @Test void returns_false() {
-        final Maybe<String> maybe = Maybe.just("OK");
+        final Maybe<String> maybe = Maybe.just(OK);
         final Maybe<String> other = Maybe.just("OTHER");
         final boolean isEqualToOther = maybe.equals(other);
 
@@ -346,9 +348,9 @@ import org.junit.jupiter.api.Test;
   @Nested class hashCode {
     @Nested class when_there_is_a_value_in_the_monad {
       @Test void returns_the_hash_code_of_the_value() {
-        final Maybe<String> maybe = Maybe.just("OK");
+        final Maybe<String> maybe = Maybe.just(OK);
 
-        assertThat(maybe).hasSameHashCodeAs("OK");
+        assertThat(maybe).hasSameHashCodeAs(OK);
       }
     }
 
@@ -364,7 +366,7 @@ import org.junit.jupiter.api.Test;
   @Nested class toString {
     @Nested class when_there_is_a_value_in_the_monad {
       @Test void returns_the_string_representation_of_the_value() {
-        final Maybe<String> maybe = Maybe.just("OK");
+        final Maybe<String> maybe = Maybe.just(OK);
 
         assertThat(maybe).hasToString("Maybe[OK]");
       }

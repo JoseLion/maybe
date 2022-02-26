@@ -56,42 +56,121 @@ public final class EffectHandler<E extends Exception> {
   }
 
   /**
-   * Handle an error if present or if was not already handled. The error is passed
-   * in the argument of the {@code handler} function.
-   * 
-   * @param handler a function to handle the error if exists
-   * @return a new handler with nothing if the error is handled. The same handler
-   *         instance otherwise
+   * Run an effect if the error is present and is an instance of the provided
+   * type. The error is passed in the argument of to the {@code effect}
+   * consumer.
+   *
+   * @param <X> the type of the error to match
+   * @param ofType a class instance of the error type to match
+   * @param effect a consumer function with the error passed in the argument
+   * @return the same handler to continue chainning operations
    */
-  public EffectHandler<E> doOnError(final Consumer<? super Throwable> handler) {
-    if (error.isPresent()) {
-      handler.accept(error.get());
-      return withNothing();
-    }
+  public <X extends Exception> EffectHandler<E> doOnError(final Class<X> ofType, final Consumer<X> effect) {
+    error.filter(ofType::isInstance)
+      .map(ofType::cast)
+      .ifPresent(effect);
 
     return this;
   }
 
   /**
-   * Catch an error if it's instance of the {@code errorType} passed and it was
-   * not already handled. The catched error is passed in the argument of the
-   * {@code handler} function.
-   * 
-   * @param <X>       the type of the error to catch
-   * @param errorType a class instance of the error type to catch
-   * @param handler   a function to handle the error if exists
-   * @return a new handler with nothing if the error is catched. The same handler
-   *         instance otherwise
+   * Run an effect if the error is present and is an instance of the provided
+   * type.
+   *
+   * @param <X> the type of the error to match
+   * @param ofType a class instance of the error type to match
+   * @param effect a runnable function
+   * @return the same handler to continue chainning operations
    */
-  public <X extends E> EffectHandler<E> catchError(final Class<X> errorType, final Consumer<X> handler) {
-    if (error.isPresent() && errorType.isAssignableFrom(error.get().getClass())) {
-      final X exception = errorType.cast(error.get());
+  public <X extends Exception> EffectHandler<E> doOnError(final Class<X> ofType, final Runnable effect) {
+    return this.doOnError(ofType, caught -> effect.run());
+  }
 
-      handler.accept(exception);
-      return withNothing();
-    }
+  /**
+   * Run an effect if the error is present. The error is passed in the argument
+   * of the {@code effect} consumer.
+   * 
+   * @param effect a consumer function with the error passed in the argument
+   * @return the same handler to continue chainning operations
+   */
+  public EffectHandler<E> doOnError(final Consumer<E> effect) {
+    error.ifPresent(effect);
 
     return this;
+  }
+
+  /**
+   * Run an effect if an error is present.
+   *
+   * @param effect a runnable function
+   * @return the same handler to continue chainning operations
+   */
+  public EffectHandler<E> doOnError(final Runnable effect) {
+    return this.doOnError(caught -> effect.run());
+  }
+
+  /**
+   * Catch the error if is present and is an instance of the provided type.
+   * Assuming the error was handled returns a handler with {@code nothing}. The
+   * caught error is passed in the argument of the {@code handler} consumer.
+   * 
+   * @param <X> the type of the error to catch
+   * @param ofType a class instance of the error type to catch
+   * @param handler a consumer function that recieves the caught error
+   * @return a handler with nothing if an error instance of the provided type
+   *         was caught. The same handler instance otherwise
+   */
+  public <X extends E> EffectHandler<E> catchError(final Class<X> ofType, final Consumer<X> handler) {
+    return error.filter(ofType::isInstance)
+      .map(ofType::cast)
+      .map(caught -> {
+        handler.accept(caught);
+        return EffectHandler.<E>withNothing();
+      })
+      .orElse(this);
+  }
+
+  /**
+   * Catch the error if is present and is an instance of the provided type.
+   * Assuming the error was handled returns a handler with {@code nothing}.
+   * 
+   * @param <X> the type of the error to catch
+   * @param ofType a class instance of the error type to catch
+   * @param handler a runnable function
+   * @return a handler with nothing if an error instance of the provided type
+   *         was caught. The same handler instance otherwise
+   */
+  public <X extends E> EffectHandler<E> catchError(final Class<X> ofType, final Runnable handler) {
+    return this.catchError(ofType, caught -> handler.run());
+  }
+
+  /**
+   * Catch the error if is present. Assuming the error was handled returns a
+   * handler with {@code nothing}. The caught error is passed in the argument
+   * of the {@code handler} consumer.
+   *
+   * @param handler a consumer function that recieves the caught error
+   * @return a handler with nothing if an error instance of the provided type
+   *         was caught. The same handler instance otherwise
+   */
+  public EffectHandler<E> catchError(final Consumer<E> handler) {
+    return error.map(caught -> {
+      handler.accept(caught);
+      return EffectHandler.<E>withNothing();
+    })
+    .orElse(this);
+  }
+
+  /**
+   * Catch the error if is present. Assuming the error was handled returns a
+   * handler with {@code nothing}.
+   *
+   * @param handler a runnable function
+   * @return a handler with nothing if an error instance of the provided type
+   *         was caught. The same handler instance otherwise
+   */
+  public EffectHandler<E> catchError(final Runnable handler) {
+    return this.catchError(caught -> handler.run());
   }
 
   /**
@@ -109,7 +188,7 @@ public final class EffectHandler<E extends Exception> {
    * If an error is present, map the error to another exception and throw it. Does
    * nothing otherwise.
    * 
-   * @param <X>         the new error type
+   * @param <X> the new error type
    * @param errorMapper a function that maps the new exception to throw
    * @throws X a mapped exception
    */

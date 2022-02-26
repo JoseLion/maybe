@@ -28,13 +28,17 @@ import org.junit.jupiter.api.Test;
 
 @UnitTest class ResolveHandlerTest {
 
+  private static final String OK = "OK";
+
+  private static final String OTHER = "OTHER";
+
   private static final FileSystemException FAIL_EXCEPTION = new FileSystemException("FAIL");
 
   private final SupplierChecked<String, FileSystemException> throwingOp = () -> {
     throw FAIL_EXCEPTION;
   };
 
-  private final SupplierChecked<String, RuntimeException> okOp = () -> "OK";
+  private final SupplierChecked<String, RuntimeException> okOp = () -> OK;
 
   @Nested class doOnError {
     @Nested class when_the_error_is_present {
@@ -105,67 +109,67 @@ import org.junit.jupiter.api.Test;
       @Nested class and_the_error_type_is_provided {
         @Nested class and_the_error_is_an_instance_of_the_provided_type {
           @Test void calls_the_handler_function() {
-            final Function<FileSystemException, String> functionSpy = spyLambda(e -> "OK");
-            final Supplier<String> supplierSpy = spyLambda(() -> "OK");
+            final Function<FileSystemException, String> functionSpy = spyLambda(e -> OK);
+            final Supplier<String> supplierSpy = spyLambda(() -> OK);
             final List<ResolveHandler<String, FileSystemException>> handlers = List.of(
               Maybe.fromSupplier(throwingOp).catchError(FileSystemException.class, functionSpy),
               Maybe.fromSupplier(throwingOp).catchError(FileSystemException.class, supplierSpy)
             );
 
-            verify(functionSpy, times(1)).apply(FAIL_EXCEPTION);
-            verify(supplierSpy, times(1)).get();
-
             assertThat(handlers).isNotEmpty().allSatisfy(handler -> {
-              assertThat(handler.success()).contains("OK");
+              assertThat(handler.success()).contains(OK);
               assertThat(handler.error()).isEmpty();
             });
+
+            verify(functionSpy, times(1)).apply(FAIL_EXCEPTION);
+            verify(supplierSpy, times(1)).get();
           }
         }
 
         @Nested class and_the_error_is_NOT_an_instance_of_the_provided_type {
           @Test void never_calls_the_handler_function() {
-            final Function<AccessDeniedException, String> functionSpy = spyLambda(e -> "OK");
-            final Supplier<String> supplierSpy = spyLambda(() -> "OK");
+            final Function<AccessDeniedException, String> functionSpy = spyLambda(e -> OK);
+            final Supplier<String> supplierSpy = spyLambda(() -> OK);
             final List<ResolveHandler<String, FileSystemException>> handlers = List.of(
               Maybe.fromSupplier(throwingOp).catchError(AccessDeniedException.class, functionSpy),
               Maybe.fromSupplier(throwingOp).catchError(AccessDeniedException.class, supplierSpy)
             );
 
-            verify(functionSpy, never()).apply(any());
-            verify(supplierSpy, never()).get();
-
             assertThat(handlers).isNotEmpty().allSatisfy(handler -> {
               assertThat(handler.success()).isEmpty();
               assertThat(handler.error()).contains(FAIL_EXCEPTION);
             });
+
+            verify(functionSpy, never()).apply(any());
+            verify(supplierSpy, never()).get();
           }
         }
       }
 
       @Nested class and_the_error_type_is_NOT_provided {
         @Test void calls_the_handler_function() {
-          final Function<FileSystemException, String> handlerSpy = spyLambda(e -> "OK");
-          final Supplier<String> supplierSpy = spyLambda(() -> "OK");
+          final Function<FileSystemException, String> handlerSpy = spyLambda(e -> OK);
+          final Supplier<String> supplierSpy = spyLambda(() -> OK);
           final List<ResolveHandler<String, FileSystemException>> resolvers = List.of(
             Maybe.fromSupplier(throwingOp).catchError(handlerSpy),
             Maybe.fromSupplier(throwingOp).catchError(supplierSpy)
           );
 
-          verify(handlerSpy, times(1)).apply(FAIL_EXCEPTION);
-          verify(supplierSpy, times(1)).get();
-
           assertThat(resolvers).isNotEmpty().allSatisfy(resolver -> {
-            assertThat(resolver.success()).contains("OK");
+            assertThat(resolver.success()).contains(OK);
             assertThat(resolver.error()).isEmpty();
           });
+
+          verify(handlerSpy, times(1)).apply(FAIL_EXCEPTION);
+          verify(supplierSpy, times(1)).get();
         }
       }
     }
 
     @Nested class when_the_error_is_NOT_present {
       @Test void never_calls_the_handler_function() {
-        final Function<RuntimeException, String> functionSpy = spyLambda(e -> "OK");
-        final Supplier<String> supplierSpy = spyLambda(() -> "OK");
+        final Function<RuntimeException, String> functionSpy = spyLambda(e -> OK);
+        final Supplier<String> supplierSpy = spyLambda(() -> OK);
         final List<ResolveHandler<String, RuntimeException>> resolvers = List.of(
           Maybe.fromSupplier(okOp).catchError(RuntimeException.class, functionSpy),
           Maybe.fromSupplier(okOp).catchError(RuntimeException.class, supplierSpy),
@@ -173,13 +177,13 @@ import org.junit.jupiter.api.Test;
           Maybe.fromSupplier(okOp).catchError(supplierSpy)
         );
 
-        verify(functionSpy, never()).apply(any());
-        verify(supplierSpy, never()).get();
-
         assertThat(resolvers).isNotEmpty().allSatisfy(resolver -> {
-          assertThat(resolver.success()).contains("OK");
+          assertThat(resolver.success()).contains(OK);
           assertThat(resolver.error()).isEmpty();
         });
+
+        verify(functionSpy, never()).apply(any());
+        verify(supplierSpy, never()).get();
       }
     }
   }
@@ -318,9 +322,9 @@ import org.junit.jupiter.api.Test;
       @Test void returns_the_value() {
         final ResolveHandler<String, ?> handler = Maybe.fromSupplier(okOp);
 
-        assertThat(handler.orElse("OTHER")).isEqualTo("OK");
-        assertThat(handler.orElse(Exception::getMessage)).isEqualTo("OK");
-        assertThat(handler.orElse(() -> "OTHER")).isEqualTo("OK");
+        assertThat(handler.orElse(OTHER)).isEqualTo(OK);
+        assertThat(handler.orElse(Exception::getMessage)).isEqualTo(OK);
+        assertThat(handler.orElse(() -> OTHER)).isEqualTo(OK);
       }
     }
 
@@ -328,9 +332,9 @@ import org.junit.jupiter.api.Test;
       @Test void returns_the_default_value() {
         final ResolveHandler<String, FileSystemException> handler = Maybe.fromSupplier(throwingOp);
 
-        assertThat(handler.orElse("OTHER")).isEqualTo("OTHER");
+        assertThat(handler.orElse(OTHER)).isEqualTo(OTHER);
         assertThat(handler.orElse(FileSystemException::getMessage)).isEqualTo(FAIL_EXCEPTION.getMessage());
-        assertThat(handler.orElse(() -> "OTHER")).isEqualTo("OTHER");
+        assertThat(handler.orElse(() -> OTHER)).isEqualTo(OTHER);
       }
     }
   }
@@ -341,8 +345,8 @@ import org.junit.jupiter.api.Test;
         final Function<RuntimeException, FileSystemException> functionSpy = spyLambda(error -> FAIL_EXCEPTION);
         final ResolveHandler<String, RuntimeException> handler = Maybe.fromSupplier(okOp);
 
-        assertThat(handler.orThrow()).isEqualTo("OK");
-        assertThat(handler.orThrow(functionSpy)).isEqualTo("OK");
+        assertThat(handler.orThrow()).isEqualTo(OK);
+        assertThat(handler.orThrow(functionSpy)).isEqualTo(OK);
 
         verify(functionSpy, never()).apply(any());
       }
@@ -350,7 +354,7 @@ import org.junit.jupiter.api.Test;
 
     @Nested class when_the_value_is_NOT_present {
       @Test void throws_the_error() {
-        final RuntimeException anotherError = new RuntimeException("OTHER");
+        final RuntimeException anotherError = new RuntimeException(OTHER);
         final Function<FileSystemException, RuntimeException> functionSpy = spyLambda(error -> anotherError);
         final ResolveHandler<?, FileSystemException> handler = Maybe.fromSupplier(throwingOp);
 
@@ -366,7 +370,7 @@ import org.junit.jupiter.api.Test;
     @Nested class when_the_value_is_present {
       @Test void returns_a_maybe_with_the_value() {
         assertThat(Maybe.fromSupplier(okOp).toMaybe().value())
-          .contains("OK");
+          .contains(OK);
       }
     }
 
@@ -381,7 +385,7 @@ import org.junit.jupiter.api.Test;
   @Nested class toOptional {
     @Nested class when_the_value_is_present {
       @Test void returns_the_value_wrapped_in_an_optinal() {
-        assertThat(Maybe.fromSupplier(okOp).toOptional()).contains("OK");
+        assertThat(Maybe.fromSupplier(okOp).toOptional()).contains(OK);
       }
     }
 
