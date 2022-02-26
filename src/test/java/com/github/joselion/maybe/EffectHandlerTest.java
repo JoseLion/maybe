@@ -31,6 +31,28 @@ import org.junit.jupiter.api.Test;
 
   private final RunnableChecked<RuntimeException> noOp = () -> { };
 
+  @Nested class doOnSuccess {
+    @Nested class when_the_value_is_present {
+      @Test void calls_the_effect_callback() {
+        final Runnable runnableSpy = spyLambda(() -> { });
+
+        Maybe.fromRunnable(noOp).doOnSuccess(runnableSpy);
+
+        verify(runnableSpy, times(1)).run();
+      }
+    }
+
+    @Nested class when_the_value_is_NOT_present {
+      @Test void never_calls_the_effect_callback() {
+        final Runnable runnableSpy = spyLambda(() -> { });
+
+        Maybe.fromRunnable(throwingOp).doOnSuccess(runnableSpy);
+
+        verify(runnableSpy, never()).run();
+      }
+    }
+  }
+
   @Nested class doOnError {
     @Nested class when_the_error_is_present {
       @Nested class and_the_error_type_is_provided {

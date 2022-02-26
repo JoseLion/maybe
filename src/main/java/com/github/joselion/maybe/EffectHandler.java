@@ -56,13 +56,27 @@ public final class EffectHandler<E extends Exception> {
   }
 
   /**
+   * Runs an effect if the operation succeeds. That is, when the error is empty.
+   *
+   * @param effect a runnable function
+   * @return the same handler to continue chainning operations
+   */
+  public EffectHandler<E> doOnSuccess(final Runnable effect) {
+    if (error.isEmpty()) {
+      effect.run();
+    }
+
+    return this;
+  }
+
+  /**
    * Run an effect if the error is present and is an instance of the provided
    * type. The error is passed in the argument of to the {@code effect}
    * consumer.
    *
    * @param <X> the type of the error to match
    * @param ofType a class instance of the error type to match
-   * @param effect a consumer function with the error passed in the argument
+   * @param effect a consumer function that recieves the caught error
    * @return the same handler to continue chainning operations
    */
   public <X extends Exception> EffectHandler<E> doOnError(final Class<X> ofType, final Consumer<X> effect) {
@@ -90,7 +104,7 @@ public final class EffectHandler<E extends Exception> {
    * Run an effect if the error is present. The error is passed in the argument
    * of the {@code effect} consumer.
    * 
-   * @param effect a consumer function with the error passed in the argument
+   * @param effect a consumer function that recieves the caught error
    * @return the same handler to continue chainning operations
    */
   public EffectHandler<E> doOnError(final Consumer<E> effect) {
