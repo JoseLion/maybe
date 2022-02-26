@@ -11,9 +11,9 @@ import com.github.joselion.maybe.util.SupplierChecked;
 import org.eclipse.jdt.annotation.Nullable;
 
 /**
- * Maybe is a container object (monad) that may contain a value. Its API allows
- * to process throwing operations in a functional way leveraging
- * {@link java.util.Optional Optional} to unbox the possible contained value.
+ * Maybe is a monadic wrapper that may contain a value. Its API allows to
+ * process throwing operations in a functional way leveraging
+ * {@link java.util.Optional Optional} to unwrap the possible contained value.
  * 
  * @param <T> the type of the wrapped value
  * 
@@ -26,6 +26,15 @@ public final class Maybe<T> {
 
   private Maybe(final @Nullable T value) {
     this.value = Optional.ofNullable(value);
+  }
+
+  /**
+   * Internal use only.
+   *
+   * @return the possible wrapped value
+   */
+  Optional<T> value() {
+    return value;
   }
 
   /**

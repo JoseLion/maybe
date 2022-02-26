@@ -31,7 +31,7 @@ public final class EffectHandler<E extends Exception> {
    * @param error the error to instanciate the EffectHandler
    * @return a EffectHandler instance with an error value
    */
-  protected static <E extends Exception> EffectHandler<E> withError(final E error) {
+  static <E extends Exception> EffectHandler<E> withError(final E error) {
     return new EffectHandler<>(error);
   }
 
@@ -42,8 +42,17 @@ public final class EffectHandler<E extends Exception> {
    * @param <E> the type of the possible exception
    * @return a EffectHandler with neither the success nor the error value
    */
-  protected static <E extends Exception> EffectHandler<E> withNothing() {
+  static <E extends Exception> EffectHandler<E> withNothing() {
     return new EffectHandler<>(null);
+  }
+
+  /**
+   * Internal use only.
+   *
+   * @return the possible thrown exception
+   */
+  Optional<E> error() {
+    return error;
   }
 
   /**

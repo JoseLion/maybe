@@ -101,6 +101,7 @@ def jupiterVersion = '5.8.2'
 dependencies {
   testImplementation('org.assertj:assertj-core:3.22.0')
   testImplementation("org.junit.jupiter:junit-jupiter-api:$jupiterVersion")
+  testImplementation('org.mockito:mockito-core:4.3.1')
 
   testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$jupiterVersion")
 }

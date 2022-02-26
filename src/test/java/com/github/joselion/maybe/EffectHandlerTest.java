@@ -2,7 +2,6 @@ package com.github.joselion.maybe;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
-import static org.assertj.core.api.InstanceOfAssertFactories.optional;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.EOFException;
@@ -15,10 +14,6 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 @UnitTest class EffectHandlerTest {
-
-  private static final String ERROR = "error";
-
-  private static final String VALUE = "value";
 
   private static final IOException FAIL_EXCEPTION = new IOException("FAIL");
 
@@ -39,8 +34,8 @@ import org.junit.jupiter.api.Test;
                   .isInstanceOf(IOException.class)
                   .hasMessageContaining("FAIL");
               })
+              .error()
           )
-          .extracting(ERROR, optional(IOException.class))
           .isEmpty();
         }
       }
@@ -50,6 +45,7 @@ import org.junit.jupiter.api.Test;
           final RunnableChecked<IOException> failingOp = () -> {
             throw new UnsupportedOperationException("ERROR");
           };
+
           assertThat(
             Maybe.fromRunnable(failingOp)
               .doOnError(error -> {
@@ -57,8 +53,8 @@ import org.junit.jupiter.api.Test;
                   .isInstanceOf(UnsupportedOperationException.class)
                   .hasMessageContaining("ERROR");
               })
+              .error()
           )
-          .extracting(ERROR, optional(IOException.class))
           .isEmpty();
         }
       }
@@ -71,8 +67,8 @@ import org.junit.jupiter.api.Test;
             .doOnError(error -> {
               throw new AssertionError("The handler should not be executed");
             })
+            .error()
         )
-        .extracting(ERROR, optional(RuntimeException.class))
         .isEmpty();
       }
     }
@@ -89,8 +85,8 @@ import org.junit.jupiter.api.Test;
                   .isInstanceOf(IOException.class)
                   .hasMessage("FAIL");
               })
+              .error()
           )
-          .extracting(ERROR, optional(IOException.class))
           .isEmpty();
         }
       }
@@ -102,8 +98,8 @@ import org.junit.jupiter.api.Test;
               .catchError(EOFException.class, error -> {
                 throw new AssertionError("The handler should not be executed");
               })
+              .error()
           )
-          .extracting(ERROR, optional(IOException.class))
           .contains(FAIL_EXCEPTION);
         }
       }
@@ -116,8 +112,8 @@ import org.junit.jupiter.api.Test;
             .catchError(RuntimeException.class, error -> {
               throw new AssertionError("The handler should not be executed");
             })
+            .error()
         )
-        .extracting(ERROR, optional(RuntimeException.class))
         .isEmpty();
       }
     }
@@ -161,11 +157,8 @@ import org.junit.jupiter.api.Test;
 
   @Nested class toMaybe {
     @Test void returns_a_maybe_with_nothing() {
-      assertThat(
-        Maybe.fromRunnable(throwingOp).toMaybe()
-      )
-      .extracting(VALUE, optional(Void.class))
-      .isEmpty();
+      assertThat(Maybe.fromRunnable(throwingOp).toMaybe().value())
+        .isEmpty();
     }
   }
 }

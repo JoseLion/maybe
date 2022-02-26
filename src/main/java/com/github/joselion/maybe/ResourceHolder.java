@@ -31,8 +31,17 @@ public class ResourceHolder<R extends AutoCloseable> {
    * @param resource the resource to instantiate the ResourceSpec with
    * @return a new instance of ResourceSpec with the give resource
    */
-  protected static <R extends AutoCloseable> ResourceHolder<R> from(final @Nullable R resource) {
+  static <R extends AutoCloseable> ResourceHolder<R> from(final @Nullable R resource) {
     return new ResourceHolder<>(resource);
+  }
+
+  /**
+   * Internal use only.
+   *
+   * @return the possible stored resource
+   */
+  Optional<R> resource() {
+    return resource;
   }
 
   /**
