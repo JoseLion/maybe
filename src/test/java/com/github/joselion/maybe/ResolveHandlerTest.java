@@ -40,6 +40,36 @@ import org.junit.jupiter.api.Test;
 
   private final SupplierChecked<String, RuntimeException> okOp = () -> OK;
 
+  @Nested class doOnSuccess {
+    @Nested class when_the_value_is_present {
+      @Test void calls_the_effect_callback() {
+        final Consumer<String> consumerSpy = spyLambda(v -> { });
+        final Runnable runnableSpy = spyLambda(() -> { });
+
+        Maybe.fromSupplier(okOp)
+          .doOnSuccess(consumerSpy)
+          .doOnSuccess(runnableSpy);
+
+        verify(consumerSpy, times(1)).accept(OK);
+        verify(runnableSpy, times(1)).run();
+      }
+    }
+
+    @Nested class when_the_value_is_NOT_present {
+      @Test void never_calls_the_effect_callback() {
+        final Consumer<String> consumerSpy = spyLambda(v -> { });
+        final Runnable runnableSpy = spyLambda(() -> { });
+
+        Maybe.fromSupplier(throwingOp)
+          .doOnSuccess(consumerSpy)
+          .doOnSuccess(runnableSpy);
+
+        verify(consumerSpy, never()).accept(any());
+        verify(runnableSpy, never()).run();
+      }
+    }
+  }
+
   @Nested class doOnError {
     @Nested class when_the_error_is_present {
       @Nested class and_the_error_type_is_provided {

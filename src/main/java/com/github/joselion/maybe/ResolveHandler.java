@@ -89,13 +89,36 @@ public final class ResolveHandler<T, E extends Exception> {
   }
 
   /**
+   * Run an effect if the operation resolved successfully. The resolved value
+   * is passed in the argument of the {@code effect} consumer.
+   *
+   * @param effect a function that receives the resolved value
+   * @return the same handler to continue chainning operations
+   */
+  public ResolveHandler<T, E> doOnSuccess(final Consumer<T> effect) {
+    success.ifPresent(effect);
+
+    return this;
+  }
+
+  /**
+   * Run an effect if the operation resolved successfully.
+   *
+   * @param effect a runnable function
+   * @return the same handler to continue chainning operations
+   */
+  public ResolveHandler<T, E> doOnSuccess(final Runnable effect) {
+    return this.doOnSuccess(resolved -> effect.run());
+  }
+
+  /**
    * Run an effect if the error is present and is an instance of the provided
-   * type. The error is passed in the argument of to the {@code effect}
+   * type. The error is passed in the argument of the {@code effect}
    * consumer.
    *
    * @param <X> the type of the error to match
    * @param ofType a class instance of the error type to match
-   * @param effect a consumer function with the error passed in the argument
+   * @param effect a consumer function that receives the caught error
    * @return the same handler to continue chainning operations
    */
   public <X extends Exception> ResolveHandler<T, E> doOnError(final Class<X> ofType, final Consumer<X> effect) {
@@ -123,7 +146,7 @@ public final class ResolveHandler<T, E extends Exception> {
    * Run an effect if the error is present. The error is passed in the argument
    * of the {@code effect} consumer.
    * 
-   * @param effect a consumer function with the error passed in the argument
+   * @param effect a consumer function that receives the caught error
    * @return the same handler to continue chainning operations
    */
   public ResolveHandler<T, E> doOnError(final Consumer<E> effect) {
@@ -149,7 +172,7 @@ public final class ResolveHandler<T, E extends Exception> {
    * 
    * @param <X> the type of the error to catch
    * @param ofType a class instance of the error type to catch
-   * @param handler a function that recieves the caught error and produces
+   * @param handler a function that receives the caught error and produces
    *                another value
    * @return a handler containing a new value if an error instance of the
    *         provided type was caught. The same handler instance otherwise
@@ -180,8 +203,8 @@ public final class ResolveHandler<T, E extends Exception> {
    * Catch the error if is present and handle it to return a new value. The
    * caught error is passed in the argument of the {@code handler} function.
    *
-   * @param handler a function that recieves the caught error in the argument
-   *                and returns another value
+   * @param handler a function that receives the caught error and produces
+   *                another value
    * @return a handler containing a new value if an error was caught. The same
    *         handler instance otherwise
    */
@@ -211,7 +234,7 @@ public final class ResolveHandler<T, E extends Exception> {
    * If neither the value nor the error is present, it returns an empty handler.
    * 
    * @param <U> the type the value will be mapped to
-   * @param mapper a function to map the value to another (if present)
+   * @param mapper a function that receives the resolved value and produces another
    * @return a new handler with either the mapped value, the previous error, or
    *         nothing
    */
@@ -235,7 +258,7 @@ public final class ResolveHandler<T, E extends Exception> {
    * <p>
    * If neither the value nor the error is present, it returns an empty handler.
    * 
-   * @param predicate a predicate to apply to the value (if present)
+   * @param predicate a predicate to apply to the resolved value
    * @return a new handler with either the value if it matched the predicate,
    *         the previous error, or nothing
    */
@@ -301,8 +324,8 @@ public final class ResolveHandler<T, E extends Exception> {
    * the mapping function, which has the error on its argument, and returns
    * another value.
    *
-   * @param mapper the mapping function that produces another value if the
-   *               opration failed to resolve
+   * @param mapper a function that receives the caught error and produces
+   *               another value
    * @return the resolved value if present. Another value otherwise
    */
   public T orElse(final Function<E, T> mapper) {
@@ -335,12 +358,13 @@ public final class ResolveHandler<T, E extends Exception> {
    * Returns the value resolved/handled if present. Throws another error otherwise.
    * 
    * @param <X> the new error type
-   * @param errorMapper a function that maps the new exception to throw
+   * @param mapper a function that receives the caught error and produces
+   *               another exception
    * @return the resolved/handled value if present
    * @throws X a mapped exception
    */
-  public <X extends Throwable> T orThrow(final Function<E, X> errorMapper) throws X {
-    return success.orElseThrow(() -> errorMapper.apply(error.orElseThrow()));
+  public <X extends Throwable> T orThrow(final Function<E, X> mapper) throws X {
+    return success.orElseThrow(() -> mapper.apply(error.orElseThrow()));
   }
 
   /**
@@ -377,7 +401,8 @@ public final class ResolveHandler<T, E extends Exception> {
    * {@code runEffectClosing} operation will not be executed either.
    * 
    * @param <R> the type of the {@link AutoCloseable} resource
-   * @param mapper the function to map the value to a resource
+   * @param mapper a function that receives the resolved value and produces an
+   *               autoclosable resource
    * @return a {@link ResourceHolder} with the mapped resource if the value is
    *         present. An empty {@link ResourceHolder} otherwise
    * 
