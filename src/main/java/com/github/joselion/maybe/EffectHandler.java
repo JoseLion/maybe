@@ -174,11 +174,30 @@ public final class EffectHandler<E extends Exception> {
   }
 
   /**
+   * Terminal operation to handle the error if present. The error is passed in
+   * the argument of the {@code effect} consumer.
+   *
+   * @param effect a consumer function that receives the caught error
+   */
+  public void orElse(final Consumer<E> effect) {
+    error.ifPresent(effect);
+  }
+
+  /**
+   * Terminal operation to handle the error if present.
+   *
+   * @param effect a runnable function
+   */
+  public void orElse(final Runnable effect) {
+    this.orElse(caught -> effect.run());
+  }
+
+  /**
    * Throws the error if present. Does nothing otherwise.
    * 
    * @throws E the error thrown by the {@code effect} operation
    */
-  public void onErrorThrow() throws E {
+  public void orThrow() throws E {
     if (error.isPresent()) {
       throw error.get();
     }
@@ -189,12 +208,12 @@ public final class EffectHandler<E extends Exception> {
    * nothing otherwise.
    * 
    * @param <X> the new error type
-   * @param errorMapper a function that maps the new exception to throw
+   * @param mapper a function that maps the new exception to throw
    * @throws X a mapped exception
    */
-  public <X extends Throwable> void onErrorThrow(final Function<E, X> errorMapper) throws X {
+  public <X extends Throwable> void orThrow(final Function<E, X> mapper) throws X {
     if (error.isPresent()) {
-      throw errorMapper.apply(error.get());
+      throw mapper.apply(error.get());
     }
   }
 
