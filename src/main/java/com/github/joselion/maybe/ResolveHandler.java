@@ -89,8 +89,9 @@ public final class ResolveHandler<T, E extends Exception> {
   }
 
   /**
-   * Run an effect if an error is present and is instance of the provided type.
-   * The error is passed in the argument of to the {@code effect} consumer.
+   * Run an effect if the error is present and is an instance of the provided
+   * type. The error is passed in the argument of to the {@code effect}
+   * consumer.
    *
    * @param <X> the type of the error to match
    * @param ofType a class instance of the error type to match
@@ -98,16 +99,16 @@ public final class ResolveHandler<T, E extends Exception> {
    * @return the same handler to continue chainning operations
    */
   public <X extends Exception> ResolveHandler<T, E> doOnError(final Class<X> ofType, final Consumer<X> effect) {
-    if (error.isPresent() && ofType.isInstance(error.get())) {
-      final X exception = ofType.cast(error.get());
-      effect.accept(exception);
-    }
+    error.filter(ofType::isInstance)
+      .map(ofType::cast)
+      .ifPresent(effect);
 
     return this;
   }
 
   /**
-   * Run an effect if an error is present and is instance of the provided type.
+   * Run an effect if the error is present and is an instance of the provided
+   * type.
    *
    * @param <X> the type of the error to match
    * @param ofType a class instance of the error type to match
@@ -115,12 +116,12 @@ public final class ResolveHandler<T, E extends Exception> {
    * @return the same handler to continue chainning operations
    */
   public <X extends Exception> ResolveHandler<T, E> doOnError(final Class<X> ofType, final Runnable effect) {
-    return this.doOnError(ofType, err -> effect.run());
+    return this.doOnError(ofType, caught -> effect.run());
   }
 
   /**
-   * Run an effect if an error is present. The error is passed in the argument
-   * of to the {@code effect} consumer.
+   * Run an effect if the error is present. The error is passed in the argument
+   * of the {@code effect} consumer.
    * 
    * @param effect a consumer function with the error passed in the argument
    * @return the same handler to continue chainning operations
@@ -138,33 +139,32 @@ public final class ResolveHandler<T, E extends Exception> {
    * @return the same handler to continue chainning operations
    */
   public ResolveHandler<T, E> doOnError(final Runnable effect) {
-    return this.doOnError(err -> effect.run());
+    return this.doOnError(caught -> effect.run());
   }
 
   /**
-   * Catch the error if it's instance of the provided type. Then handle the
-   * error and return a new value. The caught error is passed in the argument
-   * of the {@code handler} function.
+   * Catch the error if is present and is an instance of the provided type.
+   * Then handle the error and return a new value. The caught error is passed
+   * in the argument of the {@code handler} function.
    * 
    * @param <X> the type of the error to catch
    * @param ofType a class instance of the error type to catch
-   * @param handler a function that recieves the caught error in the argument
-   *                and produces another value
+   * @param handler a function that recieves the caught error and produces
+   *                another value
    * @return a handler containing a new value if an error instance of the
    *         provided type was caught. The same handler instance otherwise
    */
   public <X extends E> ResolveHandler<T, E> catchError(final Class<X> ofType, final Function<X, T> handler) {
-    if (error.isPresent() && ofType.isInstance(error.get())) {
-      final X exception = ofType.cast(error.get());
-      return withSuccess(handler.apply(exception));
-    }
-
-    return this;
+    return error.filter(ofType::isInstance)
+      .map(ofType::cast)
+      .map(handler::apply)
+      .map(ResolveHandler::<T, E>withSuccess)
+      .orElse(this);
   }
 
   /**
-   * Catch the error if it's instance of the provided type. Then handle the
-   * error and return a new value.
+   * Catch the error if is present and is an instance of the provided type.
+   * Then handle the error and return a new value.
    *
    * @param <X> the type of the error to catch
    * @param ofType a class instance of the error type to catch
@@ -173,12 +173,12 @@ public final class ResolveHandler<T, E extends Exception> {
    *         provided type was caught. The same handler instance otherwise
    */
   public <X extends E> ResolveHandler<T, E> catchError(final Class<X> ofType, final Supplier<T> handler) {
-    return this.catchError(ofType, err -> handler.get());
+    return this.catchError(ofType, caught -> handler.get());
   }
 
   /**
-   * Catch the error of any type and handle it to return a new value. The caught
-   * error is passed in the argument of the {@code handler} function.
+   * Catch the error if is present and handle it to return a new value. The
+   * caught error is passed in the argument of the {@code handler} function.
    *
    * @param handler a function that recieves the caught error in the argument
    *                and returns another value
@@ -186,21 +186,21 @@ public final class ResolveHandler<T, E extends Exception> {
    *         handler instance otherwise
    */
   public ResolveHandler<T, E> catchError(final Function<E, T> handler) {
-    return error.isPresent()
-      ? withSuccess(handler.apply(error.get()))
-      : this;
+    return error.map(handler::apply)
+      .map(ResolveHandler::<T, E>withSuccess)
+      .orElse(this);
   }
 
   /**
-   * Catch the error of any type and handle it to return a new value through the
-   * supplier function.
+   * Catch the error if is present and handle it to return a new value through
+   * the supplier function.
    *
    * @param supplier a supplier function that produces another value
    * @return a handler containing a new value if an error was caught. The same
    *         handler instance otherwise
    */
   public ResolveHandler<T, E> catchError(final Supplier<T> supplier) {
-    return catchError(err -> supplier.get());
+    return catchError(caught -> supplier.get());
   }
 
   /**
@@ -322,7 +322,7 @@ public final class ResolveHandler<T, E extends Exception> {
   }
 
   /**
-   * Returns the value resolved/handled if present. Throws the error otherwise.
+   * Returns the resolved value if present. Throws the error otherwise.
    * 
    * @return the resolved/handled value if present
    * @throws E the error thrown by the {@code resolve} operation
@@ -385,8 +385,7 @@ public final class ResolveHandler<T, E extends Exception> {
    * @see ResourceHolder#runEffectClosing(ConsumerChecked)
    */
   public <R extends AutoCloseable> ResourceHolder<R> mapToResource(final Function<T, R> mapper) {
-    return this.success
-      .map(mapper)
+    return this.success.map(mapper)
       .map(ResourceHolder::from)
       .orElseGet(() -> ResourceHolder.from(null));
   }
