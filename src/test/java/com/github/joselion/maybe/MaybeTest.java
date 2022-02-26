@@ -1,7 +1,6 @@
 package com.github.joselion.maybe;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.InstanceOfAssertFactories.optional;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -16,20 +15,12 @@ import org.junit.jupiter.api.Test;
 
 @UnitTest class MaybeTest {
 
-  private static final String VALUE = "value";
-
-  private static final String SUCCESS = "success";
-
-  private static final String ERROR = "error";
-
   @Nested class just {
     @Nested class when_a_value_is_passed {
       @Test void returns_the_monad_with_the_value() {
         final Maybe<String> maybe = Maybe.just("foo");
 
-        assertThat(maybe)
-          .extracting(VALUE, optional(String.class))
-          .contains("foo");
+        assertThat(maybe.value()).contains("foo");
       }
     }
 
@@ -37,9 +28,7 @@ import org.junit.jupiter.api.Test;
       @Test void there_is_nothing_in_the_monad() {
         final Maybe<Object> maybe = Maybe.just(null);
 
-        assertThat(maybe)
-          .extracting(VALUE, optional(Object.class))
-          .isEmpty();
+        assertThat(maybe.value()).isEmpty();
       }
     }
   }
@@ -49,9 +38,7 @@ import org.junit.jupiter.api.Test;
     @Test void there_is_nothing_in_the_monad() {
       Maybe<Object> maybe = Maybe.nothing();
 
-      assertThat(maybe)
-      .extracting(VALUE, optional(Object.class))
-      .isEmpty();
+      assertThat(maybe.value()).isEmpty();
     }
   }
 
@@ -60,13 +47,8 @@ import org.junit.jupiter.api.Test;
       @Test void returns_a_handler_with_the_value() {
         final ResolveHandler<String, ?> handler = Maybe.fromSupplier(() -> "OK");
 
-        assertThat(handler)
-          .extracting(SUCCESS, optional(String.class))
-          .contains("OK");
-
-        assertThat(handler)
-          .extracting(ERROR, optional(RuntimeException.class))
-          .isEmpty();
+        assertThat(handler.success()).contains("OK");
+        assertThat(handler.error()).isEmpty();
       }
     }
 
@@ -77,14 +59,8 @@ import org.junit.jupiter.api.Test;
           throw exception;
         });
 
-        assertThat(handler)
-          .extracting(SUCCESS, optional(Object.class))
-          .isEmpty();
-
-        assertThat(handler)
-          .extracting(ERROR, optional(IOException.class))
-          .containsInstanceOf(IOException.class)
-          .contains(exception);
+        assertThat(handler.success()).isEmpty();
+        assertThat(handler.error()).contains(exception);
       }
     }
   }
@@ -98,10 +74,7 @@ import org.junit.jupiter.api.Test;
         });
 
         assertThat(counter).containsExactly(1);
-
-        assertThat(handler)
-          .extracting(ERROR, optional(RuntimeException.class))
-          .isEmpty();
+        assertThat(handler.error()).isEmpty();
       }
     }
 
@@ -112,10 +85,7 @@ import org.junit.jupiter.api.Test;
           throw exception;
         });
 
-        assertThat(handler)
-          .extracting(ERROR, optional(IOException.class))
-          .containsInstanceOf(IOException.class)
-          .contains(exception);
+        assertThat(handler.error()).contains(exception);
       }
     }
   }
@@ -128,11 +98,10 @@ import org.junit.jupiter.api.Test;
           .resolve(FileInputStream::new)
           .orThrow(Error::new);
       ) {
-        softly.assertThat(Maybe.withResource(fis))
-          .extracting("resource", optional(FileInputStream.class))
-            .isPresent()
-            .containsInstanceOf(FileInputStream.class)
-            .containsSame(fis);
+        softly.assertThat(Maybe.withResource(fis).resource())
+          .isPresent()
+          .containsInstanceOf(FileInputStream.class)
+          .containsSame(fis);
       } catch (Exception error) {
         throw new Error(error);
       }
@@ -144,10 +113,7 @@ import org.junit.jupiter.api.Test;
       @Test void maps_the_value_with_the_passed_function() {
         final Maybe<Integer> maybe = Maybe.just("OK").map(String::length);
 
-        assertThat(maybe)
-          .extracting(VALUE, optional(Integer.class))
-            .containsInstanceOf(Integer.class)
-            .contains(2);
+        assertThat(maybe.value()).contains(2);
       }
     }
 
@@ -155,9 +121,7 @@ import org.junit.jupiter.api.Test;
       @Test void returns_nothing() {
         Maybe<Integer> maybe = Maybe.<String>nothing().map(String::length);
 
-        assertThat(maybe)
-          .extracting(VALUE, optional(IOException.class))
-          .isEmpty();
+        assertThat(maybe.value()).isEmpty();
       }
     }
   }
@@ -167,10 +131,7 @@ import org.junit.jupiter.api.Test;
       @Test void maps_the_value_with_the_passed_maybe_function() {
         final Maybe<Integer> maybe = Maybe.just("OK").flatMap(str -> Maybe.just(str.length()));
 
-        assertThat(maybe)
-          .extracting(VALUE, optional(Integer.class))
-          .containsInstanceOf(Integer.class)
-          .contains(2);
+        assertThat(maybe.value()).contains(2);
       }
     }
 
@@ -179,9 +140,7 @@ import org.junit.jupiter.api.Test;
         final Maybe<Integer> maybe = Maybe.<String>nothing()
           .flatMap(str -> Maybe.just(str.length()));
 
-        assertThat(maybe)
-          .extracting(VALUE, optional(Integer.class))
-          .isEmpty();
+        assertThat(maybe.value()).isEmpty();
       }
     }
   }
@@ -195,13 +154,8 @@ import org.junit.jupiter.api.Test;
             return "OK";
           });
 
-        assertThat(handler)
-          .extracting(SUCCESS, optional(String.class))
-          .contains("OK");
-
-        assertThat(handler)
-          .extracting(ERROR, optional(Exception.class))
-          .isEmpty();
+        assertThat(handler.success()).contains("OK");
+        assertThat(handler.error()).isEmpty();
       }
     }
 
@@ -212,13 +166,8 @@ import org.junit.jupiter.api.Test;
             throw new AssertionError("The then operation should not be executed");
           });
 
-        assertThat(handler)
-          .extracting(SUCCESS, optional(Object.class))
-          .isEmpty();
-
-        assertThat(handler)
-          .extracting(ERROR, optional(Exception.class))
-          .isEmpty();
+        assertThat(handler.success()).isEmpty();
+        assertThat(handler.error()).isEmpty();
       }
     }
 
@@ -227,13 +176,8 @@ import org.junit.jupiter.api.Test;
         final ResolveHandler<String, ?> handler = Maybe.just(3)
           .resolve(value -> "OK".repeat(value));
 
-        assertThat(handler)
-          .extracting(SUCCESS, optional(String.class))
-          .contains("OKOKOK");
-
-        assertThat(handler)
-          .extracting(ERROR, optional(Exception.class))
-          .isEmpty();
+        assertThat(handler.success()).contains("OKOKOK");
+        assertThat(handler.error()).isEmpty();
       }
     }
 
@@ -245,14 +189,8 @@ import org.junit.jupiter.api.Test;
             throw exception;
           });
 
-        assertThat(handler)
-          .extracting(SUCCESS, optional(Object.class))
-          .isEmpty();
-
-        assertThat(handler)
-          .extracting(ERROR, optional(IOException.class))
-          .containsInstanceOf(IOException.class)
-          .contains(exception);
+        assertThat(handler.success()).isEmpty();
+        assertThat(handler.error()).contains(exception);
       }
     }
   }
@@ -269,9 +207,7 @@ import org.junit.jupiter.api.Test;
             assertThat(none).isExactlyInstanceOf(Void.class);
           });
 
-        assertThat(handler)
-          .extracting(ERROR, optional(RuntimeException.class))
-          .isEmpty();
+        assertThat(handler.error()).isEmpty();
       }
     }
 
@@ -282,9 +218,7 @@ import org.junit.jupiter.api.Test;
             throw new AssertionError("The then operation should not be executed");
           });
 
-        assertThat(handler)
-          .extracting(ERROR, optional(Exception.class))
-          .isEmpty();
+        assertThat(handler.error()).isEmpty();
       }
     }
 
@@ -295,9 +229,7 @@ import org.junit.jupiter.api.Test;
             assertThat(value).isEqualTo(3);
           });
 
-        assertThat(handler)
-          .extracting(ERROR, optional(Exception.class))
-          .isEmpty();
+        assertThat(handler.error()).isEmpty();
       }
     }
 
@@ -309,10 +241,7 @@ import org.junit.jupiter.api.Test;
             throw exception;
           });
 
-        assertThat(handler)
-          .extracting(ERROR, optional(IOException.class))
-          .containsInstanceOf(IOException.class)
-          .contains(exception);
+        assertThat(handler.error()).contains(exception);
       }
     }
   }
@@ -322,10 +251,7 @@ import org.junit.jupiter.api.Test;
       @Test void returns_a_maybe_with_the_value_cast() {
         final Maybe<Number> maybe = Maybe.<Number>just(3);
 
-        assertThat(maybe.cast(Integer.class))
-          .extracting(VALUE, optional(Integer.class))
-          .containsInstanceOf(Integer.class)
-          .contains(3);
+        assertThat(maybe.cast(Integer.class).value()).contains(3);
       }
     }
 
@@ -333,9 +259,7 @@ import org.junit.jupiter.api.Test;
       @Test void returns_nothing() {
         final Maybe<String> maybe = Maybe.just("3");
 
-        assertThat(maybe.cast(Integer.class))
-          .extracting(VALUE, optional(Integer.class))
-          .isEmpty();
+        assertThat(maybe.cast(Integer.class).value()).isEmpty();
       }
     }
   }

@@ -42,7 +42,7 @@ public final class ResolveHandler<T, E extends Exception> {
    * @param success the success value to instantiate the ResolveHandler
    * @return a ResolveHandler instance with a success value
    */
-  protected static <T, E extends Exception> ResolveHandler<T, E> withSuccess(final T success) {
+  static <T, E extends Exception> ResolveHandler<T, E> withSuccess(final T success) {
     return new ResolveHandler<>(success, null);
   }
 
@@ -54,7 +54,7 @@ public final class ResolveHandler<T, E extends Exception> {
    * @param error the error to instantiate the ResolveHandler
    * @return a ResolveHandler instance with an error value
    */
-  protected static <T, E extends Exception> ResolveHandler<T, E> withError(final E error) {
+  static <T, E extends Exception> ResolveHandler<T, E> withError(final E error) {
     return new ResolveHandler<>(null, error);
   }
 
@@ -66,57 +66,141 @@ public final class ResolveHandler<T, E extends Exception> {
    * @param <E> the type of the possible exception
    * @return a ResolveHandler with neither the success nor the error value
    */
-  protected static <T, E extends Exception> ResolveHandler<T, E> withNothing() {
+  static <T, E extends Exception> ResolveHandler<T, E> withNothing() {
     return new ResolveHandler<>(null, null);
   }
 
   /**
-   * Run an effect if an error is present. The error is passed in the argunment
+   * Internal use only.
+   *
+   * @return the possible success value
+   */
+  Optional<T> success() {
+    return success;
+  }
+
+  /**
+   * Internal use only.
+   *
+   * @return the possible thrown exception
+   */
+  Optional<E> error() {
+    return error;
+  }
+
+  /**
+   * Run an effect if an error is present and is instance of the provided type.
+   * The error is passed in the argument of to the {@code effect} consumer.
+   *
+   * @param <X> the type of the error to match
+   * @param ofType a class instance of the error type to match
+   * @param effect a consumer function with the error passed in the argument
+   * @return the same handler to continue chainning operations
+   */
+  public <X extends Exception> ResolveHandler<T, E> doOnError(final Class<X> ofType, final Consumer<X> effect) {
+    if (error.isPresent() && ofType.isInstance(error.get())) {
+      final X exception = ofType.cast(error.get());
+      effect.accept(exception);
+    }
+
+    return this;
+  }
+
+  /**
+   * Run an effect if an error is present and is instance of the provided type.
+   *
+   * @param <X> the type of the error to match
+   * @param ofType a class instance of the error type to match
+   * @param effect a runnable function
+   * @return the same handler to continue chainning operations
+   */
+  public <X extends Exception> ResolveHandler<T, E> doOnError(final Class<X> ofType, final Runnable effect) {
+    return this.doOnError(ofType, err -> effect.run());
+  }
+
+  /**
+   * Run an effect if an error is present. The error is passed in the argument
    * of to the {@code effect} consumer.
    * 
-   * @param effect a consumer with the error passed in the argument
-   * @return The same handler to continue chainning operations
+   * @param effect a consumer function with the error passed in the argument
+   * @return the same handler to continue chainning operations
    */
-  public ResolveHandler<T, E> doOnError(final Consumer<? super Throwable> effect) {
+  public ResolveHandler<T, E> doOnError(final Consumer<E> effect) {
     error.ifPresent(effect);
 
     return this;
   }
 
   /**
-   * If an error is present, handle the error and return a new value. The error
-   * is passed in the argunment of the {@code handler} function.
-   * 
-   * @param handler a function that should return a new value in case of error
-   * @return a new handler with the new value if error is present. The same
-   *         handler instance otherwise
+   * Run an effect if an error is present.
+   *
+   * @param effect a runnable function
+   * @return the same handler to continue chainning operations
    */
-  public ResolveHandler<T, E> onError(final Function<? super Throwable, T> handler) {
-    if (error.isPresent()) {
-      return withSuccess(handler.apply(error.get()));
+  public ResolveHandler<T, E> doOnError(final Runnable effect) {
+    return this.doOnError(err -> effect.run());
+  }
+
+  /**
+   * Catch the error if it's instance of the provided type. Then handle the
+   * error and return a new value. The caught error is passed in the argument
+   * of the {@code handler} function.
+   * 
+   * @param <X> the type of the error to catch
+   * @param ofType a class instance of the error type to catch
+   * @param handler a function that recieves the caught error in the argument
+   *                and produces another value
+   * @return a handler containing a new value if an error instance of the
+   *         provided type was caught. The same handler instance otherwise
+   */
+  public <X extends E> ResolveHandler<T, E> catchError(final Class<X> ofType, final Function<X, T> handler) {
+    if (error.isPresent() && ofType.isInstance(error.get())) {
+      final X exception = ofType.cast(error.get());
+      return withSuccess(handler.apply(exception));
     }
 
     return this;
   }
 
   /**
-   * Catch an error if it's instance of the {@code errorType} passed, then handle
-   * the error and return a new value. The catched error is passed in the argument
-   * of the {@code handler} function.
-   * 
+   * Catch the error if it's instance of the provided type. Then handle the
+   * error and return a new value.
+   *
    * @param <X> the type of the error to catch
-   * @param errorType a class instance of the error type to catch
-   * @param handler a function that should return a new value in case of error
-   * @return a new handler with the new value if the error is catched. The same
+   * @param ofType a class instance of the error type to catch
+   * @param handler a supplier function that produces another value
+   * @return a handler containing a new value if an error instance of the
+   *         provided type was caught. The same handler instance otherwise
+   */
+  public <X extends E> ResolveHandler<T, E> catchError(final Class<X> ofType, final Supplier<T> handler) {
+    return this.catchError(ofType, err -> handler.get());
+  }
+
+  /**
+   * Catch the error of any type and handle it to return a new value. The caught
+   * error is passed in the argument of the {@code handler} function.
+   *
+   * @param handler a function that recieves the caught error in the argument
+   *                and returns another value
+   * @return a handler containing a new value if an error was caught. The same
    *         handler instance otherwise
    */
-  public <X extends E> ResolveHandler<T, E> catchError(final Class<X> errorType, final Function<X, T> handler) {
-    if (error.isPresent() && errorType.isAssignableFrom(error.get().getClass())) {
-      final X exception = errorType.cast(error.get());
-      return withSuccess(handler.apply(exception));
-    }
+  public ResolveHandler<T, E> catchError(final Function<E, T> handler) {
+    return error.isPresent()
+      ? withSuccess(handler.apply(error.get()))
+      : this;
+  }
 
-    return this;
+  /**
+   * Catch the error of any type and handle it to return a new value through the
+   * supplier function.
+   *
+   * @param supplier a supplier function that produces another value
+   * @return a handler containing a new value if an error was caught. The same
+   *         handler instance otherwise
+   */
+  public ResolveHandler<T, E> catchError(final Supplier<T> supplier) {
+    return catchError(err -> supplier.get());
   }
 
   /**

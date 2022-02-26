@@ -2,7 +2,6 @@ package com.github.joselion.maybe;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.assertj.core.api.InstanceOfAssertFactories.optional;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -16,10 +15,6 @@ import org.junit.jupiter.api.Test;
 
 @UnitTest class ResourceHolderTest {
 
-  private static final String SUCCESS = "success";
-
-  private static final String ERROR = "error";
-
   private static final String FILE_PATH = "./src/test/resources/readTest.txt";
 
   @Nested class resolveClosing {
@@ -30,13 +25,8 @@ import org.junit.jupiter.api.Test;
             throw new AssertionError("The handler should not be executed!");
           });
 
-        assertThat(handler)
-          .extracting(SUCCESS, optional(AutoCloseable.class))
-          .isEmpty();
-
-        assertThat(handler)
-          .extracting(ERROR, optional(Exception.class))
-          .isEmpty();
+        assertThat(handler.success()).isEmpty();
+        assertThat(handler.error()).isEmpty();
       }
     }
 
@@ -52,13 +42,8 @@ import org.junit.jupiter.api.Test;
               return "OK";
             });
 
-          assertThat(handler)
-            .extracting(SUCCESS, optional(String.class))
-            .contains("OK");
-
-          assertThat(handler)
-            .extracting(ERROR, optional(RuntimeException.class))
-            .isEmpty();
+          assertThat(handler.success()).contains("OK");
+          assertThat(handler.error()).isEmpty();
 
           assertThatThrownBy(fis::read)
             .isExactlyInstanceOf(IOException.class)
@@ -78,15 +63,8 @@ import org.junit.jupiter.api.Test;
               throw exception;
             });
 
-          assertThat(handler)
-            .extracting(SUCCESS, optional(Object.class))
-            .isEmpty();
-
-          assertThat(handler)
-            .extracting(ERROR, optional(IOException.class))
-            .containsInstanceOf(IOException.class)
-            .contains(exception);
-
+          assertThat(handler.success()).isEmpty();
+          assertThat(handler.error()).contains(exception);
           assertThatThrownBy(fis::read)
             .isExactlyInstanceOf(IOException.class)
             .hasMessage("Stream Closed");
@@ -103,9 +81,7 @@ import org.junit.jupiter.api.Test;
             throw new AssertionError("The handler should not be executed!");
           });
 
-        assertThat(handler)
-          .extracting(ERROR, optional(Exception.class))
-          .isEmpty();
+        assertThat(handler.error()).isEmpty();
       }
     }
 
@@ -124,9 +100,7 @@ import org.junit.jupiter.api.Test;
 
           assertThat(counter).containsExactly(1);
 
-          assertThat(handler)
-            .extracting(ERROR, optional(RuntimeException.class))
-            .isEmpty();
+          assertThat(handler.error()).isEmpty();
 
           assertThatThrownBy(fis::read)
             .isExactlyInstanceOf(IOException.class)
@@ -146,10 +120,7 @@ import org.junit.jupiter.api.Test;
               throw exception;
             });
 
-          assertThat(handler)
-            .extracting(ERROR, optional(IOException.class))
-            .containsInstanceOf(IOException.class)
-            .contains(exception);
+          assertThat(handler.error()).contains(exception);
 
           assertThatThrownBy(fis::read)
             .isExactlyInstanceOf(IOException.class)

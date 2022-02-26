@@ -1,18 +1,23 @@
 package com.github.joselion.maybe;
 
+import static com.github.joselion.maybe.helpers.Helpers.spyLambda;
 import static org.assertj.core.api.Assertions.as;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.InstanceOfAssertFactories.INPUT_STREAM;
-import static org.assertj.core.api.InstanceOfAssertFactories.optional;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
-import java.io.EOFException;
 import java.io.FileInputStream;
-import java.io.IOException;
-import java.util.ArrayList;
+import java.nio.file.AccessDeniedException;
+import java.nio.file.FileSystemException;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import com.github.joselion.maybe.exceptions.WrappingException;
 import com.github.joselion.maybe.helpers.UnitTest;
@@ -23,218 +28,158 @@ import org.junit.jupiter.api.Test;
 
 @UnitTest class ResolveHandlerTest {
 
-  private static final String SUCCESS = "success";
+  private static final FileSystemException FAIL_EXCEPTION = new FileSystemException("FAIL");
 
-  private static final String ERROR = "error";
-
-  private static final String VALUE = "value";
-
-  private static final String RESOURCE = "resource";
-
-  private static final IOException FAIL_EXCEPTION = new IOException("FAIL");
-
-  private static final UnsupportedOperationException ERROR_EXCEPTION = new UnsupportedOperationException("ERROR");
-
-  private final SupplierChecked<String, IOException> throwingOp = () -> {
+  private final SupplierChecked<String, FileSystemException> throwingOp = () -> {
     throw FAIL_EXCEPTION;
-  };
-
-  private final SupplierChecked<String, IOException> errorOp = () -> {
-    throw ERROR_EXCEPTION;
   };
 
   private final SupplierChecked<String, RuntimeException> okOp = () -> "OK";
 
   @Nested class doOnError {
     @Nested class when_the_error_is_present {
-      @Nested class and_the_error_is_instance_of_the_checked_exception {
-        @Test void runs_the_effect() {
-          final List<Integer> counter = new ArrayList<>();
-          final ResolveHandler<String, IOException> handler = Maybe.fromSupplier(throwingOp)
-            .doOnError(error -> {
-              assertThat(error)
-                .isInstanceOf(IOException.class)
-                .hasMessage("FAIL");
+      @Nested class and_the_error_type_is_provided {
+        @Nested class and_the_error_is_an_instance_of_the_provided_type {
+          @Test void calls_the_effect_callback() {
+            final Consumer<FileSystemException> consumerSpy = spyLambda(error -> { });
+            final Runnable runnableSpy = spyLambda(() -> { });
 
-              counter.add(1);
-            });
+            Maybe.fromSupplier(throwingOp)
+              .doOnError(FileSystemException.class, consumerSpy)
+              .doOnError(FileSystemException.class, runnableSpy);
 
-          assertThat(counter).containsExactly(1);
+            verify(consumerSpy, times(1)).accept(FAIL_EXCEPTION);
+            verify(runnableSpy, times(1)).run();;
+          }
+        }
 
-          assertThat(handler)
-            .extracting(SUCCESS, optional(String.class))
-            .isEmpty();
+        @Nested class and_the_error_is_NOT_an_instance_of_the_provided_type {
+          @Test void never_calls_the_effect_callback() {
+            final Consumer<RuntimeException> consumerSpy = spyLambda(error -> { });
+            final Runnable runnableSpy = spyLambda(() -> { });
 
-          assertThat(handler)
-            .extracting(ERROR, optional(IOException.class))
-            .contains(FAIL_EXCEPTION);
+            Maybe.fromSupplier(throwingOp)
+              .doOnError(RuntimeException.class, consumerSpy)
+              .doOnError(RuntimeException.class, runnableSpy);
+
+            verify(consumerSpy, never()).accept(any());
+            verify(runnableSpy, never()).run();
+          }
         }
       }
 
-      @Nested class and_the_error_is_NOT_instance_of_the_checked_exception {
-        @Test void runs_the_effect() {
-          final List<Integer> counter = new ArrayList<>();
-          final ResolveHandler<String, IOException> handler = Maybe.fromSupplier(errorOp)
-            .doOnError(error -> {
-              assertThat(error)
-                .isInstanceOf(UnsupportedOperationException.class)
-                .hasMessage("ERROR");
+      @Nested class and_the_error_type_is_NOT_provided {
+        @Test void calls_the_effect_callback() {
+          final Consumer<FileSystemException> consumerSpy = spyLambda(error -> { });
+          final Runnable runnableSpy = spyLambda(() -> { });
 
-              counter.add(1);
-            });
+          Maybe.fromSupplier(throwingOp)
+            .doOnError(consumerSpy)
+            .doOnError(runnableSpy);
 
-          assertThat(counter).containsExactly(1);
-
-          assertThat(handler)
-            .extracting(SUCCESS, optional(String.class))
-            .isEmpty();
-
-          assertThat(handler)
-            .extracting(ERROR, optional(UnsupportedOperationException.class))
-            .contains(ERROR_EXCEPTION);
+          verify(consumerSpy, times(1)).accept(FAIL_EXCEPTION);
+          verify(runnableSpy, times(1)).run();
         }
       }
     }
 
     @Nested class when_the_error_is_NOT_present {
-      @Test void does_NOT_run_the_effect() {
-        final ResolveHandler<String, RuntimeException> handler = Maybe.fromSupplier(okOp)
-          .doOnError(error -> {
-            throw new AssertionError("The handler should not be executed");
-          });
+      @Test void never_calls_the_effect_callback() {
+        final Consumer<RuntimeException> cunsumerSpy = spyLambda(error -> { });
+        final Runnable runnableSpy = spyLambda(() -> { });
 
-        assertThat(handler)
-          .extracting(SUCCESS, optional(String.class))
-          .contains("OK");
+        Maybe.fromSupplier(okOp)
+          .doOnError(RuntimeException.class, cunsumerSpy)
+          .doOnError(RuntimeException.class, runnableSpy)
+          .doOnError(cunsumerSpy)
+          .doOnError(runnableSpy);
 
-        assertThat(handler)
-          .extracting(ERROR, optional(IOException.class))
-          .isEmpty();
-      }
-    }
-  }
-
-  @Nested class onError {
-    @Nested class when_the_error_is_present {
-      @Nested class and_the_error_is_instance_of_the_checked_exception {
-        @Test void applies_the_handler_function() {
-          final ResolveHandler<String, IOException> handler = Maybe.fromSupplier(throwingOp)
-            .onError(error -> {
-              assertThat(error)
-                .isInstanceOf(IOException.class)
-                .hasMessage("FAIL");
-
-              return "OK";
-            });
-
-          assertThat(handler)
-            .extracting(SUCCESS, optional(String.class))
-            .contains("OK");
-
-          assertThat(handler)
-            .extracting(ERROR, optional(IOException.class))
-            .isEmpty();
-        }
-      }
-
-      @Nested class and_the_error_is_NOT_instance_of_the_checked_exception {
-        @Test void applies_the_handler_function() {
-          final SupplierChecked<String, IOException> failingOp = () -> {
-            throw new UnsupportedOperationException("ERROR");
-          };
-          final ResolveHandler<String, IOException> handler = Maybe.fromSupplier(failingOp)
-            .onError(error -> {
-              assertThat(error)
-                .isInstanceOf(UnsupportedOperationException.class)
-                .hasMessage("ERROR");
-
-              return "OK";
-            });
-
-          assertThat(handler)
-            .extracting(SUCCESS, optional(String.class))
-            .contains("OK");
-
-          assertThat(handler)
-            .extracting(ERROR, optional(IOException.class))
-            .isEmpty();
-        }
-      }
-    }
-
-    @Nested class when_the_error_is_NOT_present {
-      @Test void the_error_handler_is_not_executed() {
-        final ResolveHandler<String, RuntimeException> handler = Maybe.fromSupplier(okOp)
-          .onError(error -> {
-            throw new AssertionError("The handler should not be executed");
-          });
-
-        assertThat(handler)
-          .extracting(SUCCESS, optional(String.class))
-          .contains("OK");
-
-        assertThat(handler)
-          .extracting(ERROR, optional(IOException.class))
-          .isEmpty();
+        verify(cunsumerSpy, never()).accept(any());
+        verify(runnableSpy, never()).run();
       }
     }
   }
 
   @Nested class catchError {
     @Nested class when_the_error_is_present {
-      @Nested class and_is_instance_of_the_errorType_argument {
-        @Test void catches_the_error_and_the_handler_is_applied() {
-          final ResolveHandler<String, IOException> handler = Maybe.fromSupplier(throwingOp)
-            .catchError(IOException.class, error -> {
-              assertThat(error)
-                .isInstanceOf(IOException.class)
-                .hasMessage("FAIL");
+      @Nested class and_the_error_type_is_provided {
+        @Nested class and_the_error_is_an_instance_of_the_provided_type {
+          @Test void calls_the_handler_function() {
+            final Function<FileSystemException, String> functionSpy = spyLambda(e -> "OK");
+            final Supplier<String> supplierSpy = spyLambda(() -> "OK");
+            final List<ResolveHandler<String, FileSystemException>> handlers = List.of(
+              Maybe.fromSupplier(throwingOp).catchError(FileSystemException.class, functionSpy),
+              Maybe.fromSupplier(throwingOp).catchError(FileSystemException.class, supplierSpy)
+            );
 
-              return "OK";
+            verify(functionSpy, times(1)).apply(FAIL_EXCEPTION);
+            verify(supplierSpy, times(1)).get();
+
+            assertThat(handlers).isNotEmpty().allSatisfy(handler -> {
+              assertThat(handler.success()).contains("OK");
+              assertThat(handler.error()).isEmpty();
             });
+          }
+        }
 
-          assertThat(handler)
-            .extracting(SUCCESS, optional(String.class))
-            .contains("OK");
+        @Nested class and_the_error_is_NOT_an_instance_of_the_provided_type {
+          @Test void never_calls_the_handler_function() {
+            final Function<AccessDeniedException, String> functionSpy = spyLambda(e -> "OK");
+            final Supplier<String> supplierSpy = spyLambda(() -> "OK");
+            final List<ResolveHandler<String, FileSystemException>> handlers = List.of(
+              Maybe.fromSupplier(throwingOp).catchError(AccessDeniedException.class, functionSpy),
+              Maybe.fromSupplier(throwingOp).catchError(AccessDeniedException.class, supplierSpy)
+            );
 
-          assertThat(handler)
-            .extracting(ERROR, optional(IOException.class))
-            .isEmpty();
+            verify(functionSpy, never()).apply(any());
+            verify(supplierSpy, never()).get();
+
+            assertThat(handlers).isNotEmpty().allSatisfy(handler -> {
+              assertThat(handler.success()).isEmpty();
+              assertThat(handler.error()).contains(FAIL_EXCEPTION);
+            });
+          }
         }
       }
 
-      @Nested class and_is_NOT_instance_of_the_errorType_argument {
-        @Test void the_error_is_NOT_catched_and_the_handler_is_not_applied() {
-          final ResolveHandler<String, IOException> handler = Maybe.fromSupplier(throwingOp)
-            .catchError(EOFException.class, error -> {
-              throw new AssertionError("The handler should not be executed");
-            });
+      @Nested class and_the_error_type_is_NOT_provided {
+        @Test void calls_the_handler_function() {
+          final Function<FileSystemException, String> handlerSpy = spyLambda(e -> "OK");
+          final Supplier<String> supplierSpy = spyLambda(() -> "OK");
+          final List<ResolveHandler<String, FileSystemException>> resolvers = List.of(
+            Maybe.fromSupplier(throwingOp).catchError(handlerSpy),
+            Maybe.fromSupplier(throwingOp).catchError(supplierSpy)
+          );
 
-          assertThat(handler)
-            .extracting(SUCCESS, optional(String.class))
-            .isEmpty();
+          verify(handlerSpy, times(1)).apply(FAIL_EXCEPTION);
+          verify(supplierSpy, times(1)).get();
 
-          assertThat(handler)
-            .extracting(ERROR, optional(IOException.class))
-            .contains(FAIL_EXCEPTION);
+          assertThat(resolvers).isNotEmpty().allSatisfy(resolver -> {
+            assertThat(resolver.success()).contains("OK");
+            assertThat(resolver.error()).isEmpty();
+          });
         }
       }
     }
 
     @Nested class when_the_error_is_NOT_present {
-      @Test void the_error_handler_is_not_executed() {
-        final ResolveHandler<String, RuntimeException> handler = Maybe.fromSupplier(okOp)
-          .catchError(RuntimeException.class, error -> {
-            throw new AssertionError("The handler should not be executed");
-          });
+      @Test void never_calls_the_handler_function() {
+        final Function<RuntimeException, String> functionSpy = spyLambda(e -> "OK");
+        final Supplier<String> supplierSpy = spyLambda(() -> "OK");
+        final List<ResolveHandler<String, RuntimeException>> resolvers = List.of(
+          Maybe.fromSupplier(okOp).catchError(RuntimeException.class, functionSpy),
+          Maybe.fromSupplier(okOp).catchError(RuntimeException.class, supplierSpy),
+          Maybe.fromSupplier(okOp).catchError(functionSpy),
+          Maybe.fromSupplier(okOp).catchError(supplierSpy)
+        );
 
-        assertThat(handler)
-          .extracting(SUCCESS, optional(String.class))
-          .contains("OK");
+        verify(functionSpy, never()).apply(any());
+        verify(supplierSpy, never()).get();
 
-        assertThat(handler)
-          .extracting(ERROR, optional(IOException.class))
-          .isEmpty();
+        assertThat(resolvers).isNotEmpty().allSatisfy(resolver -> {
+          assertThat(resolver.success()).contains("OK");
+          assertThat(resolver.error()).isEmpty();
+        });
       }
     }
   }
@@ -245,28 +190,19 @@ import org.junit.jupiter.api.Test;
         final ResolveHandler<Integer, ?> handler = ResolveHandler.withSuccess("Hello world!")
           .map(String::length);
 
-        assertThat(handler)
-          .extracting(SUCCESS, optional(Integer.class))
-          .contains(12);
+        assertThat(handler.success()).contains(12);
 
-        assertThat(handler)
-          .extracting(ERROR, optional(Exception.class))
-          .isEmpty();
+        assertThat(handler.error()).isEmpty();
       }
     }
 
     @Nested class when_the_error_is_present {
       @Test void returns_a_new_handler_with_the_previous_error() {
-        final ResolveHandler<?, IOException> handler = ResolveHandler.withError(FAIL_EXCEPTION)
+        final ResolveHandler<?, FileSystemException> handler = ResolveHandler.withError(FAIL_EXCEPTION)
           .map(Object::toString);
 
-        assertThat(handler)
-          .extracting(SUCCESS, optional(String.class))
-          .isEmpty();
-
-        assertThat(handler)
-          .extracting(ERROR, optional(IOException.class))
-          .contains(FAIL_EXCEPTION);
+        assertThat(handler.success()).isEmpty();
+        assertThat(handler.error()).contains(FAIL_EXCEPTION);
       }
     }
 
@@ -275,13 +211,8 @@ import org.junit.jupiter.api.Test;
         final ResolveHandler<?, ?> handler = ResolveHandler.withNothing()
           .map(Object::toString);
 
-        assertThat(handler)
-          .extracting(SUCCESS, optional(String.class))
-          .isEmpty();
-
-        assertThat(handler)
-          .extracting(ERROR, optional(Exception.class))
-          .isEmpty();
+        assertThat(handler.success()).isEmpty();
+        assertThat(handler.error()).isEmpty();
       }
     }
   }
@@ -293,13 +224,8 @@ import org.junit.jupiter.api.Test;
           final ResolveHandler<String, ?> handler = ResolveHandler.withSuccess("Hello world!")
             .filter(it -> it.contains("world"));
 
-          assertThat(handler)
-            .extracting(SUCCESS, optional(String.class))
-            .contains("Hello world!");
-
-          assertThat(handler)
-            .extracting(ERROR, optional(Exception.class))
-            .isEmpty();
+          assertThat(handler.success()).contains("Hello world!");
+          assertThat(handler.error()).isEmpty();
         }
       }
 
@@ -308,29 +234,19 @@ import org.junit.jupiter.api.Test;
           final ResolveHandler<String, ?> handler = ResolveHandler.withSuccess("Hello world!")
             .filter(it -> it.contains("planet"));
 
-          assertThat(handler)
-            .extracting(SUCCESS, optional(String.class))
-            .isEmpty();
-
-          assertThat(handler)
-            .extracting(ERROR, optional(Exception.class))
-            .isEmpty();
+          assertThat(handler.success()).isEmpty();
+          assertThat(handler.error()).isEmpty();
         }
       }
     }
 
     @Nested class when_the_error_is_present {
       @Test void returns_a_new_handler_with_the_previous_error() {
-        final ResolveHandler<?, IOException> handler = ResolveHandler.withError(FAIL_EXCEPTION)
+        final ResolveHandler<?, FileSystemException> handler = ResolveHandler.withError(FAIL_EXCEPTION)
           .filter(Objects::isNull);
 
-        assertThat(handler)
-          .extracting(SUCCESS, optional(String.class))
-          .isEmpty();
-
-        assertThat(handler)
-          .extracting(ERROR, optional(IOException.class))
-          .contains(FAIL_EXCEPTION);
+        assertThat(handler.success()).isEmpty();
+        assertThat(handler.error()).contains(FAIL_EXCEPTION);
       }
     }
 
@@ -339,13 +255,8 @@ import org.junit.jupiter.api.Test;
         final ResolveHandler<?, ?> handler = ResolveHandler.withNothing()
           .filter(Objects::isNull);
 
-        assertThat(handler)
-          .extracting(SUCCESS, optional(String.class))
-          .isEmpty();
-
-        assertThat(handler)
-          .extracting(ERROR, optional(Exception.class))
-          .isEmpty();
+        assertThat(handler.success()).isEmpty();
+        assertThat(handler.error()).isEmpty();
       }
     }
   }
@@ -358,14 +269,8 @@ import org.junit.jupiter.api.Test;
           final ResolveHandler<String, WrappingException> handler = ResolveHandler.withSuccess(anyValue)
             .cast(String.class);
 
-          assertThat(handler)
-            .extracting(SUCCESS, optional(String.class))
-            .containsInstanceOf(String.class)
-            .contains("Hello");
-
-          assertThat(handler)
-            .extracting(ERROR, optional(WrappingException.class))
-            .isEmpty();
+          assertThat(handler.success()).contains("Hello");
+          assertThat(handler.error()).isEmpty();
         }
       }
 
@@ -375,12 +280,8 @@ import org.junit.jupiter.api.Test;
           final ResolveHandler<String, WrappingException> handler = ResolveHandler.withSuccess(anyValue)
             .cast(String.class);
 
-          assertThat(handler)
-            .extracting(SUCCESS, optional(String.class))
-            .isEmpty();
-
-          assertThat(handler)
-            .extracting(ERROR, optional(WrappingException.class))
+          assertThat(handler.success()).isEmpty();
+          assertThat(handler.error())
             .map(WrappingException::getCause)
             .containsInstanceOf(ClassCastException.class)
             .isNotEmpty();
@@ -393,14 +294,10 @@ import org.junit.jupiter.api.Test;
         final ResolveHandler<String, WrappingException> handler = ResolveHandler.withError(FAIL_EXCEPTION)
             .cast(String.class);
 
-        assertThat(handler)
-          .extracting(SUCCESS, optional(String.class))
-          .isEmpty();
-
-        assertThat(handler)
-          .extracting(ERROR, optional(WrappingException.class))
+        assertThat(handler.success()).isEmpty();
+        assertThat(handler.error())
           .map(WrappingException::getCause)
-          .containsInstanceOf(IOException.class)
+          .containsInstanceOf(FileSystemException.class)
           .isNotEmpty();
       }
     }
@@ -410,13 +307,8 @@ import org.junit.jupiter.api.Test;
         final ResolveHandler<?, ?> handler = ResolveHandler.withNothing()
           .cast(String.class);
 
-        assertThat(handler)
-          .extracting(SUCCESS, optional(String.class))
-          .isEmpty();
-
-        assertThat(handler)
-          .extracting(ERROR, optional(Exception.class))
-          .isEmpty();
+        assertThat(handler.success()).isEmpty();
+        assertThat(handler.error()).isEmpty();
       }
     }
   }
@@ -434,10 +326,10 @@ import org.junit.jupiter.api.Test;
 
     @Nested class when_the_value_is_NOT_present {
       @Test void returns_the_default_value() {
-        final ResolveHandler<String, IOException> handler = Maybe.fromSupplier(throwingOp);
+        final ResolveHandler<String, FileSystemException> handler = Maybe.fromSupplier(throwingOp);
 
         assertThat(handler.orElse("OTHER")).isEqualTo("OTHER");
-        assertThat(handler.orElse(IOException::getMessage)).isEqualTo(FAIL_EXCEPTION.getMessage());
+        assertThat(handler.orElse(FileSystemException::getMessage)).isEqualTo(FAIL_EXCEPTION.getMessage());
         assertThat(handler.orElse(() -> "OTHER")).isEqualTo("OTHER");
       }
     }
@@ -445,37 +337,27 @@ import org.junit.jupiter.api.Test;
 
   @Nested class orThrow {
     @Nested class when_the_value_is_present {
-      @Test void returns_the_value() throws EOFException {
-        assertThat(
-          Maybe.fromSupplier(okOp).orThrow()
-        )
-        .isEqualTo("OK");
+      @Test void returns_the_value() throws FileSystemException {
+        final Function<RuntimeException, FileSystemException> functionSpy = spyLambda(error -> FAIL_EXCEPTION);
+        final ResolveHandler<String, RuntimeException> handler = Maybe.fromSupplier(okOp);
 
-        assertThat(
-          Maybe.fromSupplier(okOp).orThrow(error -> new EOFException(error.getMessage()))
-        )
-        .isEqualTo("OK");
+        assertThat(handler.orThrow()).isEqualTo("OK");
+        assertThat(handler.orThrow(functionSpy)).isEqualTo("OK");
+
+        verify(functionSpy, never()).apply(any());
       }
     }
 
     @Nested class when_the_value_is_NOT_present {
       @Test void throws_the_error() {
-        final ResolveHandler<?, IOException> handler = Maybe.fromSupplier(throwingOp);
+        final RuntimeException anotherError = new RuntimeException("OTHER");
+        final Function<FileSystemException, RuntimeException> functionSpy = spyLambda(error -> anotherError);
+        final ResolveHandler<?, FileSystemException> handler = Maybe.fromSupplier(throwingOp);
 
-        assertThat(
-          assertThrows(IOException.class, handler::orThrow)
-        )
-        .isExactlyInstanceOf(IOException.class)
-        .hasMessage("FAIL");
+        assertThatThrownBy(handler::orThrow).isEqualTo(FAIL_EXCEPTION);
+        assertThatThrownBy(() -> handler.orThrow(functionSpy)).isEqualTo(anotherError);
 
-        assertThat(
-          assertThrows(
-            EOFException.class,
-            () -> handler.orThrow(error -> new EOFException(error.getMessage() + " - OTHER ERROR"))
-          )
-        )
-        .isExactlyInstanceOf(EOFException.class)
-        .hasMessage("FAIL - OTHER ERROR");
+        verify(functionSpy, times(1)).apply(FAIL_EXCEPTION);
       }
     }
   }
@@ -483,21 +365,15 @@ import org.junit.jupiter.api.Test;
   @Nested class toMaybe {
     @Nested class when_the_value_is_present {
       @Test void returns_a_maybe_with_the_value() {
-        assertThat(
-          Maybe.fromSupplier(okOp).toMaybe()
-        )
-        .extracting(VALUE, optional(String.class))
-        .contains("OK");
+        assertThat(Maybe.fromSupplier(okOp).toMaybe().value())
+          .contains("OK");
       }
     }
 
     @Nested class when_the_value_is_NOT_present {
       @Test void returns_a_maybe_with_nothing() {
-        assertThat(
-          Maybe.fromSupplier(throwingOp).toMaybe()
-        )
-        .extracting(VALUE, optional(String.class))
-        .isEmpty();
+        assertThat(Maybe.fromSupplier(throwingOp).toMaybe().value())
+          .isEmpty();
       }
     }
   }
@@ -519,13 +395,11 @@ import org.junit.jupiter.api.Test;
   @Nested class mapToResource {
     @Nested class when_the_value_is_present {
       @Test void returns_a_resource_holder_with_the_mapped_value() {
-        final ResourceHolder<FileInputStream> resHolder = Maybe.just("./src/test/resources/readTest.txt")
+        final ResourceHolder<FileInputStream> holder = Maybe.just("./src/test/resources/readTest.txt")
           .resolve(FileInputStream::new)
           .mapToResource(Function.identity());
 
-        assertThat(resHolder)
-          .extracting(RESOURCE, optional(FileInputStream.class))
-          .containsInstanceOf(FileInputStream.class)
+        assertThat(holder.resource())
           .get(as(INPUT_STREAM))
           .hasContent("foo");
       }
@@ -533,13 +407,11 @@ import org.junit.jupiter.api.Test;
 
     @Nested class when_the_error_is_NOT_present {
       @Test void returns_an_empty_resource_holder() {
-        final ResourceHolder<FileInputStream> resHolder = Maybe.just("invalidFile.txt")
+        final ResourceHolder<FileInputStream> holder = Maybe.just("invalidFile.txt")
           .resolve(FileInputStream::new)
           .mapToResource(Function.identity());
 
-        assertThat(resHolder)
-          .extracting(RESOURCE, optional(FileInputStream.class))
-          .isEmpty();
+        assertThat(holder.resource()).isEmpty();
       }
     }
   }
