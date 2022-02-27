@@ -226,11 +226,12 @@ public final class Maybe<T> {
    * operation was handled with no errors. The value of the previous operation
    * is passed as argument of the {@link FunctionChecked}.
    * 
-   * @param <U>  the type of value returned by the next operation
-   * @param <E>  the type of exception the new resolver may throw
-   * @param resolver the checked supplier operation to resolve
-   * @return a {@link ResolveHandler} with either the value resolved or the thrown
-   *         exception to be handled
+   * @param <U> the type of value returned by the next operation
+   * @param <E> the type of exception the new resolver may throw
+   * @param resolver a checked function that receives the current value and
+   *                 resolves another
+   * @return a {@link ResolveHandler} with either the resolved value, or the
+   *         thrown exception to be handled
    */
   public <U, E extends Exception> ResolveHandler<U, E> resolve(final FunctionChecked<T, U, E> resolver) {
     if (value.isPresent()) {
