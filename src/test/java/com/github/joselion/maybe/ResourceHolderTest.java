@@ -31,7 +31,7 @@ import org.junit.jupiter.api.Test;
     }
 
     @Nested class when_the_resource_is_present {
-      @Nested class when_the_operation_success {
+      @Nested class when_the_operation_succeeds {
         @Test void returns_a_handler_with_the_value() {
           final FileInputStream fis = getFIS();
           final ResolveHandler<String, ?> handler = Maybe.withResource(fis)
@@ -86,7 +86,7 @@ import org.junit.jupiter.api.Test;
     }
 
     @Nested class when_the_resource_is_present {
-      @Nested class when_the_operation_success {
+      @Nested class when_the_operation_succeeds {
         @Test void returns_a_handler_with_nothing() {
           final List<Integer> counter = new ArrayList<>();
           final FileInputStream fis = getFIS();

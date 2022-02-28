@@ -24,4 +24,15 @@ public interface FunctionChecked<T, R, E extends Exception> {
    * @throws E which extends from {@link Exception}
    */
   R apply(T t) throws E;
+
+  /**
+   * Returns a function that always returns its input argument.
+   *
+   * @param <T> the type of the input and output objects to the function
+   * @param <E> the type of exception that the function throws
+   * @return a function that always returns its input argument
+   */
+  static <T, E extends Exception> FunctionChecked<T, T, E> identity() {
+      return t -> t;
+  }
 }
