@@ -21,6 +21,7 @@ import java.util.function.Supplier;
 
 import com.github.joselion.maybe.exceptions.WrappingException;
 import com.github.joselion.maybe.helpers.UnitTest;
+import com.github.joselion.maybe.util.FunctionChecked;
 import com.github.joselion.maybe.util.SupplierChecked;
 
 import org.junit.jupiter.api.Nested;
@@ -214,6 +215,57 @@ import org.junit.jupiter.api.Test;
 
         verify(functionSpy, never()).apply(any());
         verify(supplierSpy, never()).get();
+      }
+    }
+  }
+
+  @Nested class resolve {
+    @Nested class when_the_value_is_present {
+      @Test void calls_the_resolver_callback_and_creates_a_new_handler() {
+        final FunctionChecked<String, Integer, RuntimeException> successSpy = spyLambda(String::length);
+        final FunctionChecked<RuntimeException, Integer, RuntimeException> errorSpy = spyLambda(e -> -1);
+        final List<ResolveHandler<Integer, RuntimeException>> handlers = List.of(
+          Maybe.fromResolver(okOp).resolve(successSpy),
+          Maybe.fromResolver(okOp).resolve(successSpy, errorSpy)
+        );
+
+        assertThat(handlers).isNotEmpty().allSatisfy(handler -> {
+          assertThat(handler.success()).contains(OK.length());
+          assertThat(handler.error()).isEmpty();
+        });
+
+        verify(successSpy, times(2)).apply(OK);
+        verify(errorSpy, never()).apply(any());
+      }
+    }
+
+    @Nested class when_the_value_is_NOT_present {
+      @Nested class and_the_error_resolver_is_NOT_provided {
+        @Test void never_calls_the_resolver_callback_and_creates_a_handler_with_nothing() {
+          final FunctionChecked<String, Integer, RuntimeException> successSpy = spyLambda(String::length);
+          final ResolveHandler<Integer, RuntimeException> handler = Maybe.fromResolver(throwingOp)
+            .resolve(successSpy);
+
+          assertThat(handler.success()).isEmpty();
+          assertThat(handler.error()).isEmpty();
+
+          verify(successSpy, never()).apply(any());
+        }
+      }
+
+      @Nested class and_the_error_resolver_is_provided {
+        @Test void call_only_the_error_callback_and_creates_a_new_handler() {
+          final FunctionChecked<String, Integer, RuntimeException> successSpy = spyLambda(String::length);
+          final FunctionChecked<FileSystemException, Integer, RuntimeException> errorSpy = spyLambda(e -> -1);
+          final ResolveHandler<Integer, RuntimeException> handler = Maybe.fromResolver(throwingOp)
+            .resolve(successSpy, errorSpy);
+
+          assertThat(handler.success()).contains(-1);
+          assertThat(handler.error()).isEmpty();
+
+          verify(successSpy, never()).apply(any());
+          verify(errorSpy, times(1)).apply(FAIL_EXCEPTION);
+        }
       }
     }
   }

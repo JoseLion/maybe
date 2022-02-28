@@ -227,6 +227,49 @@ public final class ResolveHandler<T, E extends Exception> {
   }
 
   /**
+   * Chain another resolver if the value is present. Otherwise, ignore the
+   * error and return a new handler with {@code nothing}. This operator is
+   * effectively an alias for {@code .toMaybe().resolve(..)}.
+   *
+   * @param <S> the type of value returned by the next operation
+   * @param <X> the type of exception the new resolver may throw
+   * @param resolver a checked function that receives the current value and
+   *                 resolves another
+   * @return a new handler with either the resolved value, the thrown exception
+   *         to be handled, or nothing
+   */
+  public <S, X extends Exception> ResolveHandler<S, X> resolve(final FunctionChecked<T, S, X> resolver) {
+    return toMaybe().resolve(resolver);
+  }
+
+  /**
+   * Chain another resolver covering both cases of success or error. This could
+   * be useful when we don't want to ignore any possible error and handle it
+   * with another resolver.
+   * <p>
+   * The first callback receives the resolved value, the second callback the
+   * caught error. Both should resolve another value of the same type {@code S},
+   * but only one of the callbacks is invoked. It depends on which whether the
+   * previous value was resolved or not.
+   *
+   * @param <S> the type of value returned by the next operation
+   * @param <X> the type of exception the new resolver may throw
+   * @param successResolver a checked function that receives the current value
+   *                        and resolves another
+   * @param errorResolver a checked function that receives the error and
+   *                      resolves another value
+   * @return a new handler with either the resolved value, the thrown exception
+   *         to be handled, or nothing
+   */
+  public <S, X extends Exception> ResolveHandler<S, X> resolve(
+    final FunctionChecked<T, S, X> successResolver,
+    final FunctionChecked<E, S, X> errorResolver
+  ) {
+    return error.map(Maybe.fromResolver(errorResolver))
+      .orElseGet(() -> this.resolve(successResolver));
+  }
+
+  /**
    * If the value is present, map it to another value through the {@code mapper}
    * function. If the error is present, the {@code mapper} is never applied and
    * the next handler will still contain the error.
