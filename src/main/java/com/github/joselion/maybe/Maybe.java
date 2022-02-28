@@ -72,7 +72,7 @@ public final class Maybe<T> {
    * @return a {@link ResolveHandler} with either the value resolved or the thrown
    *         exception to be handled
    */
-  public static <T, E extends Exception> ResolveHandler<T, E> fromSupplier(final SupplierChecked<T, E> resolver) {
+  public static <T, E extends Exception> ResolveHandler<T, E> fromResolver(final SupplierChecked<T, E> resolver) {
     try {
       return ResolveHandler.withSuccess(resolver.get());
     } catch (Exception e) {
@@ -81,6 +81,38 @@ public final class Maybe<T> {
 
       return ResolveHandler.withError(error);
     }
+  }
+
+  /**
+   * Convenience partial application of a {@code resolver}. This method creates
+   * a function that receives any external value of type {@code S}, and produces
+   * a {@link ResolveHandler} once applied. This is specially useful when we
+   * want to create a {@link Maybe} from a callback argument, like on a
+   * {@link Optional#map(Function)} for instance.
+   * <p>For example, the following code:
+   * <pre>
+   *  Optional.of(value)
+   *    .map(str -> Maybe.fromResolver(() -> decode(str)));
+   * </pre>
+   * Is equivalent to:
+   * <pre>
+   *  Optional.of(value)
+   *    .map(Maybe.fromResolver(this::decode));
+   * </pre>
+   *
+   * @param <S> the external value type
+   * @param <T> the type of the value to be resolved
+   * @param <E> the type of the error the resolver may throw
+   * @param resolver a checked function that receives an external value
+   *                 {@code S} and produces a value {@code T}
+   * @return a partially applied {@link ResolveHandler}. That is, a function
+   *         that receives an external value {@code S}, and produces a new
+   *         handler {@code ResolveHandler<T, E>}
+   */
+  public static <S, T, E extends Exception> Function<S, ResolveHandler<T, E>> fromResolver(
+    final FunctionChecked<S, T, E> resolver
+  ) {
+    return injected -> Maybe.fromResolver(() -> resolver.apply(injected));
   }
 
   /**
@@ -93,7 +125,7 @@ public final class Maybe<T> {
    * @return an {@link EffectHandler} with either the thrown exception to be
    *         handled or nothing
    */
-  public static <E extends Exception> EffectHandler<E> fromRunnable(final RunnableChecked<E> effect) {
+  public static <E extends Exception> EffectHandler<E> fromEffect(final RunnableChecked<E> effect) {
     try {
       effect.run();
       return EffectHandler.withNothing();
@@ -103,6 +135,36 @@ public final class Maybe<T> {
 
       return EffectHandler.withError(error);
     }
+  }
+
+  /**
+   * Convenience partial application of an {@code effect}. This method creates
+   * a function that receives any external value of type {@code S}, and produces
+   * a {@link EffectHandler} once applied. This is specially useful when we
+   * want to create a {@link Maybe} from a callback argument, like on a
+   * {@link Optional#map(Function)} for instance.
+   * <p>For example, the following code:
+   * <pre>
+   *  Optional.of(value)
+   *    .map(msg -> Maybe.fromEffect(() -> sendMessage(msg)));
+   * </pre>
+   * Is equivalent to:
+   * <pre>
+   *  Optional.of(value)
+   *    .map(Maybe.fromEffect(this::sendMessage));
+   * </pre>
+   *
+   * @param <S> the external value type
+   * @param <E> the type of the error the resolver may throw
+   * @param effect a checked consumer that receives an external value {@code S}
+   * @return a partially applied {@link EffectHandler}. That is, a function
+   *         that receives an external value {@code S}, and produces a new
+   *         handler {@code EffectHandler<E>}
+   */
+  public static <S, E extends Exception> Function<S, EffectHandler<E>> fromEffect(
+    final ConsumerChecked<S, E> effect
+  ) {
+    return injected -> Maybe.fromEffect(() -> effect.accept(injected));
   }
 
   /**
@@ -172,7 +234,7 @@ public final class Maybe<T> {
    */
   public <U, E extends Exception> ResolveHandler<U, E> resolve(final FunctionChecked<T, U, E> resolver) {
     if (value.isPresent()) {
-      return Maybe.fromSupplier(() -> resolver.apply(value.get()));
+      return Maybe.fromResolver(() -> resolver.apply(value.get()));
     }
 
     return ResolveHandler.withNothing();
@@ -189,7 +251,7 @@ public final class Maybe<T> {
    */
   public <E extends Exception> EffectHandler<E> runEffect(final ConsumerChecked<T, E> effect) {
     if (value.isPresent()) {
-      return Maybe.fromRunnable(() -> effect.accept(value.get()));
+      return Maybe.fromEffect(() -> effect.accept(value.get()));
     }
 
     return EffectHandler.withNothing();
