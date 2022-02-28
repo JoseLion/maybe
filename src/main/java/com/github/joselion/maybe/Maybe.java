@@ -11,9 +11,9 @@ import com.github.joselion.maybe.util.SupplierChecked;
 import org.eclipse.jdt.annotation.Nullable;
 
 /**
- * Maybe is a monadic wrapper that may contain a value. Its API allows to
- * process throwing operations in a functional way leveraging
- * {@link java.util.Optional Optional} to unwrap the possible contained value.
+ * Maybe is a monadic wrapper that may contain a value. Its rich API allows to
+ * process throwing operations in a functional way leveraging {@link Optional}
+ * to unwrap the possible contained value.
  * 
  * @param <T> the type of the wrapped value
  * 
@@ -38,11 +38,11 @@ public final class Maybe<T> {
   }
 
   /**
-   * Returns a {@code Maybe} monadic wrapper of the given value. If the value is
+   * Creates a {@link Maybe} wrapper of the given value. If the value is
    * {@code null}, it returns a {@link #nothing()}.
    * 
    * @param <T>   the type of the value
-   * @param value the value to wrap on the monad
+   * @param value the value be wrapped
    * @return a {@code Maybe} wrapping the value if it's non-{@code null},
    *         {@link #nothing()} otherwise
    */
@@ -51,14 +51,34 @@ public final class Maybe<T> {
   }
 
   /**
-   * Returns a {@code Maybe} monadic wrapper with nothing on it. This means the monad does
-   * not contains a value because an exception may have occurred.
+   * Creates a {@link Maybe} wrapper with nothing on it. This means the wrapper
+   * does not contains a value because an exception may have occurred.
    * 
    * @param <T> the type of the value
    * @return a {@code Maybe} with nothing
    */
   public static <T> Maybe<T> nothing() {
     return new Maybe<>(null);
+  }
+
+  /**
+   * Creates a {@link Maybe} wrapper of the given value if the optional is not
+   * empty. Returns a {@link #nothing()} otherwise.
+   * <p>
+   * This is a convenience creator that would be equivalent to:
+   * <pre>
+   *  Maybe.just(opt)
+   *    .resolve(Optional::get)
+   *    .toMaybe();
+   * </pre>
+   *
+   * @param <T> the type of the value
+   * @param value an optional value to create the wrapper from
+   * @return a {@code Maybe} wrapping the value if it's not empty.
+   *         {@link #nothing()} otherwise
+   */
+  public static <T> Maybe<T> fromOptional(final Optional<T> value) {
+    return new Maybe<>(value.orElse(null));
   }
 
   /**
@@ -182,9 +202,8 @@ public final class Maybe<T> {
   }
 
   /**
-   * Maps the value of the monad, if present, to another value using the
-   * provided {@link Function} mapper. Otherwise, ignores the mapper and
-   * returns {@link #nothing()}.
+   * If present, maps the value to another using the provided mapper function.
+   * Otherwise, ignores the mapper and returns {@link #nothing()}.
    * 
    * @param <U>    the type the value will be mapped to
    * @param mapper the mapper function
@@ -200,9 +219,8 @@ public final class Maybe<T> {
   }
 
   /**
-   * Maps the value of the monad, if present, to another value using the
-   * provided {@link Function} mapper. Otherwise, ignores the mapper and
-   * returns {@link #nothing()}.
+   * If present, maps the value to another using the provided mapper function.
+   * Otherwise, ignores the mapper and returns {@link #nothing()}.
    * 
    * This method is similar to {@link #map(Function)}, but the mapping function is
    * one whose result is already a {@code Maybe}, and if invoked, flatMap does not
@@ -259,9 +277,8 @@ public final class Maybe<T> {
   }
 
   /**
-   * If the value is present in the monad, casts the value to another type. In
-   * case of any exception during the cast, a Maybe with {@code nothing} is
-   * returned.
+   * If the value is present, casts the value to another type. In case of any
+   * exception during the cast, a Maybe with {@link #nothing()} is returned.
    * 
    * @param <U>  the type that the value will be cast to
    * @param type the class instance of the type to cast
@@ -298,10 +315,10 @@ public final class Maybe<T> {
   }
 
   /**
-   * Safely unbox the value of the monad as an {@link java.util.Optional Optional}
-   * which may or may not contain a value.
+   * Safely unbox the value as an {@link Optional} which may or may not contain
+   * a value.
    * 
-   * @return an {@code Optional} with the value of the monad, if preset.
+   * @return an optional with the value, if preset. An empty optional otherwise
    */
   public Optional<T> toOptional() {
     return value;

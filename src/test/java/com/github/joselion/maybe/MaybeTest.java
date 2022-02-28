@@ -70,6 +70,24 @@ import org.junit.jupiter.api.Test;
     }
   }
 
+  @Nested class fromOptional {
+    @Nested class when_the_optional_has_a_value {
+      @Test void returns_a_Maybe_wrapping_the_value() {
+        final Maybe<String> maybe = Maybe.fromOptional(Optional.of(OK));
+
+        assertThat(maybe.value()).contains(OK);
+      }
+    }
+
+    @Nested class when_the_optional_is_empty {
+      @Test void returns_a_Maybe_wrapping_nothing() {
+        final Maybe<?> maybe = Maybe.fromOptional(Optional.empty());
+
+        assertThat(maybe.value()).isEmpty();
+      }
+    }
+  }
+
   @Nested class fromResolver {
     @Nested class when_the_operation_succeeds {
       @Test void returns_a_handler_with_the_value() throws IOException {

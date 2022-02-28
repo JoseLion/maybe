@@ -295,11 +295,13 @@ public final class ResolveHandler<T, E extends Exception> {
 
   /**
    * If a value is present, and the value matches the given {@code predicate},
-   * returns a new handler with the value, otherwise returns an empty handler.
-   * If the error is present, the {@code predicate} is never applied and, the
-   * next handler will still contain the error.
+   * returns the same handler to continue chaining operations. Otherwise, it
+   * returns an empty handler.
    * <p>
-   * If neither the value nor the error is present, it returns an empty handler.
+   * If the error is present, the {@code predicate} is never applied and it
+   * returns the same handler to continue chaining operations
+   * <p>
+   * If neither the value nor the error are present, it returns an empty handler.
    * 
    * @param predicate a predicate to apply to the resolved value
    * @return a new handler with either the value if it matched the predicate,
@@ -307,18 +309,14 @@ public final class ResolveHandler<T, E extends Exception> {
    */
   public ResolveHandler<T, E> filter(final Predicate<T> predicate) {
     if (success.isPresent()) {
-      final T value = success.get();
-
-      return predicate.test(value)
-        ? withSuccess(value)
-        : withNothing();
+      return success.filter(predicate)
+        .map(value -> this)
+        .orElseGet(ResolveHandler::withNothing);
     }
 
-    if (error.isPresent()) {
-      return withError(error.get());
-    }
-
-    return withNothing();
+    return error.isPresent()
+      ? this
+      : withNothing();
   }
 
   /**
