@@ -37,6 +37,7 @@ javadoc {
     options.addBooleanOption('html5', true)
   }
 
+  title = 'Maybe - Safely handle exceptions'
   options.addStringOption('Xwerror', '-quiet')
 }
 
@@ -133,10 +134,12 @@ publishing {
         name = 'maybe'
         packaging = 'jar'
         description = """\
-          Maybe for Java is not a replacement for java.util.Optional. Instead, it leverages \
-          its benefits to create a functional API that allows to execute/resolve operations \
-          that may throw an exception. The intention is not only to avoid the imperative \
-          try/catch, but also to promote safe exception handling and functional programming in Java
+          Maybe<T> is a monadic wrapper similar java.util.Optional, but with a different intention. \
+          By leveraging Optional<T> benefits, it provides a functional API that safely allows us to \
+          perform operations that may or may not throw checked and unchecked exceptions.
+
+          The wrapper intends to help us avoid the imperative try/catch syntax, while promoting safe \
+          exception handling and functional programming principles.
         """
         url = 'https://github.com/JoseLion/maybe'
 

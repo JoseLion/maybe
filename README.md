@@ -1,10 +1,20 @@
-[![Maven Central](https://img.shields.io/maven-central/v/com.github.joselion/maybe.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22com.github.joselion%22%20AND%20a:%22maybe%22)
 [![JoseLion](https://circleci.com/gh/JoseLion/maybe.svg?style=svg)](https://app.circleci.com/pipelines/github/JoseLion/maybe)
+[![Maven Central](https://img.shields.io/maven-central/v/com.github.joselion/maybe.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22com.github.joselion%22%20AND%20a:%22maybe%22)
+[![javadoc](https://javadoc.io/badge2/com.github.joselion/maybe/javadoc.svg)](https://javadoc.io/doc/com.github.joselion/maybe)
 [![codecov](https://codecov.io/gh/JoseLion/maybe/branch/master/graph/badge.svg)](https://codecov.io/gh/JoseLion/maybe)
 
-# Maybe for Java
+# Maybe - Safely handle exceptions
 
-Maybe for Java is not a replacement of `java.util.Optional`. Instead, it leverages its benefits to create a functional API that allows to run operations that may throw an exception. The intention is not only to avoid the imperative try/catch, but also to promote safe exception handling and functional programming in Java.
+`Maybe<T>` is a monadic wrapper similar `java.util.Optional`, but with a different intention. By leveraging `Optional<T>` benefits, it provides a functional API that safely allows us to perform operations that may or may not throw checked and unchecked exceptions.
+
+The wrapper intends to help us avoid the imperative _try/catch_ syntax, while promoting safe exception handling and functional programming principles.
+
+## Features
+
+* Type-safe differentiation between resolving a value vs. runnning effects.
+* Easy and rich API similar to Java's `Optional`.
+* Full interoperability with `java.util.Optional`.
+* Method reference friendly - The API provides methods with overloads that makes it easier to use [method reference](https://docs.oracle.com/javase/tutorial/java/javaOO/methodreferences.html) syntax.
 
 ## Requirements
 
@@ -19,7 +29,7 @@ Maybe is available in [Maven Central](https://mvnrepository.com/artifact/com.git
 **Gradle**
 
 ```gradle
-implementation(group: 'com.github.joselion', name: 'maybe', version: 'X.X.X')
+implementation('com.github.joselion:maybe:x.y.z')
 ```
 
 **Maven**
@@ -28,76 +38,94 @@ implementation(group: 'com.github.joselion', name: 'maybe', version: 'X.X.X')
 <dependency>
   <groupId>com.github.joselion</groupId>
   <artifactId>maybe</artifactId>
-  <version>X.X.X</version>
+  <version>x.y.z</version>
 </dependency>
 ```
 
-## Usage
+## Basics
 
-The API has two basic usages:
-- **Resolve:** When we need to get a value/result from a throwing operation.
-- **RunEffect:** When we need to only run some effect so no value will be returned from the throwing operation.
+We'd use `Maybe<T>` for 2 defferent casses:
+- **Resolve:** When we need to obtain a value from a throwing operation.
+- **Effects:** When we need to run an effect from a throwing operation, so no value is returned.
 
-It's also possible to create simple instances of Maybe using `Maybe.just(value)` or `Maybe.nothing()`. As the monad may or may not contain a value, a quick way to unbox the value is with the method `.toOptional()`, which will turn the Maybe into an Optional that may or may not contain a value. Some other helpful methods are available which are listed bellow in this document.
+We can create simple instances of Maybe using `Maybe.just(value)` or `Maybe.nothing()` so we can chain throwing operations to it that will create the **handlers**. We also provide the convenience static methods `.fromResolver(..)` and `.fromEffect(..)` that let us create **handlers** directly from lambda expressions. Given the built-in lambda expression do not allow checked exception, we provide a few basic functional interfaces like `FunctionChecked<T, R, E>`, that are just like the built-in ones, but with a `throws E` declaration. You can find them all [here](src\main\java\com\github\joselion\maybe\util)
 
-### Resolve
+### Resolve handler
 
-To resolve a value we can use `Maybe.resolve(..)`, which expects a [SupplierChecked][supplier-checked-ref] function as argument. This function is like a regular `Supplier` but its content is allowed to throw exceptions. The result of this function will be a [ResolveHandler][resolve-handler-ref] which works as an API to handle/catch the possible error and then return the value or a default, throw an exception, or return to the Maybe API to chain other operations.
+Once a resolver operation runs we'll get a [ResolveHandler][resolve-handler-ref] instance. This is the API that let us handle the possible exception and produce a final value, or chain more operations to it.
 
 ```java
-Path path = Paths.get("foo.txt");
+final Path path = Paths.get("foo.txt");
 
-List<String> fooLines = Maybe.resolve(() -> Files.readAllLines(path, UTF_8))
-  .onError(error -> List.of("<Error reading file>")) // the `error` arg here is of type `IOException`
-  .orDefault(List.of());
+final List<String> fooLines = Maybe.fromResolver(() -> Files.readAllLines(path))
+  .doOnError(error -> log.error("Fail to read the file", error)) // where `error` has type IOException
+  .orElse(List.of());
+
+// or we could use method reference
+
+final List<String> fooLines = Maybe.just(path)
+  .resolver(Files::readAllLines)
+  .doOnError(error -> log.error("Fail to read the file", error)) // where `error` has type IOException
+  .orElse(List.of());
 ```
 
-In the example above we want to read from a file, which may fail because of a `IOException`. Using the API we set a value to return in case of error, and to safely unbox the value we also give a default value in case the error was not handled.
+The method `.readAllLines(..)` on example above reads from a file, which may throw a `IOException`. With the resolver API we can run an effect if the exception was thrown. The we use `.orElse(..)` to safely unwrap the resulting value or another one in case of failure.
 
-### RunEffect
+### Effect handler
 
-To only run an effect we can use `Maybe.runEffect(..)`, which expects a [RunnableChecked][runnable-checked-ref] function as argument. As well, this function is like a regular `Runnable` but its content is allowed to throw exceptions. The result of this function will be an [EffectHandler][effect-handler-ref] which works as an API to handle/catch the possible error, throw an exception, or return to the Maybe API to chain other operations.
+When an effect operation runs we'll get a [EffectHandler][effect-handler-ref] instences. Likewise, this is the API that allow us to handle any possinble exception the effect may throw. This handler is very similar to the [ResolveHandler][resolve-handler-ref], but given an effect will never resolve a value, it does not have any of the methods related to manipulating or unwrapping the value.
 
 ```java
-Maybe.runEffect(() -> {
-  final String to: ...
-  final String from: ...
-  final String message: ...
+Maybe.fromEffect(() -> {
+  final String to = ...
+  final String from = ...
+  final String message = ...
   
   MailService.send(message, to, from);
 })
-.onError(error -> { // the `error` arg here is of type `MessagingException`
+.doOnError(error -> { // the `error` has type `MessagingException`
   MailService.report(error.getMessage());
 });
 ```
 
-In the example above we want to send an email using a mail service which may throw a `MessagingException` in case of failure. Using the API we handle the error and report the failure. An effect will not have a value, so if we use the `.and()` operation after this the result on the maybe will be of type `Void`.
+In the example above the `.send(..)` methods may throw a `MessagingException`. With the effect API we handle the error running another effect, i.e. reporting the error to another service.
 
 ### Catching multiple exceptions
 
-If an operation may throw multiple type of exceptions, they can be handle using the `.catchError(..)` method in the handlers. This method can be chained one after another, so the first one to match the exception type will handle the error. As the method `.onError(..)` catches all exceptions, it's important not to use it before `.catchError(..)`.
+Some operation may throw multiple type of exceptions. We can choose how to handle each one using one of the `.catchError(..)` matcher overloads. This method can be chained one after another, meaning the first one to match the exception type will handle the error. However, the compiler cannot ensure exhaustive matching of the error types (for now), so we'll always need to handle a default case with a terminal operator.
 
 ```java
-// BAD
-Maybe.resolve(() -> ...)
-  .catchError(ErrorA.class, () -> ...)
-  .onError(() -> ...)
-  .catchError(ErrorB.class, () -> ...) // The error will not be present at this point
-  .catchError(ErrorC.class, () -> ...);
-
-// GOOD
-Maybe.resolve(() -> ...)
-  .catchError(ErrorA.class, () -> ...)
-  .catchError(ErrorB.class, () -> ...)
-  .catchError(ErrorC.class, () -> ...)
-  .onError(() -> ...);
+Maybe.just(path)
+  .resolve(Files::readAllLines) // throws IOException
+  .catchError(FileNotFoundException.class, () -> ...)
+  .catchError(FileSystemException.class, () -> ...)
+  .catchError(EOFException.class, () -> ...)
+  .orElse(() -> ...);
 ```
 
-## AutoCloseable Resources
+## Optional interoperability
 
-The library also offers a way to easily handle [AutoCloseable](https://docs.oracle.com/javase/8/docs/api/java/lang/AutoCloseable.html) resources in a similar way the `try-with-resource` statement does, but again, with a more functional approach. The idea is not only to avoid imperative code, but also to promote the correct handle of all throwing operations step by step, instead of handling them all in a single catch for instance.
+The API provides full interoperability with Java's `Optional`. You can use `Maybe.fromOptional(..)` to create an instance from an optional value, or you can use the terminal operator `.toOptional()` to unwrap the value to an optional too. However, there's a change you might want to create a `Maybe<T>` withing the Optional API or another library like [Project Reactor](https://projectreactor.io/), like from `.map(..)` method. To make this esier the API provides overloads to that create partial applications, and when fully applied return the specific handler.
 
-To use a resource with `Maybe`, we first need to pass it to the API, which will hold the value until its used in some operations, and finally closed. The resource API allows to resolve or run effects with the provided resource. Just like the usual `resolve` and `runEffect`, with the difference that the resource will be closed when the operation finishes.
+So instead of having nested lambdas like this:
+
+```java
+Optional.ofNullable(rawValue)
+  .map(str -> Maybe.fromResolver(() -> Base64.getDecoder().decode(str)))
+  .map(decoded -> decoded.catchError(...));
+```
+
+You can use the partial application overload and use method reference syntax:
+
+```java
+Optional.ofNullable(rawValue)
+  .map(Maybe.fromResolver(Base64.getDecoder()::decode))
+  .map(decoded -> decoded.catchError(...));
+```
+
+## Autocloseable resources
+
+Maybe also offers a way to work with [AutoCloseable](https://docs.oracle.com/javase/8/docs/api/java/lang/AutoCloseable.html) resources in a similar way the `try-with-resource` statement does, but with a more functional approach. We do this by creating a [ResourceHolder][resource-holder-ref] instance from an autoclosable value, which will hold on to the value to close it at the end. The resource API let us resolve or run effects using the resource, so we can ultimately handle the throwing operation with either the [ResolveHandler][resolve-handler-ref] or the [EffectHandler][effect-handler-ref].
 
 ```java
 Maybe.withResource(myResource)
@@ -111,15 +139,13 @@ Maybe.withResource(myResource)
   });
 ```
 
-**Note:** For increased type safety, the parameter that `.withResource(..)` takes should extend from `AutoCloseable`.
-
-The methods `.resolveClosing(..)` and `.runEffectClosing(..)` will return a [ResolveHandler][resolve-handler-ref] and [EffectHandler][effect-handler-ref] instance respectively, so you can handle them just like any other `Maybe` operation. However, it's most likely that the resource you need to use will also throw it's own exception. As a good practice, the library promotes first handling the exception that the resource may throw and then doing any operation with it. To enable this, the [ResolveHandler][resolve-handler-ref] provides a method `.mapToResource(..)` that allows to map any resolved value to a resource:
+In many cases, the resource you need will also throw an exception when we obtain it. We encourage you to first handle the exception that obtaining the resource may throw, and then map the value to a [ResourceHolder][resource-holder-ref] to handle the next operation. For this [ResolveHandler][resolve-handler-ref] provides a `.mapToResource(..)` method so you can map resolved values to resources.
 
 ```java
 public Properties parsePropertiesFile(final String filePath) {
   return Maybe.just(filePath)
-    .thenResolve(InputFileStream::new)
-    .doOnError(error -> /* Handle the error appropiately */)
+    .resolve(FileInputStream::new)
+    .catchError(() -> /* Handle the error */)
     .mapToResource(Function.identity())
     .resolveClosing(inputStream -> {
       final Properties props = new Properties();
@@ -127,72 +153,23 @@ public Properties parsePropertiesFile(final String filePath) {
 
       return props;
     })
-    .onError(error -> /* Handle the error appropiately */)
-    .orDefault(new Properties());
+    .orElse(new Properties());
 }
 ```
 
-**Note:** Even though the first resolved value already extends from `AutoCloseable`, we need to map it so the type constraint is honored. An identity function will suffice in these cases. Specifically, for `Maybe<T>` it's impossible to know at compile-time that the type `T` already extends from `AutoCloseable`, so we'll always need a map function the ensures this constraint.
+> We know the first resolved value extends from `AutoCloseable`, but the compiler doesn't. We need to explicitly map the value with `Function.identity()` so the compiler can safely ensure that the resource can be closed.
 
-## API Description
+## API Reference
 
-### Maybe
+You can find more details of the API in the [latest Javadocs](https://javadoc.io/doc/com.github.joselion/maybe).If you need to check the Javadocs of an older version you can also use the full URL as shown below. Just replace `<x.y.z>` with the version you want to see:
 
-| Method                    | Description |
-| ------------------------- | ----------- |
-| `Maybe.just(value)`       | Returns a `Maybe` monad wrapping the given value. If the value is `null`, it returns a `nothing()`. |
-| `Maybe.nothing()`         | Returns a `Maybe` monad with nothing on it. This means the monad does not contains a value because an exception may have occurred. |
-| `Maybe.resolve(resolver)` | Resolves the value of a throwing operation using a `SupplierChecked` expression. Returning then a `ResolveHandler` which allows to handle the possible error and return a safe value. |
-| `Maybe.runEffect(effect)` | Runs an effect that may throw an exception using a `RunnableChecked` expression. Returning then an `EffectHandler` which allows to handle the possible error. |
-| `.withResource(resource)` | Creates a [ResourceHolder](#ResourceHolder) from which you can resolve or run effects using the provided resource, which will be automatically closed when the operation finishes |
-| `.map(mapper)`            | Maps the current success value of the monad to another value using the provided `Function` mapper. |
-| `.flatMap(mapper)`        | Maps the current success value of the monad to another value using the provided `Function` mapper. |
-| `.thenResolve(resolver)`  | Chain the `Maybe` with another resolver, if and only if the previous operation was handled with no errors. The value of the previous operation is passed as argument of the `FunctionChecked`. |
-| `.thenRunEffect(effect)`  | Chain the `Maybe` with another effect, if and only if the previous operation was handled with no errors. |
-| `.cast(type)`             | If the value is present in the monad, casts the value to another type. In case of any exception during the cast, a Maybe with `nothing` is returned. |
-| `.hasValue()`             | Checks if the `Maybe` has a value. |
-| `.hasNothing()`           | Checks if the `Maybe` has nothing. That is, when no value is present. |
-| `.toOptional()`           | Safely unbox the value of the monad as a `java.util.Optional` which may or may not contain a value. |
-
-### ResolveHandler
-
-| Method                                   | Description |
-| ---------------------------------------- | ----------- |
-| `.doOnError(handler)`                    | Run an effect if an error is present. The error is passed in the argument of to the `effect` consumer. |
-| `.onError(handler)`                      | If an error is present, handle the error and return a new value. The error is passed in the argument of to the `handler` function. |
-| `.catchError(errorType, handler)`        | Catch an error if it's instance of the `errorType` passed, then handle the error and return a new value. The caught error is passed in the argument of the `handler` function. |
-| `.and()`                                 | Allows the ResolveHandler API to go back to the Maybe API. This is useful to continue chaining more Maybe operations. |
-| `.orDefault(defaultValue)`               | Returns the value resolved/handled if present. A default value otherwise. |
-| `.orSupplyDefault(defaultValueSupplier)` | Returns the value resolved/handled if present. A default value otherwise supplied by the supplier. |
-| `.orThrow()`                             | Returns the value resolved/handled if present. Throws the error otherwise. |
-| `.orThrow(errorMapper)`                  | Returns the value resolved/handled if present. Throws another error otherwise. |
-| `.mapToResource(mapper)`                 | Maps the value to an `AutoCloseable` resource if present, returning a [ResourceHolder](#ResourceHolder) with the mapped value. Otherwise, returns an empty [ResourceHolder](#ResourceHolder).
-
-### EffectHandler
-
-| Method                            | Description |
-| --------------------------------- | ----------- |
-| `.onError(handler)`               | Handle an error if present or if was not already handled. The error is passed in the argument of the `handler` function. |
-| `.catchError(errorType, handler)` | Catch an error if it's instance of the `errorType` passed and it was not already handled. The caught error is passed in the argument of the `handler` function. |
-| `.and()`                          | Allows the EffectHandler API to go back to the Maybe API. This is useful to continue chaining more Maybe operations. |
-| `.onErrorThrow()`                 | Throws the error if present. Does nothing otherwise. |
-| `.onErrorThrow(errorMapper)`      | If an error is present, map the error to another exception and throw it. Does nothing otherwise. |
-
-### ResourceHolder
-
-| Method                      | Description |
-| --------------------------- | ----------- |
-| `.resolveClosing(resolver)` | Same as `Maybe.resolve(resolver)`, with the difference that it takes a `FunctionChecked` which argument contains the resource if present, if not, the operation will not run. The resource will always be closed at the end. |
-| `.runEffectClosing(effect)` |Same as `Maybe.runEffect(effect)`, with the difference that it takes a `ConsumerChecked` which argument contains the resource if present, if not, the operation will not run. The resource will always be closed at the end. |
-
-[supplier-checked-ref]: src/main/java/com/github/joselion/maybe/util/SupplierChecked.java
-[resolve-handler-ref]: src/main/java/com/github/joselion/maybe/ResolveHandler.java
-[runnable-checked-ref]: src/main/java/com/github/joselion/maybe/util/RunnableChecked.java
-[effect-handler-ref]: src/main/java/com/github/joselion/maybe/EffectHandler.java
+```http
+https://javadoc.io/doc/com.github.joselion/maybe/<x.y.z>
+```
 
 ## Something's missing?
 
-Please create an [issue](https://github.com/JoseLion/maybe/issues/new) describing your request, feature or bug. I'll try to look into it as soon as possible 🙂
+Suggestions are always welcome! Please create an [issue](https://github.com/JoseLion/maybe/issues/new) describing the request, feature, or bug. I'll try to look into it as soon as possible 🙂
 
 ## Contributions
 
@@ -201,3 +178,8 @@ Contributions are very welcome! To do so, please fork this repository and open a
 ## License
 
 [Apache License 2.0](LICENSE)
+
+<!-- References -->
+[resolve-handler-ref]: src/main/java/com/github/joselion/maybe/ResolveHandler.java
+[effect-handler-ref]: src/main/java/com/github/joselion/maybe/EffectHandler.java
+[resource-holder-ref]: src/main/java/com/github/joselion/maybe/ResourceHolder.java
