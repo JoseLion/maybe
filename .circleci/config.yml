@@ -118,9 +118,9 @@ workflows:
       - publish-snapshot:
           requires:
             - build
-          # filters:
-          #   branches:
-          #     only: master
+          filters:
+            branches:
+              only: master
 
       - publish-release:
           requires:
