@@ -13,14 +13,13 @@ plugins {
 
   id 'com.github.joselion.pretty-jupiter' version '1.6.2'
   id 'com.github.joselion.strict-null-check' version '1.4.4'
-  id 'io.codearte.nexus-staging' version '0.30.0'
+  id 'io.github.gradle-nexus.publish-plugin' version '1.1.0'
   id 'name.remal.sonarlint' version '1.5.0'
   id 'nebula.lint' version '17.7.0'
 }
 
 def isRelease = project.hasProperty('releaseVersion')
-def snapshotSuffix = '-SNAPSHOT'
-def suffix = isRelease ? '' : snapshotSuffix
+def suffix = isRelease ? '' : '-SNAPSHOT'
 
 group = 'com.github.joselion'
 version = "2.0.0$suffix"
@@ -164,26 +163,14 @@ publishing {
       }
     }
   }
-
-  repositories {
-    maven {
-      def releasesRepoUrl = 'https://oss.sonatype.org/service/local/staging/deploy/maven2/'
-      def snapshotsRepoUrl = 'https://oss.sonatype.org/content/repositories/snapshots/'
-
-      url = version.endsWith(snapshotSuffix) ? snapshotsRepoUrl : releasesRepoUrl
-      credentials(PasswordCredentials) {
-        username = project.findProperty('ossrhUsername')
-        password = project.findProperty('ossrhPassword')
-      }
-    }
-  }
 }
 
 signing {
   sign publishing.publications.mavenJava
 }
 
-nexusStaging {
-  username = project.findProperty('ossrhUsername')
-  password = project.findProperty('ossrhPassword')
+nexusPublishing {
+  repositories {
+    sonatype()
+  }
 }
