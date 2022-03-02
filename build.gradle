@@ -38,7 +38,10 @@ javadoc {
   }
 
   title = 'Maybe - Safely handle exceptions'
-  options.addStringOption('Xwerror', '-quiet')
+  options {
+    addStringOption('Xwerror', '-quiet')
+    tags('apiNote')
+  }
 }
 
 jar {
