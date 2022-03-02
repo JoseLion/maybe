@@ -377,12 +377,15 @@ public final class ResolveHandler<T, E extends Exception> {
    * Returns the resolved value if present. Otherwise, the result produced by
    * the supplying function as another value.
    *
+   * @apiNote Use this method instead of {@link #orElse(Object)} to do lazy
+   *          evaluation of the produced value. That means that the "else"
+   *          value won't be evaluated if the error is not present.
    * @param supplier the supplying function that produces another value if the
    *                 opration failed to resolve
    * @return the resolved value if present. Another value otherwise
    */
-  public T orElse(final Supplier<T> supplier) {
-    return success.orElseGet(supplier::get);
+  public T orElseGet(final Supplier<T> supplier) {
+    return success.orElseGet(supplier);
   }
 
   /**

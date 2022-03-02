@@ -406,7 +406,6 @@ import org.junit.jupiter.api.Test;
 
         assertThat(handler.orElse(OTHER)).isEqualTo(OK);
         assertThat(handler.orElse(Exception::getMessage)).isEqualTo(OK);
-        assertThat(handler.orElse(() -> OTHER)).isEqualTo(OK);
       }
     }
 
@@ -416,7 +415,30 @@ import org.junit.jupiter.api.Test;
 
         assertThat(handler.orElse(OTHER)).isEqualTo(OTHER);
         assertThat(handler.orElse(FileSystemException::getMessage)).isEqualTo(FAIL_EXCEPTION.getMessage());
-        assertThat(handler.orElse(() -> OTHER)).isEqualTo(OTHER);
+      }
+    }
+  }
+
+  @Nested class orElseGet {
+    @Nested class when_the_value_is_present {
+      @Test void never_evaluates_the_supplier_and_returns_the_value() {
+        final Supplier<String> supplierSpy = spyLambda(() -> OTHER);
+        final ResolveHandler<String, ?> handler = Maybe.fromResolver(okOp);
+
+        assertThat(handler.orElseGet(supplierSpy)).isEqualTo(OK);
+
+        verify(supplierSpy, never()).get();
+      }
+    }
+
+    @Nested class when_the_value_is_NOT_present {
+      @Test void evaluates_the_supplier_and_returns_the_produced_value() {
+        final Supplier<String> supplierSpy = spyLambda(() -> OTHER);
+        final ResolveHandler<String, FileSystemException> handler = Maybe.fromResolver(throwingOp);
+
+        assertThat(handler.orElseGet(supplierSpy)).isEqualTo(OTHER);
+
+        verify(supplierSpy, times(1)).get();
       }
     }
   }
