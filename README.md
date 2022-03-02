@@ -48,7 +48,7 @@ We'd use `Maybe<T>` for 2 defferent casses:
 - **Resolve:** When we need to obtain a value from a throwing operation.
 - **Effects:** When we need to run an effect from a throwing operation, so no value is returned.
 
-We can create simple instances of Maybe using `Maybe.just(value)` or `Maybe.nothing()` so we can chain throwing operations to it that will create the **handlers**. We also provide the convenience static methods `.fromResolver(..)` and `.fromEffect(..)` that let us create **handlers** directly from lambda expressions. Given the built-in lambda expression do not allow checked exception, we provide a few basic functional interfaces like `FunctionChecked<T, R, E>`, that are just like the built-in ones, but with a `throws E` declaration. You can find them all [here](src\main\java\com\github\joselion\maybe\util)
+We can create simple instances of Maybe using `Maybe.just(value)` or `Maybe.nothing()` so we can chain throwing operations to it that will create the **handlers**. We also provide the convenience static methods `.fromResolver(..)` and `.fromEffect(..)` that let us create **handlers** directly from lambda expressions. Given the built-in lambda expression do not allow checked exception, we provide a few basic functional interfaces like `FunctionChecked<T, R, E>`, that are just like the built-in ones, but with a `throws E` declaration. You can find them all in the [util packages][util-package-ref] of the library.
 
 ### Resolve handler
 
@@ -177,9 +177,10 @@ Contributions are very welcome! To do so, please fork this repository and open a
 
 ## License
 
-[Apache License 2.0](LICENSE)
+[Apache License 2.0](https://github.com/JoseLion/maybe/blob/master/LICENSE)
 
 <!-- References -->
-[resolve-handler-ref]: src/main/java/com/github/joselion/maybe/ResolveHandler.java
-[effect-handler-ref]: src/main/java/com/github/joselion/maybe/EffectHandler.java
-[resource-holder-ref]: src/main/java/com/github/joselion/maybe/ResourceHolder.java
+[resolve-handler-ref]: https://javadoc.io/doc/com.github.joselion/maybe/latest/com/github/joselion/maybe/ResolveHandler.html
+[effect-handler-ref]: https://javadoc.io/doc/com.github.joselion/maybe/latest/com/github/joselion/maybe/EffectHandler.html
+[resource-holder-ref]: https://javadoc.io/doc/com.github.joselion/maybe/latest/com/github/joselion/maybe/ResourceHolder.html
+[util-package-ref]: https://javadoc.io/doc/com.github.joselion/maybe/latest/com/github/joselion/maybe/util/package-summary.html
