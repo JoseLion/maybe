@@ -1,8 +1,6 @@
 package com.github.joselion.maybe.util;
 
 /**
- * ConsumerChecked
- * 
  * The same as {@link java.util.function.Consumer Consumer}, but the lambda
  * expression throws an {@code E} checked exception.
  * 
