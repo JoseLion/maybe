@@ -41,7 +41,7 @@ public final class Maybe<T> {
    * Creates a {@link Maybe} wrapper of the given value. If the value is
    * {@code null}, it returns a {@link #nothing()}.
    * 
-   * @param <T>   the type of the value
+   * @param <T> the type of the value
    * @param value the value be wrapped
    * @return a {@code Maybe} wrapping the value if it's non-{@code null},
    *         {@link #nothing()} otherwise
@@ -205,7 +205,7 @@ public final class Maybe<T> {
    * If present, maps the value to another using the provided mapper function.
    * Otherwise, ignores the mapper and returns {@link #nothing()}.
    * 
-   * @param <U>    the type the value will be mapped to
+   * @param <U> the type the value will be mapped to
    * @param mapper the mapper function
    * @return a {@code Maybe} with the mapped value if present,
    *         {@link #nothing()} otherwise
@@ -226,7 +226,7 @@ public final class Maybe<T> {
    * one whose result is already a {@code Maybe}, and if invoked, flatMap does not
    * wrap it within an additional {@code Maybe}.
    * 
-   * @param <U>    the type the value will be mapped to
+   * @param <U> the type the value will be mapped to
    * @param mapper the mapper function
    * @return a {@code Maybe} with the mapped value if present,
    *         {@link #nothing()} otherwise
@@ -280,7 +280,7 @@ public final class Maybe<T> {
    * If the value is present, casts the value to another type. In case of any
    * exception during the cast, a Maybe with {@link #nothing()} is returned.
    * 
-   * @param <U>  the type that the value will be cast to
+   * @param <U> the type that the value will be cast to
    * @param type the class instance of the type to cast
    * @return a new {@code Maybe} with the cast value if it can be cast,
    *         {@link #nothing()} otherwise

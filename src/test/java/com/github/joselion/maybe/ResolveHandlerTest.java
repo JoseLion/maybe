@@ -410,7 +410,7 @@ import org.junit.jupiter.api.Test;
     }
 
     @Nested class when_the_value_is_NOT_present {
-      @Test void returns_the_default_value() {
+      @Test void returns_the_provided_value() {
         final ResolveHandler<String, FileSystemException> handler = Maybe.fromResolver(throwingOp);
 
         assertThat(handler.orElse(OTHER)).isEqualTo(OTHER);
@@ -439,6 +439,24 @@ import org.junit.jupiter.api.Test;
         assertThat(handler.orElseGet(supplierSpy)).isEqualTo(OTHER);
 
         verify(supplierSpy, times(1)).get();
+      }
+    }
+  }
+
+  @Nested class orNull {
+    @Nested class when_the_value_is_present {
+      @Test void returns_the_value() {
+        final ResolveHandler<String, ?> handler = Maybe.fromResolver(okOp);
+
+        assertThat(handler.orNull()).isEqualTo(OK);
+      }
+    }
+
+    @Nested class when_the_value_is_NOT_present {
+      @Test void returns_null() {
+        final ResolveHandler<String, FileSystemException> handler = Maybe.fromResolver(throwingOp);
+
+        assertThat(handler.orNull()).isNull();
       }
     }
   }
