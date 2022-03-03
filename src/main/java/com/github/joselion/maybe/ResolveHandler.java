@@ -389,6 +389,22 @@ public final class ResolveHandler<T, E extends Exception> {
   }
 
   /**
+   * Returns the resolved value if present. Just {@code null} otherwise.
+   * <p>
+   * It's strongly encouraged to use {@link #toOptional()} instead to better
+   * handle nullability, but if you really need to return {@code null} in case
+   * of error, you should only use this method.
+   * <p>
+   * Using {@code .orElse(null)} will result in ambiguity between
+   * {@link #orElse(Function)} and {@link #orElse(Object)}.
+   *
+   * @return the resolved value if present. Just {@code null} otherwise.
+   */
+  public @Nullable T orNull() {
+    return success.orElse(null);
+  }
+
+  /**
    * Returns the resolved value if present. Throws the error otherwise.
    * 
    * @return the resolved/handled value if present
