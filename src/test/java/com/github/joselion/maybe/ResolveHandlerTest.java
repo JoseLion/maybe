@@ -45,28 +45,22 @@ import org.junit.jupiter.api.Test;
     @Nested class when_the_value_is_present {
       @Test void calls_the_effect_callback() {
         final Consumer<String> consumerSpy = spyLambda(v -> { });
-        final Runnable runnableSpy = spyLambda(() -> { });
 
         Maybe.fromResolver(okOp)
-          .doOnSuccess(consumerSpy)
-          .doOnSuccess(runnableSpy);
+          .doOnSuccess(consumerSpy);
 
         verify(consumerSpy, times(1)).accept(OK);
-        verify(runnableSpy, times(1)).run();
       }
     }
 
     @Nested class when_the_value_is_NOT_present {
       @Test void never_calls_the_effect_callback() {
         final Consumer<String> consumerSpy = spyLambda(v -> { });
-        final Runnable runnableSpy = spyLambda(() -> { });
 
         Maybe.fromResolver(throwingOp)
-          .doOnSuccess(consumerSpy)
-          .doOnSuccess(runnableSpy);
+          .doOnSuccess(consumerSpy);
 
         verify(consumerSpy, never()).accept(any());
-        verify(runnableSpy, never()).run();
       }
     }
   }
@@ -77,28 +71,22 @@ import org.junit.jupiter.api.Test;
         @Nested class and_the_error_is_an_instance_of_the_provided_type {
           @Test void calls_the_effect_callback() {
             final Consumer<FileSystemException> consumerSpy = spyLambda(error -> { });
-            final Runnable runnableSpy = spyLambda(() -> { });
 
             Maybe.fromResolver(throwingOp)
-              .doOnError(FileSystemException.class, consumerSpy)
-              .doOnError(FileSystemException.class, runnableSpy);
+              .doOnError(FileSystemException.class, consumerSpy);
 
             verify(consumerSpy, times(1)).accept(FAIL_EXCEPTION);
-            verify(runnableSpy, times(1)).run();;
           }
         }
 
         @Nested class and_the_error_is_NOT_an_instance_of_the_provided_type {
           @Test void never_calls_the_effect_callback() {
             final Consumer<RuntimeException> consumerSpy = spyLambda(error -> { });
-            final Runnable runnableSpy = spyLambda(() -> { });
 
             Maybe.fromResolver(throwingOp)
-              .doOnError(RuntimeException.class, consumerSpy)
-              .doOnError(RuntimeException.class, runnableSpy);
+              .doOnError(RuntimeException.class, consumerSpy);
 
             verify(consumerSpy, never()).accept(any());
-            verify(runnableSpy, never()).run();
           }
         }
       }
@@ -106,14 +94,11 @@ import org.junit.jupiter.api.Test;
       @Nested class and_the_error_type_is_NOT_provided {
         @Test void calls_the_effect_callback() {
           final Consumer<FileSystemException> consumerSpy = spyLambda(error -> { });
-          final Runnable runnableSpy = spyLambda(() -> { });
 
           Maybe.fromResolver(throwingOp)
-            .doOnError(consumerSpy)
-            .doOnError(runnableSpy);
+            .doOnError(consumerSpy);
 
           verify(consumerSpy, times(1)).accept(FAIL_EXCEPTION);
-          verify(runnableSpy, times(1)).run();
         }
       }
     }
@@ -121,16 +106,12 @@ import org.junit.jupiter.api.Test;
     @Nested class when_the_error_is_NOT_present {
       @Test void never_calls_the_effect_callback() {
         final Consumer<RuntimeException> cunsumerSpy = spyLambda(error -> { });
-        final Runnable runnableSpy = spyLambda(() -> { });
 
         Maybe.fromResolver(okOp)
           .doOnError(RuntimeException.class, cunsumerSpy)
-          .doOnError(RuntimeException.class, runnableSpy)
-          .doOnError(cunsumerSpy)
-          .doOnError(runnableSpy);
+          .doOnError(cunsumerSpy);
 
         verify(cunsumerSpy, never()).accept(any());
-        verify(runnableSpy, never()).run();
       }
     }
   }
@@ -141,38 +122,26 @@ import org.junit.jupiter.api.Test;
         @Nested class and_the_error_is_an_instance_of_the_provided_type {
           @Test void calls_the_handler_function() {
             final Function<FileSystemException, String> functionSpy = spyLambda(e -> OK);
-            final Supplier<String> supplierSpy = spyLambda(() -> OK);
-            final List<ResolveHandler<String, FileSystemException>> handlers = List.of(
-              Maybe.fromResolver(throwingOp).catchError(FileSystemException.class, functionSpy),
-              Maybe.fromResolver(throwingOp).catchError(FileSystemException.class, supplierSpy)
-            );
+            final ResolveHandler<String, FileSystemException> handler = Maybe.fromResolver(throwingOp)
+              .catchError(FileSystemException.class, functionSpy);
 
-            assertThat(handlers).isNotEmpty().allSatisfy(handler -> {
-              assertThat(handler.success()).contains(OK);
-              assertThat(handler.error()).isEmpty();
-            });
+            assertThat(handler.success()).contains(OK);
+            assertThat(handler.error()).isEmpty();
 
             verify(functionSpy, times(1)).apply(FAIL_EXCEPTION);
-            verify(supplierSpy, times(1)).get();
           }
         }
 
         @Nested class and_the_error_is_NOT_an_instance_of_the_provided_type {
           @Test void never_calls_the_handler_function() {
             final Function<AccessDeniedException, String> functionSpy = spyLambda(e -> OK);
-            final Supplier<String> supplierSpy = spyLambda(() -> OK);
-            final List<ResolveHandler<String, FileSystemException>> handlers = List.of(
-              Maybe.fromResolver(throwingOp).catchError(AccessDeniedException.class, functionSpy),
-              Maybe.fromResolver(throwingOp).catchError(AccessDeniedException.class, supplierSpy)
-            );
+            final ResolveHandler<String, FileSystemException> handler = Maybe.fromResolver(throwingOp)
+              .catchError(AccessDeniedException.class, functionSpy);
 
-            assertThat(handlers).isNotEmpty().allSatisfy(handler -> {
-              assertThat(handler.success()).isEmpty();
-              assertThat(handler.error()).contains(FAIL_EXCEPTION);
-            });
+            assertThat(handler.success()).isEmpty();
+            assertThat(handler.error()).contains(FAIL_EXCEPTION);
 
             verify(functionSpy, never()).apply(any());
-            verify(supplierSpy, never()).get();
           }
         }
       }
@@ -180,19 +149,13 @@ import org.junit.jupiter.api.Test;
       @Nested class and_the_error_type_is_NOT_provided {
         @Test void calls_the_handler_function() {
           final Function<FileSystemException, String> handlerSpy = spyLambda(e -> OK);
-          final Supplier<String> supplierSpy = spyLambda(() -> OK);
-          final List<ResolveHandler<String, FileSystemException>> resolvers = List.of(
-            Maybe.fromResolver(throwingOp).catchError(handlerSpy),
-            Maybe.fromResolver(throwingOp).catchError(supplierSpy)
-          );
+          final ResolveHandler<String, FileSystemException> resolver = Maybe.fromResolver(throwingOp)
+            .catchError(handlerSpy);
 
-          assertThat(resolvers).isNotEmpty().allSatisfy(resolver -> {
-            assertThat(resolver.success()).contains(OK);
-            assertThat(resolver.error()).isEmpty();
-          });
+          assertThat(resolver.success()).contains(OK);
+          assertThat(resolver.error()).isEmpty();
 
           verify(handlerSpy, times(1)).apply(FAIL_EXCEPTION);
-          verify(supplierSpy, times(1)).get();
         }
       }
     }
@@ -200,12 +163,9 @@ import org.junit.jupiter.api.Test;
     @Nested class when_the_error_is_NOT_present {
       @Test void never_calls_the_handler_function() {
         final Function<RuntimeException, String> functionSpy = spyLambda(e -> OK);
-        final Supplier<String> supplierSpy = spyLambda(() -> OK);
         final List<ResolveHandler<String, RuntimeException>> resolvers = List.of(
           Maybe.fromResolver(okOp).catchError(RuntimeException.class, functionSpy),
-          Maybe.fromResolver(okOp).catchError(RuntimeException.class, supplierSpy),
-          Maybe.fromResolver(okOp).catchError(functionSpy),
-          Maybe.fromResolver(okOp).catchError(supplierSpy)
+          Maybe.fromResolver(okOp).catchError(functionSpy)
         );
 
         assertThat(resolvers).isNotEmpty().allSatisfy(resolver -> {
@@ -214,7 +174,6 @@ import org.junit.jupiter.api.Test;
         });
 
         verify(functionSpy, never()).apply(any());
-        verify(supplierSpy, never()).get();
       }
     }
   }

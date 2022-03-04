@@ -59,28 +59,22 @@ import org.junit.jupiter.api.Test;
         @Nested class and_the_error_is_an_instance_of_the_provided_type {
           @Test void calls_the_effect_callback() {
             final Consumer<FileSystemException> consumerSpy = spyLambda(error -> { });
-            final Runnable runnableSpy = spyLambda(() -> { });
 
             Maybe.fromEffect(throwingOp)
-              .doOnError(FileSystemException.class, consumerSpy)
-              .doOnError(FileSystemException.class, runnableSpy);
+              .doOnError(FileSystemException.class, consumerSpy);
 
             verify(consumerSpy, times(1)).accept(FAIL_EXCEPTION);
-            verify(runnableSpy, times(1)).run();;
           }
         }
 
         @Nested class and_the_error_is_NOT_an_instance_of_the_provided_type {
           @Test void never_calls_the_effect_callback() {
             final Consumer<RuntimeException> consumerSpy = spyLambda(error -> { });
-            final Runnable runnableSpy = spyLambda(() -> { });
 
             Maybe.fromEffect(throwingOp)
-              .doOnError(RuntimeException.class, consumerSpy)
-              .doOnError(RuntimeException.class, runnableSpy);
+              .doOnError(RuntimeException.class, consumerSpy);
 
             verify(consumerSpy, never()).accept(any());
-            verify(runnableSpy, never()).run();
           }
         }
       }
@@ -88,14 +82,11 @@ import org.junit.jupiter.api.Test;
       @Nested class and_the_error_type_is_NOT_provided {
         @Test void calls_the_effect_callback() {
           final Consumer<FileSystemException> consumerSpy = spyLambda(error -> { });
-          final Runnable runnableSpy = spyLambda(() -> { });
 
           Maybe.fromEffect(throwingOp)
-            .doOnError(consumerSpy)
-            .doOnError(runnableSpy);
+            .doOnError(consumerSpy);
 
           verify(consumerSpy, times(1)).accept(FAIL_EXCEPTION);
-          verify(runnableSpy, times(1)).run();
         }
       }
     }
@@ -103,16 +94,12 @@ import org.junit.jupiter.api.Test;
     @Nested class when_the_error_is_NOT_present {
       @Test void never_calls_the_effect_callback() {
         final Consumer<RuntimeException> cunsumerSpy = spyLambda(error -> { });
-        final Runnable runnableSpy = spyLambda(() -> { });
 
         Maybe.fromEffect(noOp)
           .doOnError(RuntimeException.class, cunsumerSpy)
-          .doOnError(RuntimeException.class, runnableSpy)
-          .doOnError(cunsumerSpy)
-          .doOnError(runnableSpy);
+          .doOnError(cunsumerSpy);
 
         verify(cunsumerSpy, never()).accept(any());
-        verify(runnableSpy, never()).run();
       }
     }
   }
@@ -123,36 +110,24 @@ import org.junit.jupiter.api.Test;
         @Nested class and_the_error_is_an_instance_of_the_provided_type {
           @Test void calls_the_handler_function() {
             final Consumer<FileSystemException> consumerSpy = spyLambda(e -> { });
-            final Runnable runnableSpy = spyLambda(() -> { });
-            final List<EffectHandler<FileSystemException>> handlers = List.of(
-              Maybe.fromEffect(throwingOp).catchError(FileSystemException.class, consumerSpy),
-              Maybe.fromEffect(throwingOp).catchError(FileSystemException.class, runnableSpy)
-            );
+            final EffectHandler<FileSystemException> handler = Maybe.fromEffect(throwingOp)
+              .catchError(FileSystemException.class, consumerSpy);
 
-            assertThat(handlers).isNotEmpty().allSatisfy(handler -> {
-              assertThat(handler.error()).isEmpty();
-            });
+            assertThat(handler.error()).isEmpty();
 
             verify(consumerSpy, times(1)).accept(FAIL_EXCEPTION);
-            verify(runnableSpy, times(1)).run();
           }
         }
 
         @Nested class and_the_error_is_NOT_an_instance_of_the_provided_type {
           @Test void never_calls_the_handler_function() {
             final Consumer<AccessDeniedException> consumerSpy = spyLambda(e -> { });
-            final Runnable runnableSpy = spyLambda(() -> { });
-            final List<EffectHandler<FileSystemException>> handlers = List.of(
-              Maybe.fromEffect(throwingOp).catchError(AccessDeniedException.class, consumerSpy),
-              Maybe.fromEffect(throwingOp).catchError(AccessDeniedException.class, runnableSpy)
-            );
+            final EffectHandler<FileSystemException> handler = Maybe.fromEffect(throwingOp)
+              .catchError(AccessDeniedException.class, consumerSpy);
 
-            assertThat(handlers).isNotEmpty().allSatisfy(handler -> {
-              assertThat(handler.error()).contains(FAIL_EXCEPTION);
-            });
+            assertThat(handler.error()).contains(FAIL_EXCEPTION);
 
             verify(consumerSpy, never()).accept(any());
-            verify(runnableSpy, never()).run();
           }
         }
       }
@@ -160,18 +135,12 @@ import org.junit.jupiter.api.Test;
       @Nested class and_the_error_type_is_NOT_provided {
         @Test void calls_the_handler_function() {
           final Consumer<FileSystemException> consumerSpy = spyLambda(e -> { });
-          final Runnable runnableSpy = spyLambda(() -> { });
-          final List<EffectHandler<FileSystemException>> handlers = List.of(
-            Maybe.fromEffect(throwingOp).catchError(consumerSpy),
-            Maybe.fromEffect(throwingOp).catchError(runnableSpy)
-          );
+          final EffectHandler<FileSystemException> handler = Maybe.fromEffect(throwingOp)
+            .catchError(consumerSpy);
 
-          assertThat(handlers).isNotEmpty().allSatisfy(handler -> {
-            assertThat(handler.error()).isEmpty();
-          });
+          assertThat(handler.error()).isEmpty();
 
           verify(consumerSpy, times(1)).accept(FAIL_EXCEPTION);
-          verify(runnableSpy, times(1)).run();
         }
       }
     }
@@ -179,12 +148,9 @@ import org.junit.jupiter.api.Test;
     @Nested class when_the_error_is_NOT_present {
       @Test void never_calls_the_handler_function() {
         final Consumer<RuntimeException> consumerSpy = spyLambda(e -> { });
-        final Runnable runnableSpy = spyLambda(() -> { });
         final List<EffectHandler<RuntimeException>> handlers = List.of(
           Maybe.fromEffect(noOp).catchError(RuntimeException.class, consumerSpy),
-          Maybe.fromEffect(noOp).catchError(RuntimeException.class, runnableSpy),
-          Maybe.fromEffect(noOp).catchError(consumerSpy),
-          Maybe.fromEffect(noOp).catchError(runnableSpy)
+          Maybe.fromEffect(noOp).catchError(consumerSpy)
         );
 
         assertThat(handlers).isNotEmpty().allSatisfy(handler -> {
@@ -192,7 +158,6 @@ import org.junit.jupiter.api.Test;
         });
 
         verify(consumerSpy, never()).accept(any());
-        verify(runnableSpy, never()).run();
       }
     }
   }
@@ -201,28 +166,22 @@ import org.junit.jupiter.api.Test;
     @Nested class when_the_error_is_present {
       @Test void calls_the_effect_callback() {
         final Consumer<FileSystemException> consumerSpy = spyLambda(e -> { });
-        final Runnable runnableSpy = spyLambda(() -> { });
         final EffectHandler<FileSystemException> handler = Maybe.fromEffect(throwingOp);
 
         handler.orElse(consumerSpy);
-        handler.orElse(runnableSpy);
 
         verify(consumerSpy, times(1)).accept(FAIL_EXCEPTION);
-        verify(runnableSpy, times(1)).run();
       }
     }
 
     @Nested class when_the_error_is_NOT_present {
       @Test void never_calls_the_effect_callback() {
         final Consumer<RuntimeException> consumerSpy = spyLambda(e -> { });
-        final Runnable runnableSpy = spyLambda(() -> { });
         final EffectHandler<RuntimeException> handler = Maybe.fromEffect(noOp);
 
         handler.orElse(consumerSpy);
-        handler.orElse(runnableSpy);
 
         verify(consumerSpy, never()).accept(any());
-        verify(runnableSpy, never()).run();
       }
     }
   }

@@ -2,6 +2,7 @@ package com.github.joselion.maybe;
 
 import static com.github.joselion.maybe.helpers.Helpers.spyLambda;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.InstanceOfAssertFactories.optional;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -9,7 +10,6 @@ import static org.mockito.Mockito.verify;
 
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.List;
 import java.util.Optional;
 
 import com.github.joselion.maybe.helpers.UnitTest;
@@ -92,38 +92,24 @@ import org.junit.jupiter.api.Test;
     @Nested class when_the_operation_succeeds {
       @Test void returns_a_handler_with_the_value() throws IOException {
         final SupplierChecked<String, IOException> supplierSpy = spyLambda(() -> OK);
-        final FunctionChecked<String, String, IOException> functionSpy = spyLambda(FunctionChecked.identity());
-        final List<ResolveHandler<String, ?>> handlers = List.of(
-          Maybe.fromResolver(supplierSpy),
-          Optional.of(OK).map(Maybe.fromResolver(functionSpy)).orElseThrow()
-        );
+        final ResolveHandler<String, ?> handler = Maybe.fromResolver(supplierSpy);
 
-        assertThat(handlers).isNotEmpty().allSatisfy(handler -> {
-          assertThat(handler.success()).contains(OK);
-          assertThat(handler.error()).isEmpty();
-        });
+        assertThat(handler.success()).contains(OK);
+        assertThat(handler.error()).isEmpty();
 
         verify(supplierSpy, times(1)).get();
-        verify(functionSpy, times(1)).apply(OK);
       }
     }
 
     @Nested class when_the_operation_fails {
       @Test void returns_a_handler_with_the_error() throws IOException {
         final SupplierChecked<String, IOException> supplierSpy = spyLambda(failSupplier);
-        final FunctionChecked<String, String, IOException> functionSpy = spyLambda(failFunction);
-        final List<ResolveHandler<?, IOException>> handlers = List.of(
-          Maybe.fromResolver(supplierSpy),
-          Optional.of(OK).map(Maybe.fromResolver(functionSpy)).orElseThrow()
-        );
+        final ResolveHandler<?, IOException> handler = Maybe.fromResolver(supplierSpy);
 
-        assertThat(handlers).isNotEmpty().allSatisfy(handler -> {
-          assertThat(handler.success()).isEmpty();
-          assertThat(handler.error()).contains(FAIL_EXCEPTION);
-        });
+        assertThat(handler.success()).isEmpty();
+        assertThat(handler.error()).contains(FAIL_EXCEPTION);
 
         verify(supplierSpy, times(1)).get();
-        verify(functionSpy, times(1)).apply(OK);
       }
     }
   }
@@ -132,37 +118,62 @@ import org.junit.jupiter.api.Test;
     @Nested class when_the_operation_succeeds {
       @Test void returns_a_handler_with_nothing() {
         final RunnableChecked<RuntimeException> runnableSpy = spyLambda(() -> { });
-        final ConsumerChecked<String, RuntimeException> consumerSpy = spyLambda(v -> { });
-        final List<EffectHandler<RuntimeException>> handlers = List.of(
-          Maybe.fromEffect(runnableSpy),
-          Optional.of(OK).map(Maybe.fromEffect(consumerSpy)).orElseThrow()
-        );
+        final EffectHandler<RuntimeException> handler = Maybe.fromEffect(runnableSpy);
 
-        assertThat(handlers).isNotEmpty().allSatisfy(handler -> {
-          assertThat(handler.error()).isEmpty();
-        });
+        assertThat(handler.error()).isEmpty();
 
         verify(runnableSpy, times(1)).run();
-        verify(consumerSpy, times(1)).accept(OK);
       }
     }
 
     @Nested class when_the_operation_fails {
       @Test void returns_a_handler_with_the_error() throws IOException {
         final RunnableChecked<IOException> runnableSpy = spyLambda(failRunnable);
-        final ConsumerChecked<String, IOException> consumerSpy = spyLambda(failConsumer);
-        final List<EffectHandler<IOException>> handlers = List.of(
-          Maybe.fromEffect(runnableSpy),
-          Optional.of(OK).map(Maybe.fromEffect(consumerSpy)).orElseThrow()
-        );
+        final EffectHandler<IOException> handler = Maybe.fromEffect(runnableSpy);
 
-        assertThat(handlers).isNotEmpty().allSatisfy(handler -> {
-          assertThat(handler.error()).contains(FAIL_EXCEPTION);
-        });
+        assertThat(handler.error()).contains(FAIL_EXCEPTION);
 
         verify(runnableSpy, times(1)).run();
-        verify(consumerSpy, times(1)).accept(OK);
       }
+    }
+  }
+
+  @Nested class partialResolver {
+    @Test void returns_a_function_that_takes_a_value_and_returns_a_resolve_handler() throws IOException {
+      final FunctionChecked<String, Integer, RuntimeException> successSpy = spyLambda(String::length);
+      final FunctionChecked<String, String, IOException> failureSpy = spyLambda(failFunction);
+
+      assertThat(Maybe.partialResolver(successSpy).apply(OK))
+        .isInstanceOf(ResolveHandler.class)
+        .extracting(ResolveHandler::success, optional(Integer.class))
+        .contains(OK.length());
+      assertThat(Maybe.partialResolver(failureSpy).apply(OK))
+        .isInstanceOf(ResolveHandler.class)
+        .extracting(ResolveHandler::error, optional(IOException.class))
+        .contains(FAIL_EXCEPTION);
+
+      verify(successSpy, times(1)).apply(OK);
+      verify(failureSpy, times(1)).apply(OK);
+    }
+  }
+
+  @Nested class partialEffect {
+    @Test void returns_a_function_that_takes_a_value_and_returns_an_effect_handler() throws IOException {
+      final ConsumerChecked<String, RuntimeException> successSpy = spyLambda(v -> { });
+      final ConsumerChecked<String, IOException> failureSpy = spyLambda(failConsumer);
+
+      assertThat(Maybe.partialEffect(successSpy).apply(OK))
+        .isInstanceOf(EffectHandler.class)
+        .extracting(EffectHandler::error, optional(RuntimeException.class))
+        .isEmpty();
+
+      assertThat(Maybe.partialEffect(failureSpy).apply(OK))
+        .isInstanceOf(EffectHandler.class)
+        .extracting(EffectHandler::error, optional(IOException.class))
+        .contains(FAIL_EXCEPTION);
+
+      verify(successSpy, times(1)).accept(OK);
+      verify(failureSpy, times(1)).accept(OK);
     }
   }
 
