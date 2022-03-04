@@ -88,19 +88,6 @@ public final class EffectHandler<E extends Exception> {
   }
 
   /**
-   * Run an effect if the error is present and is an instance of the provided
-   * type.
-   *
-   * @param <X> the type of the error to match
-   * @param ofType a class instance of the error type to match
-   * @param effect a runnable function
-   * @return the same handler to continue chainning operations
-   */
-  public <X extends Exception> EffectHandler<E> doOnError(final Class<X> ofType, final Runnable effect) {
-    return this.doOnError(ofType, caught -> effect.run());
-  }
-
-  /**
    * Run an effect if the error is present. The error is passed in the argument
    * of the {@code effect} consumer.
    * 
@@ -111,16 +98,6 @@ public final class EffectHandler<E extends Exception> {
     error.ifPresent(effect);
 
     return this;
-  }
-
-  /**
-   * Run an effect if an error is present.
-   *
-   * @param effect a runnable function
-   * @return the same handler to continue chainning operations
-   */
-  public EffectHandler<E> doOnError(final Runnable effect) {
-    return this.doOnError(caught -> effect.run());
   }
 
   /**
@@ -145,20 +122,6 @@ public final class EffectHandler<E extends Exception> {
   }
 
   /**
-   * Catch the error if is present and is an instance of the provided type.
-   * Assuming the error was handled returns a handler with {@code nothing}.
-   * 
-   * @param <X> the type of the error to catch
-   * @param ofType a class instance of the error type to catch
-   * @param handler a runnable function
-   * @return a handler with nothing if an error instance of the provided type
-   *         was caught. The same handler instance otherwise
-   */
-  public <X extends E> EffectHandler<E> catchError(final Class<X> ofType, final Runnable handler) {
-    return this.catchError(ofType, caught -> handler.run());
-  }
-
-  /**
    * Catch the error if is present. Assuming the error was handled returns a
    * handler with {@code nothing}. The caught error is passed in the argument
    * of the {@code handler} consumer.
@@ -176,18 +139,6 @@ public final class EffectHandler<E extends Exception> {
   }
 
   /**
-   * Catch the error if is present. Assuming the error was handled returns a
-   * handler with {@code nothing}.
-   *
-   * @param handler a runnable function
-   * @return a handler with nothing if an error instance of the provided type
-   *         was caught. The same handler instance otherwise
-   */
-  public EffectHandler<E> catchError(final Runnable handler) {
-    return this.catchError(caught -> handler.run());
-  }
-
-  /**
    * Terminal operation to handle the error if present. The error is passed in
    * the argument of the {@code effect} consumer.
    *
@@ -195,15 +146,6 @@ public final class EffectHandler<E extends Exception> {
    */
   public void orElse(final Consumer<E> effect) {
     error.ifPresent(effect);
-  }
-
-  /**
-   * Terminal operation to handle the error if present.
-   *
-   * @param effect a runnable function
-   */
-  public void orElse(final Runnable effect) {
-    this.orElse(caught -> effect.run());
   }
 
   /**
