@@ -22,7 +22,7 @@ def isRelease = project.hasProperty('releaseVersion')
 def suffix = isRelease ? '' : '-SNAPSHOT'
 
 group = 'com.github.joselion'
-version = "2.0.0$suffix"
+version = "2.1.0$suffix"
 
 sourceCompatibility = JavaVersion.VERSION_1_8
 targetCompatibility = JavaVersion.VERSION_1_8
