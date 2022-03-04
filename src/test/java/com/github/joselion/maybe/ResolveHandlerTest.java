@@ -21,6 +21,7 @@ import java.util.function.Supplier;
 
 import com.github.joselion.maybe.exceptions.WrappingException;
 import com.github.joselion.maybe.helpers.UnitTest;
+import com.github.joselion.maybe.util.ConsumerChecked;
 import com.github.joselion.maybe.util.FunctionChecked;
 import com.github.joselion.maybe.util.SupplierChecked;
 
@@ -53,7 +54,7 @@ import org.junit.jupiter.api.Test;
       }
     }
 
-    @Nested class when_the_value_is_NOT_present {
+    @Nested class when_the_error_is_present {
       @Test void never_calls_the_effect_callback() {
         final Consumer<String> consumerSpy = spyLambda(v -> { });
 
@@ -103,7 +104,7 @@ import org.junit.jupiter.api.Test;
       }
     }
 
-    @Nested class when_the_error_is_NOT_present {
+    @Nested class when_the_value_is_present {
       @Test void never_calls_the_effect_callback() {
         final Consumer<RuntimeException> cunsumerSpy = spyLambda(error -> { });
 
@@ -160,7 +161,7 @@ import org.junit.jupiter.api.Test;
       }
     }
 
-    @Nested class when_the_error_is_NOT_present {
+    @Nested class when_the_value_is_present {
       @Test void never_calls_the_handler_function() {
         final Function<RuntimeException, String> functionSpy = spyLambda(e -> OK);
         final List<ResolveHandler<String, RuntimeException>> resolvers = List.of(
@@ -180,11 +181,12 @@ import org.junit.jupiter.api.Test;
 
   @Nested class resolve {
     @Nested class when_the_value_is_present {
-      @Test void calls_the_resolver_callback_and_creates_a_new_handler() {
+      @Test void calls_the_resolver_callback_and_returns_a_new_handler() {
+        final FunctionChecked<String, Integer, RuntimeException> resolverSpy = spyLambda(String::length);
         final FunctionChecked<String, Integer, RuntimeException> successSpy = spyLambda(String::length);
         final FunctionChecked<RuntimeException, Integer, RuntimeException> errorSpy = spyLambda(e -> -1);
         final List<ResolveHandler<Integer, RuntimeException>> handlers = List.of(
-          Maybe.fromResolver(okOp).resolve(successSpy),
+          Maybe.fromResolver(okOp).resolve(resolverSpy),
           Maybe.fromResolver(okOp).resolve(successSpy, errorSpy)
         );
 
@@ -193,12 +195,13 @@ import org.junit.jupiter.api.Test;
           assertThat(handler.error()).isEmpty();
         });
 
-        verify(successSpy, times(2)).apply(OK);
+        verify(resolverSpy, times(1)).apply(OK);
+        verify(successSpy, times(1)).apply(OK);
         verify(errorSpy, never()).apply(any());
       }
     }
 
-    @Nested class when_the_value_is_NOT_present {
+    @Nested class when_the_error_is_present {
       @Nested class and_the_error_resolver_is_NOT_provided {
         @Test void never_calls_the_resolver_callback_and_creates_a_handler_with_nothing() {
           final FunctionChecked<String, Integer, RuntimeException> successSpy = spyLambda(String::length);
@@ -213,7 +216,7 @@ import org.junit.jupiter.api.Test;
       }
 
       @Nested class and_the_error_resolver_is_provided {
-        @Test void call_only_the_error_callback_and_creates_a_new_handler() {
+        @Test void call_only_the_error_callback_and_returns_a_new_effect_handler() {
           final FunctionChecked<String, Integer, RuntimeException> successSpy = spyLambda(String::length);
           final FunctionChecked<FileSystemException, Integer, RuntimeException> errorSpy = spyLambda(e -> -1);
           final ResolveHandler<Integer, RuntimeException> handler = Maybe.fromResolver(throwingOp)
@@ -224,6 +227,57 @@ import org.junit.jupiter.api.Test;
 
           verify(successSpy, never()).apply(any());
           verify(errorSpy, times(1)).apply(FAIL_EXCEPTION);
+        }
+      }
+    }
+  }
+
+  @Nested class runEffect {
+    @Nested class when_the_value_is_present {
+      @Test void calls_the_resolver_callback_and_returns_a_new_handler() throws FileSystemException {
+        final ConsumerChecked<String, FileSystemException> effectSpy = spyLambda(v -> throwingOp.get());
+        final ConsumerChecked<String, FileSystemException> successSpy = spyLambda(v -> throwingOp.get());
+        final ConsumerChecked<RuntimeException, FileSystemException> errorSpy = spyLambda(err -> { });
+        final ResolveHandler<String, RuntimeException> handler = Maybe.fromResolver(okOp);
+        final List<EffectHandler<FileSystemException>> newHandlers = List.of(
+          handler.runEffect(effectSpy),
+          handler.runEffect(successSpy, errorSpy)
+        );
+
+        assertThat(newHandlers).isNotEmpty().allSatisfy(newHandler -> {
+          assertThat(newHandler.error()).contains(FAIL_EXCEPTION);
+        });
+
+        verify(effectSpy, times(1)).accept(OK);
+        verify(successSpy, times(1)).accept(OK);
+        verify(errorSpy, never()).accept(any());
+      }
+    }
+
+    @Nested class when_the_error_is_present {
+      @Nested class and_the_error_callback_is_provided {
+        @Test void calls_only_the_error_callback_and_returns_a_new_handler() throws FileSystemException {
+          final ConsumerChecked<String, FileSystemException> successSpy = spyLambda(v -> { });
+          final ConsumerChecked<FileSystemException, FileSystemException> errorSpy = spyLambda(err -> throwingOp.get());
+          final ResolveHandler<String, FileSystemException> handler = Maybe.fromResolver(throwingOp);
+          final EffectHandler<FileSystemException> newHandler = handler.runEffect(successSpy, errorSpy);
+
+          assertThat(newHandler.error()).contains(FAIL_EXCEPTION);
+
+          verify(successSpy, never()).accept(any());
+          verify(errorSpy, times(1)).accept(FAIL_EXCEPTION);
+        }
+      }
+
+      @Nested class and_the_error_callback_is_NOT_provided {
+        @Test void never_calls_the_effect_callback_and_returns_a_new_empty_handler() throws FileSystemException {
+          final ConsumerChecked<String, FileSystemException> effectSpy = spyLambda(v -> throwingOp.get());
+          final ResolveHandler<String, FileSystemException> handler = Maybe.fromResolver(throwingOp);
+          final EffectHandler<FileSystemException> newHandler = handler.runEffect(effectSpy);
+
+          assertThat(newHandler.error()).isEmpty();
+
+          verify(effectSpy, never()).accept(any());
         }
       }
     }
@@ -368,7 +422,7 @@ import org.junit.jupiter.api.Test;
       }
     }
 
-    @Nested class when_the_value_is_NOT_present {
+    @Nested class when_the_error_is_present {
       @Test void returns_the_provided_value() {
         final ResolveHandler<String, FileSystemException> handler = Maybe.fromResolver(throwingOp);
 
@@ -390,7 +444,7 @@ import org.junit.jupiter.api.Test;
       }
     }
 
-    @Nested class when_the_value_is_NOT_present {
+    @Nested class when_the_error_is_present {
       @Test void evaluates_the_supplier_and_returns_the_produced_value() {
         final Supplier<String> supplierSpy = spyLambda(() -> OTHER);
         final ResolveHandler<String, FileSystemException> handler = Maybe.fromResolver(throwingOp);
@@ -411,7 +465,7 @@ import org.junit.jupiter.api.Test;
       }
     }
 
-    @Nested class when_the_value_is_NOT_present {
+    @Nested class when_the_error_is_present {
       @Test void returns_null() {
         final ResolveHandler<String, FileSystemException> handler = Maybe.fromResolver(throwingOp);
 
@@ -433,7 +487,7 @@ import org.junit.jupiter.api.Test;
       }
     }
 
-    @Nested class when_the_value_is_NOT_present {
+    @Nested class when_the_error_is_present {
       @Test void throws_the_error() {
         final RuntimeException anotherError = new RuntimeException(OTHER);
         final Function<FileSystemException, RuntimeException> functionSpy = spyLambda(error -> anotherError);
@@ -455,7 +509,7 @@ import org.junit.jupiter.api.Test;
       }
     }
 
-    @Nested class when_the_value_is_NOT_present {
+    @Nested class when_the_error_is_present {
       @Test void returns_a_maybe_with_nothing() {
         assertThat(Maybe.fromResolver(throwingOp).toMaybe().value())
           .isEmpty();
@@ -470,7 +524,7 @@ import org.junit.jupiter.api.Test;
       }
     }
 
-    @Nested class when_the_value_is_NOT_present {
+    @Nested class when_the_error_is_present {
       @Test void returns_an_empty_optional() {
         assertThat(Maybe.fromResolver(throwingOp).toOptional()).isEmpty();
       }
@@ -490,7 +544,7 @@ import org.junit.jupiter.api.Test;
       }
     }
 
-    @Nested class when_the_error_is_NOT_present {
+    @Nested class when_the_error_is_present {
       @Test void returns_an_empty_resource_holder() {
         final ResourceHolder<FileInputStream> holder = Maybe.just("invalidFile.txt")
           .resolve(FileInputStream::new)
