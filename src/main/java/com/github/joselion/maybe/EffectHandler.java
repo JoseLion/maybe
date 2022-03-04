@@ -4,6 +4,9 @@ import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import com.github.joselion.maybe.util.ConsumerChecked;
+import com.github.joselion.maybe.util.RunnableChecked;
+
 import org.eclipse.jdt.annotation.Nullable;
 
 /**
@@ -136,6 +139,37 @@ public final class EffectHandler<E extends Exception> {
       return EffectHandler.<E>withNothing();
     })
     .orElse(this);
+  }
+
+  /**
+   * Chain another effect covering both cases of success or error of the
+   * previous effect in two different callbacks.
+   *
+   * @param <X> the type of the error the new effect may throw
+   * @param onSuccess a runnable checked function to run in case of succeess
+   * @param onError a runnable checked function to run in case of error
+   * @return a new {@link EffectHandler} representing the result of one of the
+   *         invoked callback
+   */
+  public <X extends Exception> EffectHandler<X> runEffect(
+    final RunnableChecked<X> onSuccess,
+    final ConsumerChecked<E, X> onError
+  ) {
+    return error.map(Maybe.partialEffect(onError))
+      .orElseGet(() -> Maybe.fromEffect(onSuccess));
+  }
+
+  /**
+   * Chain another effect if the previous succeeded. Otherwise, ignore the
+   * current error and return a new handler with {@code nothing}.
+   *
+   * @param <X> the type of the error the new effect may throw
+   * @param effect a runnable checked function to run in case of succeess
+   * @return a new {@link EffectHandler} representing the result of the success
+   *         callback or an empty handler
+   */
+  public <X extends Exception> EffectHandler<X> runEffect(final RunnableChecked<X> effect) {
+    return this.runEffect(effect, err -> { });
   }
 
   /**

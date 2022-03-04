@@ -168,25 +168,8 @@ public final class ResolveHandler<T, E extends Exception> {
   }
 
   /**
-   * Chain another resolver if the value is present. Otherwise, ignore the
-   * error and return a new handler with {@code nothing}. This operator is
-   * effectively an alias for {@code .toMaybe().resolve(..)}.
-   *
-   * @param <S> the type of value returned by the next operation
-   * @param <X> the type of exception the new resolver may throw
-   * @param resolver a checked function that receives the current value and
-   *                 resolves another
-   * @return a new handler with either the resolved value, the thrown exception
-   *         to be handled, or nothing
-   */
-  public <S, X extends Exception> ResolveHandler<S, X> resolve(final FunctionChecked<T, S, X> resolver) {
-    return toMaybe().resolve(resolver);
-  }
-
-  /**
-   * Chain another resolver covering both cases of success or error. This could
-   * be useful when we don't want to ignore any possible error and handle it
-   * with another resolver.
+   * Chain another resolver covering both cases of success or error of the
+   * previous resolver in two different callbacks.
    * <p>
    * The first callback receives the resolved value, the second callback the
    * caught error. Both should resolve another value of the same type {@code S},
@@ -208,6 +191,54 @@ public final class ResolveHandler<T, E extends Exception> {
   ) {
     return error.map(Maybe.partialResolver(errorResolver))
       .orElseGet(() -> this.resolve(successResolver));
+  }
+
+  /**
+   * Chain another resolver if the value is present. Otherwise, ignore the
+   * error and return a new handler with {@code nothing}. This operator is
+   * effectively an alias for {@code .toMaybe().resolve(..)}.
+   *
+   * @param <S> the type of value returned by the next operation
+   * @param <X> the type of exception the new resolver may throw
+   * @param resolver a checked function that receives the current value and
+   *                 resolves another
+   * @return a new handler with either the resolved value, the thrown exception
+   *         to be handled, or nothing
+   */
+  public <S, X extends Exception> ResolveHandler<S, X> resolve(final FunctionChecked<T, S, X> resolver) {
+    return toMaybe().resolve(resolver);
+  }
+
+  /**
+   * Chain converting to an effect covering both cases of success or error of
+   * the previous resolver in two different callbacks.
+   *
+   * @param <X> the type of the error the effect may throw
+   * @param onSuccess a consumer checked function to run in case of succeess
+   * @param onError a consumer checked function to run in case of error
+   * @return an {@link EffectHandler} representing the result of one of the
+   *         invoked callback
+   */
+  public <X extends Exception> EffectHandler<X> runEffect(
+    final ConsumerChecked<T, X> onSuccess,
+    final ConsumerChecked<E, X> onError
+  ) {
+    return error.map(Maybe.partialEffect(onError))
+      .orElseGet(() -> this.toMaybe().runEffect(onSuccess));
+  }
+
+  /**
+   * Chain converting to an effect if the previous resolver succeeded.
+   * Otherwise, ignore the current error and return a new handler with
+   * {@code nothing}.
+   *
+   * @param <X> the type of the error the effect may throw
+   * @param effect a consume checked function to run in case of succeess
+   * @return a new {@link EffectHandler} representing the result of the success
+   *         callback or an empty handler
+   */
+  public <X extends Exception> EffectHandler<X> runEffect(final ConsumerChecked<T, X> effect) {
+    return this.runEffect(effect, err -> { });
   }
 
   /**

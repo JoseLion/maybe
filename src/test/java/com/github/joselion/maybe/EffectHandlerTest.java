@@ -16,6 +16,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import com.github.joselion.maybe.helpers.UnitTest;
+import com.github.joselion.maybe.util.ConsumerChecked;
 import com.github.joselion.maybe.util.RunnableChecked;
 
 import org.junit.jupiter.api.Nested;
@@ -158,6 +159,60 @@ import org.junit.jupiter.api.Test;
         });
 
         verify(consumerSpy, never()).accept(any());
+      }
+    }
+  }
+
+  @Nested class runEffect {
+    @Nested class when_the_error_is_NOT_present {
+      @Test void calls_the_effect_callback_and_returns_a_new_handler() throws FileSystemException {
+        final RunnableChecked<FileSystemException> effectSpy = spyLambda(throwingOp);
+        final RunnableChecked<FileSystemException> successSpy = spyLambda(throwingOp);
+        final ConsumerChecked<RuntimeException, FileSystemException> errorSpy = spyLambda(err -> throwingOp.run());
+        final EffectHandler<RuntimeException> handler = Maybe.fromEffect(noOp);
+        final List<EffectHandler<FileSystemException>> newHandlers = List.of(
+          handler.runEffect(effectSpy),
+          handler.runEffect(successSpy, errorSpy)
+        );
+
+        assertThat(newHandlers).isNotEmpty().allSatisfy(newHandler -> {
+          assertThat(newHandler).isNotSameAs(handler);
+          assertThat(newHandler.error()).contains(FAIL_EXCEPTION);
+        });
+
+        verify(effectSpy, times(1)).run();
+        verify(successSpy, times(1)).run();
+        verify(errorSpy, never()).accept(any());
+      }
+    }
+
+    @Nested class when_the_error_is_present {
+      @Nested class and_the_error_callback_is_provided {
+        @Test void calls_only_the_error_callback_and_returns_a_new_handler() throws FileSystemException {
+          final RunnableChecked<FileSystemException> successSpy = spyLambda(() -> { });
+          final ConsumerChecked<FileSystemException, FileSystemException> errorSpy = spyLambda(err -> throwingOp.run());
+          final EffectHandler<FileSystemException> handler = Maybe.fromEffect(throwingOp);
+          final EffectHandler<FileSystemException> newHandler = handler.runEffect(successSpy, errorSpy);
+
+          assertThat(newHandler).isNotSameAs(handler);
+          assertThat(newHandler.error()).contains(FAIL_EXCEPTION);
+
+          verify(successSpy, never()).run();
+          verify(errorSpy, times(1)).accept(FAIL_EXCEPTION);
+        }
+      }
+
+      @Nested class and_the_error_callback_is_NOT_provided {
+        @Test void never_calls_the_effect_callback_and_returns_a_new_empty_handler() throws FileSystemException {
+          final RunnableChecked<FileSystemException> effectSpy = spyLambda(throwingOp);
+          final EffectHandler<FileSystemException> handler = Maybe.fromEffect(throwingOp);
+          final EffectHandler<FileSystemException> newHandler = handler.runEffect(effectSpy);
+
+          assertThat(newHandler).isNotSameAs(handler);
+          assertThat(newHandler.error()).isEmpty();
+
+          verify(effectSpy, never()).run();
+        }
       }
     }
   }
