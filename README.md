@@ -66,7 +66,7 @@ final List<String> fooLines = Maybe.fromResolver(() -> Files.readAllLines(path))
 final List<String> fooLines = Maybe.just(path)
   .resolver(Files::readAllLines)
   .doOnError(error -> log.error("Fail to read the file", error)) // where `error` has type IOException
-  .orElse(List.of());
+  .orElseGet(List::of); // the else value is lazy now
 ```
 
 The method `.readAllLines(..)` on example above reads from a file, which may throw a `IOException`. With the resolver API we can run an effect if the exception was thrown. The we use `.orElse(..)` to safely unwrap the resulting value or another one in case of failure.
@@ -97,10 +97,10 @@ Some operation may throw multiple type of exceptions. We can choose how to handl
 ```java
 Maybe.just(path)
   .resolve(Files::readAllLines) // throws IOException
-  .catchError(FileNotFoundException.class, () -> ...)
-  .catchError(FileSystemException.class, () -> ...)
-  .catchError(EOFException.class, () -> ...)
-  .orElse(() -> ...);
+  .catchError(FileNotFoundException.class, err -> ...)
+  .catchError(FileSystemException.class, err -> ...)
+  .catchError(EOFException.class, err -> ...)
+  .orElse(err -> ...);
 ```
 
 ## Optional interoperability
@@ -119,7 +119,7 @@ You can use the partial application overload and use method reference syntax:
 
 ```java
 Optional.ofNullable(rawValue)
-  .map(Maybe.fromResolver(Base64.getDecoder()::decode))
+  .map(Maybe.partialResolver(Base64.getDecoder()::decode))
   .map(decoded -> decoded.catchError(...));
 ```
 
@@ -145,7 +145,7 @@ In many cases, the resource you need will also throw an exception when we obtain
 public Properties parsePropertiesFile(final String filePath) {
   return Maybe.just(filePath)
     .resolve(FileInputStream::new)
-    .catchError(() -> /* Handle the error */)
+    .catchError(err -> /* Handle the error */)
     .mapToResource(Function.identity())
     .resolveClosing(inputStream -> {
       final Properties props = new Properties();
@@ -153,7 +153,7 @@ public Properties parsePropertiesFile(final String filePath) {
 
       return props;
     })
-    .orElse(new Properties());
+    .orElseGet(Properties::new);
 }
 ```
 
