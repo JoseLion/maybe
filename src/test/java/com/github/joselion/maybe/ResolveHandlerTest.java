@@ -1,10 +1,10 @@
 package com.github.joselion.maybe;
 
 import static com.github.joselion.maybe.helpers.Helpers.spyLambda;
-import static org.assertj.core.api.Assertions.as;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.InstanceOfAssertFactories.INPUT_STREAM;
+import static org.assertj.core.api.InstanceOfAssertFactories.THROWABLE;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -533,7 +533,7 @@ import org.junit.jupiter.api.Test;
   }
 
   @Nested class mapToResource {
-    @Nested class when_the_value_is_present {
+    @Nested class when_the_resource_is_present {
       @Test void returns_a_resource_holder_with_the_mapped_value() {
         final String path = "./src/test/resources/readTest.txt";
         final ResourceHolder<FileInputStream, FileNotFoundException> holder = Maybe.just(path)
@@ -541,18 +541,36 @@ import org.junit.jupiter.api.Test;
           .mapToResource(Function.identity());
 
         assertThat(holder.resource())
-          .get(as(INPUT_STREAM))
+          .get(INPUT_STREAM)
           .hasContent("foo");
+        assertThat(holder.error()).isEmpty();
       }
     }
 
     @Nested class when_the_error_is_present {
-      @Test void returns_an_empty_resource_holder() {
+      @Test void returns_a_resource_holder_with_the_propagated_error() {
         final ResourceHolder<FileInputStream, FileNotFoundException> holder = Maybe.just("invalidFile.txt")
           .resolve(FileInputStream::new)
           .mapToResource(Function.identity());
 
         assertThat(holder.resource()).isEmpty();
+        assertThat(holder.error())
+          .get(THROWABLE)
+          .isExactlyInstanceOf(FileNotFoundException.class)
+          .hasMessageStartingWith("invalidFile.txt");
+      }
+    }
+
+    @Nested class when_neither_the_resource_nor_the_error_is_present {
+      @Test void returns_an_empty_resource_holder() {
+        final String path = "./src/test/resources/readTest.txt";
+        final ResourceHolder<FileInputStream, FileNotFoundException> holder = Maybe.just(path)
+          .resolve(FileInputStream::new)
+          .map(file -> null)
+          .mapToResource(file -> null);
+
+        assertThat(holder.resource()).isEmpty();
+        assertThat(holder.error()).isEmpty();
       }
     }
   }

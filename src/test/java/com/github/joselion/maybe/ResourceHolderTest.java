@@ -18,18 +18,6 @@ import org.junit.jupiter.api.Test;
   private static final String FILE_PATH = "./src/test/resources/readTest.txt";
 
   @Nested class resolveClosing {
-    @Nested class when_the_resource_is_NOT_present {
-      @Test void returns_a_handler_with_nothing() {
-        final ResolveHandler<AutoCloseable, Exception> handler = ResourceHolder.from(null)
-          .resolveClosing(res -> {
-            throw new AssertionError("The handler should not be executed!");
-          });
-
-        assertThat(handler.success()).isEmpty();
-        assertThat(handler.error()).isEmpty();
-      }
-    }
-
     @Nested class when_the_resource_is_present {
       @Nested class when_the_operation_succeeds {
         @Test void returns_a_handler_with_the_value() {
@@ -71,20 +59,34 @@ import org.junit.jupiter.api.Test;
         }
       }
     }
-  }
 
-  @Nested class runEffectClosing {
-    @Nested class when_the_resource_is_NOT_present {
-      @Test void returns_a_handler_with_nothing() {
-        final EffectHandler<Exception> handler = ResourceHolder.from(null)
-          .runEffectClosing(res -> {
+    @Nested class when_the_error_is_present {
+      @Test void returns_a_handler_with_the_propagated_error() {
+        final IOException error = new IOException("Something went wrong...");
+        final ResolveHandler<FileInputStream, IOException> handler = ResourceHolder.failure(error)
+          .resolveClosing(fis -> {
             throw new AssertionError("The handler should not be executed!");
           });
 
-        assertThat(handler.error()).isEmpty();
+        assertThat(handler.success()).isEmpty();
+        assertThat(handler.error()).contains(error);
       }
     }
 
+    @Nested class when_neither_the_resource_nor_the_error_is_present {
+      @Test void returns_a_handler_with_nothing() {
+        final ResolveHandler<AutoCloseable, Exception> handler = ResourceHolder.from(null)
+          .resolveClosing(res -> {
+            throw new AssertionError("The handler should not be executed!");
+          });
+
+        assertThat(handler.success()).isEmpty();
+        assertThat(handler.error()).isEmpty();
+      }
+    }
+  }
+
+  @Nested class runEffectClosing {
     @Nested class when_the_resource_is_present {
       @Nested class when_the_operation_succeeds {
         @Test void returns_a_handler_with_nothing() {
@@ -126,6 +128,29 @@ import org.junit.jupiter.api.Test;
             .isExactlyInstanceOf(IOException.class)
             .hasMessage("Stream Closed");
         }
+      }
+    }
+
+    @Nested class when_the_error_is_present {
+      @Test void returns_a_handler_with_the_propagated_error() {
+        final IOException error = new IOException("Something went wrong...");
+        final EffectHandler<IOException> handler = ResourceHolder.failure(error)
+          .runEffectClosing(res -> {
+            throw new AssertionError("The handler should not be executed!");
+          });
+
+        assertThat(handler.error()).contains(error);
+      }
+    }
+
+    @Nested class when_neither_the_resource_nor_the_error_is_present {
+      @Test void returns_a_handler_with_nothing() {
+        final EffectHandler<Exception> handler = ResourceHolder.from(null)
+          .runEffectClosing(res -> {
+            throw new AssertionError("The handler should not be executed!");
+          });
+
+        assertThat(handler.error()).isEmpty();
       }
     }
   }

@@ -62,7 +62,16 @@ public class ResourceHolder<R extends AutoCloseable, E extends Exception> {
    * @return the possible stored resource
    */
   Optional<R> resource() {
-    return resource;
+    return this.resource;
+  }
+
+  /**
+   * Internal use only.
+   *
+   * @return the possible propagated error
+   */
+  Optional<E> error() {
+    return this.error;
   }
 
   /**
@@ -77,7 +86,7 @@ public class ResourceHolder<R extends AutoCloseable, E extends Exception> {
    * neither the resource nor the error is present.
    * 
    * @param <T> the type of the value returned by the {@code resolver}
-   * @param <E> the type of exception the {@code resolver} may throw
+   * @param <X> the type of exception the {@code resolver} may throw
    * @param resolver the checked function operation to resolve
    * @return a {@link ResolveHandler} with either the value resolved or the thrown
    *         exception to be handled
@@ -113,7 +122,7 @@ public class ResourceHolder<R extends AutoCloseable, E extends Exception> {
    * possible error. The returned handler has {@code nothing} if neither the
    * resource nor the error is present.
    * 
-   * @param <E> the type of exception the {@code effect} may throw
+   * @param <X> the type of exception the {@code effect} may throw
    * @param effect the checked consumer operation to execute
    * @return an {@link EffectHandler} with either the thrown exception to be
    *         handled or nothing
