@@ -52,10 +52,6 @@ jobs:
       - run:
           name: Compile
           command: ./gradlew compileJava compileTestJava
-      
-      - run:
-          name: Lint Gradle
-          command: ./gradlew lintGradle
 
       - run:
           name: SonarLint
@@ -82,9 +78,6 @@ jobs:
       - run:
           name: Upload reports
           command: bash <(curl -s https://codecov.io/bash)
-
-      - store_test_results:
-          path: build/test-results
 
   publish-snapshot:
     executor: default-jvm
