@@ -8,31 +8,52 @@ import com.github.joselion.maybe.util.FunctionChecked;
 import org.eclipse.jdt.annotation.Nullable;
 
 /**
- * ResourceSpec is a "middle step" API that allows to resolve or run an effect
- * usinga previously passed {@link AutoCloseable} resource. This resource will
+ * ResourceHolder is a "middle step" API that allows to resolve or run an effect
+ * using a previously passed {@link AutoCloseable} resource. This resource will
  * be automatically closed after the {@code resolve} or the {@code effect}
  * operation is finished.
  * 
  * @author Jose Luis Leon
  * @since v1.3.0
  */
-public class ResourceHolder<R extends AutoCloseable> {
+public class ResourceHolder<R extends AutoCloseable, E extends Exception> {
 
   private final Optional<R> resource;
 
+  private final Optional<E> error;
+
   private ResourceHolder(final @Nullable R resource) {
     this.resource = Optional.ofNullable(resource);
+    this.error = Optional.empty();
+  }
+
+  private ResourceHolder(final E error) {
+    this.resource = Optional.empty();
+    this.error = Optional.of(error);
   }
 
   /**
-   * Internal use method to instatiate a ResourceSpec froma given resource.
+   * Internal use method to instatiate a ResourceHolder from a given resource.
    * 
    * @param <R> the type of the resource
-   * @param resource the resource to instantiate the ResourceSpec with
-   * @return a new instance of ResourceSpec with the give resource
+   * @param <E> the type of the error
+   * @param resource the resource to instantiate the ResourceHolder with
+   * @return a new instance of ResourceHolder with the given resource
    */
-  static <R extends AutoCloseable> ResourceHolder<R> from(final @Nullable R resource) {
+  static <R extends AutoCloseable, E extends Exception> ResourceHolder<R, E> from(final @Nullable R resource) {
     return new ResourceHolder<>(resource);
+  }
+
+  /**
+   * Internal use method to instatiate a failed ResourceHolder from an exception.
+   *
+   * @param <R> the type of the resource
+   * @param <E> the type of the error
+   * @param error the error to instantiate the failed ResourceHolder
+   * @return a new instance of the failed ResourceHolder with the error
+   */
+  static <R extends AutoCloseable, E extends Exception> ResourceHolder<R, E> failure(final E error) {
+    return new ResourceHolder<>(error);
   }
 
   /**
@@ -52,8 +73,8 @@ public class ResourceHolder<R extends AutoCloseable> {
    * statement.
    * <p>
    * Returs a {@link ResolveHandler} which allows to handle the possible error
-   * and return a safe value. The returned handler has {@code nothing} if the
-   * resource is not present.
+   * and return a safe value. The returned handler has {@code nothing} if
+   * neither the resource nor the error is present.
    * 
    * @param <T> the type of the value returned by the {@code resolver}
    * @param <E> the type of exception the {@code resolver} may throw
@@ -61,19 +82,24 @@ public class ResourceHolder<R extends AutoCloseable> {
    * @return a {@link ResolveHandler} with either the value resolved or the thrown
    *         exception to be handled
    */
-  public <T, E extends Exception> ResolveHandler<T, E> resolveClosing(final FunctionChecked<R, T, E> resolver) {
-    if (this.resource.isEmpty()) {
-      return ResolveHandler.withNothing();
+  @SuppressWarnings("unchecked")
+  public <T, X extends Exception> ResolveHandler<T, X> resolveClosing(final FunctionChecked<R, T, X> resolver) {
+    if (this.resource.isPresent()) {
+      try (R resArg = this.resource.get()) {
+        return ResolveHandler.withSuccess(resolver.apply(resArg));
+      } catch (Exception e) {
+        final X newError = (X) e;
+
+        return ResolveHandler.withError(newError);
+      }
     }
 
-    try (R resArg = this.resource.get()) {
-      return ResolveHandler.withSuccess(resolver.apply(resArg));
-    } catch (Exception e) {
-      @SuppressWarnings("unchecked")
-      final E error = (E) e;
-
-      return ResolveHandler.withError(error);
+    if (this.error.isPresent()) {
+      return ResolveHandler.withError((X) this.error.get());
     }
+
+
+    return ResolveHandler.withNothing();
   }
 
   /**
@@ -83,29 +109,33 @@ public class ResourceHolder<R extends AutoCloseable> {
    * after the operation finishes, just like a common try-with-resources
    * statement.
    * <p>
-   * Returning then an {@link EffectHandler} which allows to handle the possible
-   * error. The returned handler has {@code nothing} if the resource is not
-   * present.
+   * Returning then an {@link EffectHandler} which allows to handle the
+   * possible error. The returned handler has {@code nothing} if neither the
+   * resource nor the error is present.
    * 
    * @param <E> the type of exception the {@code effect} may throw
    * @param effect the checked consumer operation to execute
    * @return an {@link EffectHandler} with either the thrown exception to be
    *         handled or nothing
    */
-  public <E extends Exception> EffectHandler<E> runEffectClosing(final ConsumerChecked<R, E> effect) {
-    if (this.resource.isEmpty()) {
-      return EffectHandler.withNothing();
+  @SuppressWarnings("unchecked")
+  public <X extends Exception> EffectHandler<X> runEffectClosing(final ConsumerChecked<R, X> effect) {
+    if (this.resource.isPresent()) {
+      try (R resArg = this.resource.get()) {
+        effect.accept(resArg);
+
+        return EffectHandler.withNothing();
+      } catch (Exception e) {
+        final X newError = (X) e;
+
+        return EffectHandler.withError(newError);
+      }
     }
 
-    try (R resArg = this.resource.get()) {
-      effect.accept(resArg);
-
-      return EffectHandler.withNothing();
-    } catch (Exception e) {
-      @SuppressWarnings("unchecked")
-      final E error = (E) e;
-
-      return EffectHandler.withError(error);
+    if (this.error.isPresent()) {
+      return EffectHandler.withError((X) this.error.get());
     }
+
+    return EffectHandler.withNothing();
   }
 }

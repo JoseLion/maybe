@@ -11,6 +11,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.FileSystemException;
 import java.util.List;
@@ -534,7 +535,8 @@ import org.junit.jupiter.api.Test;
   @Nested class mapToResource {
     @Nested class when_the_value_is_present {
       @Test void returns_a_resource_holder_with_the_mapped_value() {
-        final ResourceHolder<FileInputStream> holder = Maybe.just("./src/test/resources/readTest.txt")
+        final String path = "./src/test/resources/readTest.txt";
+        final ResourceHolder<FileInputStream, FileNotFoundException> holder = Maybe.just(path)
           .resolve(FileInputStream::new)
           .mapToResource(Function.identity());
 
@@ -546,7 +548,7 @@ import org.junit.jupiter.api.Test;
 
     @Nested class when_the_error_is_present {
       @Test void returns_an_empty_resource_holder() {
-        final ResourceHolder<FileInputStream> holder = Maybe.just("invalidFile.txt")
+        final ResourceHolder<FileInputStream, FileNotFoundException> holder = Maybe.just("invalidFile.txt")
           .resolve(FileInputStream::new)
           .mapToResource(Function.identity());
 
