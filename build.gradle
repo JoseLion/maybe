@@ -11,11 +11,10 @@ plugins {
   id 'maven-publish'
   id 'signing'
 
-  id 'com.github.joselion.pretty-jupiter' version '1.6.2'
-  id 'com.github.joselion.strict-null-check' version '1.4.4'
+  id 'io.github.joselion.pretty-jupiter' version '2.0.1'
+  id 'io.github.joselion.strict-null-check' version '2.0.0'
   id 'io.github.gradle-nexus.publish-plugin' version '1.1.0'
-  id 'name.remal.sonarlint' version '1.5.0'
-  id 'nebula.lint' version '17.7.0'
+  id 'se.solrike.sonarlint' version '1.0.0-beta.4'
 }
 
 def isRelease = project.hasProperty('releaseVersion')
@@ -62,33 +61,22 @@ strictNullCheck {
   .stripMargin()
 }
 
-gradleLint {
-  alwaysRun = false
-
-  rules += [
-    'all-dependency',
-    'all-nebula-renames',
-    'archaic-wrapper',
-    'duplicate-dependency-class'
+sonarlint {
+  excludeRules = [
+    'java:S4032' // Allow packages only containing `package-info.java`
+  ]
+  includeRules = [
+    'java:S4266' // "Stream.collect()" calls should not be redundant
   ]
 }
 
-sonarlint {
-  excludes {
-    message 'java:S4032' // Allow packages only containing `package-info.java`
-  }
-  includes {
-    message('java:S4266') // "Stream.collect()" calls should not be redundant
-  }
-}
-
 checkstyle {
-  toolVersion = '9.3'
+  toolVersion = '10.3'
   sourceSets = sourceSets
 }
 
 jacoco {
-  toolVersion = '0.8.7'
+  toolVersion = '0.8.8'
 }
 
 dependencyLocking {
@@ -102,18 +90,17 @@ repositories {
 def jupiterVersion = '5.8.2'
 
 dependencies {
-  testImplementation('org.assertj:assertj-core:3.22.0')
-  testImplementation("org.junit.jupiter:junit-jupiter-api:$jupiterVersion")
-  testImplementation('org.mockito:mockito-core:4.3.1')
+  sonarlintPlugins('org.sonarsource.java:sonar-java-plugin:7.12.0.29739')
 
-  testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$jupiterVersion")
+  testImplementation('org.assertj:assertj-core:3.23.1')
+  testImplementation('org.mockito:mockito-inline:4.6.1')
 }
 
-test {
-  useJUnitPlatform()
-
-  reports {
-    junitXml.outputLocation = file("$buildDir/test-results/junit")
+testing {
+  suites {
+    test {
+      useJUnitJupiter('5.8.2')
+    }
   }
 }
 
