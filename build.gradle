@@ -20,7 +20,7 @@ plugins {
 def isRelease = project.hasProperty('releaseVersion')
 def suffix = isRelease ? '' : '-SNAPSHOT'
 
-group = 'com.github.joselion'
+group = 'io.github.joselion'
 version = "3.0.0$suffix"
 
 sourceCompatibility = JavaVersion.VERSION_1_8

@@ -1,14 +1,14 @@
-package com.github.joselion.maybe;
+package io.github.joselion.maybe;
 
 import java.util.Optional;
 import java.util.function.Function;
 
-import com.github.joselion.maybe.util.ConsumerChecked;
-import com.github.joselion.maybe.util.FunctionChecked;
-import com.github.joselion.maybe.util.RunnableChecked;
-import com.github.joselion.maybe.util.SupplierChecked;
-
 import org.eclipse.jdt.annotation.Nullable;
+
+import io.github.joselion.maybe.util.ConsumerChecked;
+import io.github.joselion.maybe.util.FunctionChecked;
+import io.github.joselion.maybe.util.RunnableChecked;
+import io.github.joselion.maybe.util.SupplierChecked;
 
 /**
  * Maybe is a monadic wrapper that may contain a value. Its rich API allows to

@@ -1,4 +1,4 @@
-package com.github.joselion.maybe.util;
+package io.github.joselion.maybe.util;
 
 /**
  * The same as {@link java.lang.Runnable Runnable}, but the lambda expression

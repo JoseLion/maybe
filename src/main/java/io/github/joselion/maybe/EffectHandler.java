@@ -1,13 +1,13 @@
-package com.github.joselion.maybe;
+package io.github.joselion.maybe;
 
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import com.github.joselion.maybe.util.ConsumerChecked;
-import com.github.joselion.maybe.util.RunnableChecked;
-
 import org.eclipse.jdt.annotation.Nullable;
+
+import io.github.joselion.maybe.util.ConsumerChecked;
+import io.github.joselion.maybe.util.RunnableChecked;
 
 /**
  * EffectHandler is an API to handle the posible error of a {@link Maybe}'s

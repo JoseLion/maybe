@@ -1,4 +1,4 @@
-package com.github.joselion.maybe.helpers;
+package io.github.joselion.testing;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.AdditionalAnswers.delegatesTo;

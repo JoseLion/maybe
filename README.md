@@ -5,7 +5,7 @@
 
 # Maybe - Safely handle exceptions
 
-`Maybe<T>` is a monadic wrapper similar `java.util.Optional`, but with a different intention. By leveraging `Optional<T>` benefits, it provides a functional API that safely allows us to perform operations that may or may not throw checked and unchecked exceptions.
+`Maybe<T>` is a monadic wrapper similar to `java.util.Optional`, but with a different intention. By leveraging `Optional<T>` benefits, it provides a functional API that safely allows us to perform operations that may throw checked and unchecked exceptions.
 
 The wrapper intends to help us avoid the imperative _try/catch_ syntax, while promoting safe exception handling and functional programming principles.
 

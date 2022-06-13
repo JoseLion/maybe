@@ -1,6 +1,6 @@
-package com.github.joselion.maybe;
+package io.github.joselion.maybe;
 
-import static com.github.joselion.maybe.helpers.Helpers.spyLambda;
+import static io.github.joselion.testing.Helpers.spyLambda;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.InstanceOfAssertFactories.optional;
 import static org.mockito.ArgumentMatchers.any;
@@ -12,15 +12,15 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Optional;
 
-import com.github.joselion.maybe.helpers.UnitTest;
-import com.github.joselion.maybe.util.ConsumerChecked;
-import com.github.joselion.maybe.util.FunctionChecked;
-import com.github.joselion.maybe.util.RunnableChecked;
-import com.github.joselion.maybe.util.SupplierChecked;
-
 import org.assertj.core.api.AutoCloseableSoftAssertions;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+
+import io.github.joselion.maybe.util.ConsumerChecked;
+import io.github.joselion.maybe.util.FunctionChecked;
+import io.github.joselion.maybe.util.RunnableChecked;
+import io.github.joselion.maybe.util.SupplierChecked;
+import io.github.joselion.testing.UnitTest;
 
 @UnitTest class MaybeTest {
 

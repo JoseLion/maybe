@@ -1,4 +1,4 @@
-package com.github.joselion.maybe;
+package io.github.joselion.maybe;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -8,10 +8,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.github.joselion.maybe.helpers.UnitTest;
-
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+
+import io.github.joselion.testing.UnitTest;
 
 @UnitTest class ResourceHolderTest {
 
