@@ -1,16 +1,56 @@
 version: 2.1
 
 executors:
-  default-jvm:
+  default:
     working_directory: ~/repo/maybe
 
     docker:
-      - image: circleci/openjdk:15-jdk-buster
+      - image: cimg/base:stable
         environment:
           JVM_OPTS: -Xmx4096m
           TERM: dumb
 
 commands:
+  install-jvm:
+    description: Install and setup the JVM environmnet
+
+    steps:
+      - run:
+          name: Get JDK SHA256
+          command: |
+            mkdir ~/jdk
+            wget "https://download.oracle.com/java/18/latest/jdk-18_linux-x64_bin.tar.gz.sha256" -O ~/jdk/jdk-18.sha256
+
+      - restore_cache:
+          key: v1-jdk-18-{{ checksum "~/jdk/jdk-18.sha256" }}
+
+      - run:
+          name: Download JDK 18.0.1.1
+          command: |
+            if [ ! -f ~/jdk/jdk-18.tar.gz ]; then
+              wget -nc https://download.oracle.com/java/18/latest/jdk-18_linux-x64_bin.tar.gz -O ~/jdk/jdk-18.tar.gz
+            fi
+
+      - run:
+          name: Install JDK
+          command: |
+            sudo tar xvf ~/jdk/jdk-18.tar.gz -C ~/jdk/
+            sudo mv ~/jdk/jdk-18.0.1.1/ /opt/
+            echo 'export JAVA_HOME=/opt/jdk-18.0.1.1' >> $BASH_ENV
+            echo 'export PATH=$PATH:$JAVA_HOME/bin' >> $BASH_ENV
+            source $BASH_ENV
+
+      - run:
+          name: Check Java version
+          command: |
+            echo $JAVA_HOME
+            java --version
+
+      - save_cache:
+          paths:
+            - ~/jdk/jdk-18.tar.gz
+          key: v1-jdk-18-{{ checksum "~/jdk/jdk-18.sha256" }}
+
   setup:
     description: "Setup the environment to run tasks on CI"
 
@@ -32,10 +72,10 @@ commands:
             - v4-dependencies-{{ checksum "buildscript-gradle.lockfile" }}-
             - v4-dependencies-
 
-  store-cache:
-    description: "Store Gradle configuration and dependendies in cache"
+      - run:
+          name: Dependencies
+          command: ./gradlew dependencies
 
-    steps:
       - save_cache:
           paths:
             - ~/repo/maybe/.gradle
@@ -44,9 +84,11 @@ commands:
 
 jobs:
   build:
-    executor: default-jvm
+    executor: default
 
     steps:
+      - install-jvm
+
       - setup
 
       - run:
@@ -73,35 +115,33 @@ jobs:
           name: Coverage
           command: ./gradlew jacocoTestReport
 
-      - store-cache
-
       - run:
           name: Upload reports
           command: bash <(curl -s https://codecov.io/bash)
 
   publish-snapshot:
-    executor: default-jvm
+    executor: default
 
     steps:
+      - install-jvm
+
       - setup
 
       - run:
           name: Publish to Sonatype Snapshot OSSRH
           command: ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository
 
-      - store-cache
-
   publish-release:
-    executor: default-jvm
+    executor: default
 
     steps:
+      - install-jvm
+
       - setup
 
       - run:
           name: Publish to Maven Central
           command: ./gradlew -PreleaseVersion publishToSonatype closeAndReleaseSonatypeStagingRepository
-
-      - store-cache
 
 workflows:
   main:
