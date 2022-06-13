@@ -1,14 +1,14 @@
-package com.github.joselion.maybe.expections;
+package io.github.joselion.maybe.expections;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.IOException;
 
-import com.github.joselion.maybe.exceptions.WrappingException;
-import com.github.joselion.maybe.helpers.UnitTest;
-
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+
+import io.github.joselion.maybe.exceptions.WrappingException;
+import io.github.joselion.testing.UnitTest;
 
 @UnitTest
 public class WrappingExceptionTest {

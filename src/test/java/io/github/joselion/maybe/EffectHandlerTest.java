@@ -1,6 +1,6 @@
-package com.github.joselion.maybe;
+package io.github.joselion.maybe;
 
-import static com.github.joselion.maybe.helpers.Helpers.spyLambda;
+import static io.github.joselion.testing.Helpers.spyLambda;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -15,12 +15,12 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import com.github.joselion.maybe.helpers.UnitTest;
-import com.github.joselion.maybe.util.ConsumerChecked;
-import com.github.joselion.maybe.util.RunnableChecked;
-
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+
+import io.github.joselion.maybe.util.ConsumerChecked;
+import io.github.joselion.maybe.util.RunnableChecked;
+import io.github.joselion.testing.UnitTest;
 
 @UnitTest class EffectHandlerTest {
 

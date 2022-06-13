@@ -1,4 +1,4 @@
-package com.github.joselion.maybe.exceptions;
+package io.github.joselion.maybe.exceptions;
 
 /**
  * A {@code WrappingException} is sort of a generic exception that simply wraps
