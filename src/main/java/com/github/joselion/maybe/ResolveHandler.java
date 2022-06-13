@@ -441,9 +441,17 @@ public final class ResolveHandler<T, E extends Exception> {
    * @see ResourceHolder#resolveClosing(FunctionChecked)
    * @see ResourceHolder#runEffectClosing(ConsumerChecked)
    */
-  public <R extends AutoCloseable> ResourceHolder<R> mapToResource(final Function<T, R> mapper) {
-    return this.success.map(mapper)
-      .map(ResourceHolder::from)
-      .orElseGet(() -> ResourceHolder.from(null));
+  public <R extends AutoCloseable> ResourceHolder<R, E> mapToResource(final Function<T, R> mapper) {
+    if (this.success.isPresent()) {
+      final R mapped = mapper.apply(this.success.get());
+
+      return ResourceHolder.from(mapped);
+    }
+
+    if (this.error.isPresent()) {
+      return ResourceHolder.failure(error.get());
+    }
+
+    return ResourceHolder.from(null);
   }
 }

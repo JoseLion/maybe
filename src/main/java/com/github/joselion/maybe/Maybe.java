@@ -193,11 +193,12 @@ public final class Maybe<T> {
    * just like a common try-with-resources statement.
    * 
    * @param <R> the type of the resource. Extends from {@link AutoCloseable}
+   * @param <E> the type of error the holder may have
    * @param resource the {@link AutoCloseable} resource to prepare
    * @return a {@link ResourceHolder} which let's you choose to resolve a value
    *         or run an effect using the prepared resource
    */
-  public static <R extends AutoCloseable> ResourceHolder<R> withResource(final R resource) {
+  public static <R extends AutoCloseable, E extends Exception> ResourceHolder<R, E> withResource(final R resource) {
     return ResourceHolder.from(resource);
   }
 
