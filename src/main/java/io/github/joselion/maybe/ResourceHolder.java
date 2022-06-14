@@ -62,7 +62,7 @@ public class ResourceHolder<R extends AutoCloseable, E extends Exception> {
    * @return the possible stored resource
    */
   Optional<R> resource() {
-    return this.resource;
+    return resource;
   }
 
   /**
@@ -71,7 +71,7 @@ public class ResourceHolder<R extends AutoCloseable, E extends Exception> {
    * @return the possible propagated error
    */
   Optional<E> error() {
-    return this.error;
+    return error;
   }
 
   /**
@@ -97,7 +97,7 @@ public class ResourceHolder<R extends AutoCloseable, E extends Exception> {
       try (R resArg = this.resource.get()) {
         return ResolveHandler.withSuccess(resolver.apply(resArg));
       } catch (Exception e) {
-        final X newError = (X) e;
+        final var newError = (X) e;
 
         return ResolveHandler.withError(newError);
       }
@@ -135,7 +135,7 @@ public class ResourceHolder<R extends AutoCloseable, E extends Exception> {
 
         return EffectHandler.withNothing();
       } catch (Exception e) {
-        final X newError = (X) e;
+        final var newError = (X) e;
 
         return EffectHandler.withError(newError);
       }

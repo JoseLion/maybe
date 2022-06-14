@@ -147,7 +147,7 @@ public final class ResolveHandler<T, E extends Exception> {
   public <X extends E> ResolveHandler<T, E> catchError(final Class<X> ofType, final Function<X, T> handler) {
     return error.filter(ofType::isInstance)
       .map(ofType::cast)
-      .map(handler::apply)
+      .map(handler)
       .map(ResolveHandler::<T, E>withSuccess)
       .orElse(this);
   }
@@ -162,7 +162,7 @@ public final class ResolveHandler<T, E extends Exception> {
    *         handler instance otherwise
    */
   public ResolveHandler<T, E> catchError(final Function<E, T> handler) {
-    return error.map(handler::apply)
+    return error.map(handler)
       .map(ResolveHandler::<T, E>withSuccess)
       .orElse(this);
   }
@@ -206,7 +206,7 @@ public final class ResolveHandler<T, E extends Exception> {
    *         to be handled, or nothing
    */
   public <S, X extends Exception> ResolveHandler<S, X> resolve(final FunctionChecked<T, S, X> resolver) {
-    return toMaybe().resolve(resolver);
+    return this.toMaybe().resolve(resolver);
   }
 
   /**
@@ -308,7 +308,7 @@ public final class ResolveHandler<T, E extends Exception> {
   public <U> ResolveHandler<U, WrappingException> cast(final Class<U> type) {
     if (success.isPresent()) {
       try {
-        final U newValue = type.cast(success.get());
+        final var newValue = type.cast(success.get());
         return withSuccess(newValue);
       } catch (ClassCastException e) {
         return withError(WrappingException.of(e));
@@ -342,7 +342,7 @@ public final class ResolveHandler<T, E extends Exception> {
    * @return the resolved value if present. Another value otherwise
    */
   public T orElse(final Function<E, T> mapper) {
-    return success.orElseGet(() -> mapper.apply(error.get()));
+    return success.orElseGet(() -> mapper.apply(error.orElseThrow()));
   }
 
   /**

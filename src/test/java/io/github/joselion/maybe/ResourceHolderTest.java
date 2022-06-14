@@ -6,8 +6,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.List;
 
+import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
@@ -21,8 +21,8 @@ import io.github.joselion.testing.UnitTest;
     @Nested class when_the_resource_is_present {
       @Nested class when_the_operation_succeeds {
         @Test void returns_a_handler_with_the_value() {
-          final FileInputStream fis = getFIS();
-          final ResolveHandler<String, ?> handler = Maybe.withResource(fis)
+          final var fis = getFIS();
+          final var handler = Maybe.withResource(fis)
             .resolveClosing(res -> {
               assertThat(res)
                 .isEqualTo(fis)
@@ -41,9 +41,9 @@ import io.github.joselion.testing.UnitTest;
 
       @Nested class when_the_operation_fails {
         @Test void returns_a_handler_with_the_error() {
-          final FileInputStream fis = getFIS();
-          final IOException exception = new IOException("FAIL");
-          final ResolveHandler<?, IOException> handler = Maybe.withResource(fis)
+          final var fis = getFIS();
+          final var exception = new IOException("FAIL");
+          final var handler = Maybe.withResource(fis)
             .resolveClosing(res -> {
               assertThat(res)
                 .isEqualTo(fis)
@@ -62,20 +62,23 @@ import io.github.joselion.testing.UnitTest;
 
     @Nested class when_the_error_is_present {
       @Test void returns_a_handler_with_the_propagated_error() {
-        final IOException error = new IOException("Something went wrong...");
-        final ResolveHandler<FileInputStream, IOException> handler = ResourceHolder.failure(error)
+        final var error = new IOException("Something went wrong...");
+        final var handler = ResourceHolder.failure(error)
           .resolveClosing(fis -> {
             throw new AssertionError("The handler should not be executed!");
           });
 
         assertThat(handler.success()).isEmpty();
-        assertThat(handler.error()).contains(error);
+        assertThat(handler.error())
+          .containsInstanceOf(IOException.class)
+          .get(InstanceOfAssertFactories.THROWABLE)
+          .hasMessage(error.getMessage());
       }
     }
 
     @Nested class when_neither_the_resource_nor_the_error_is_present {
       @Test void returns_a_handler_with_nothing() {
-        final ResolveHandler<AutoCloseable, Exception> handler = ResourceHolder.from(null)
+        final var handler = ResourceHolder.from(null)
           .resolveClosing(res -> {
             throw new AssertionError("The handler should not be executed!");
           });
@@ -90,9 +93,9 @@ import io.github.joselion.testing.UnitTest;
     @Nested class when_the_resource_is_present {
       @Nested class when_the_operation_succeeds {
         @Test void returns_a_handler_with_nothing() {
-          final List<Integer> counter = new ArrayList<>();
-          final FileInputStream fis = getFIS();
-          final EffectHandler<?> handler = Maybe.withResource(fis)
+          final var counter = new ArrayList<>();
+          final var fis = getFIS();
+          final var handler = Maybe.withResource(fis)
             .runEffectClosing(res -> {
               assertThat(res)
                 .isEqualTo(fis)
@@ -112,9 +115,9 @@ import io.github.joselion.testing.UnitTest;
 
       @Nested class when_the_operation_fails {
         @Test void returns_a_handler_with_the_error() {
-          final FileInputStream fis = getFIS();
-          final IOException exception = new IOException("FAIL");
-          final EffectHandler<IOException> handler = Maybe.withResource(fis)
+          final var fis = getFIS();
+          final var exception = new IOException("FAIL");
+          final var handler = Maybe.withResource(fis)
             .runEffectClosing(res -> {
               assertThat(res)
                 .isEqualTo(fis)
@@ -133,19 +136,22 @@ import io.github.joselion.testing.UnitTest;
 
     @Nested class when_the_error_is_present {
       @Test void returns_a_handler_with_the_propagated_error() {
-        final IOException error = new IOException("Something went wrong...");
-        final EffectHandler<IOException> handler = ResourceHolder.failure(error)
+        final var error = new IOException("Something went wrong...");
+        final var handler = ResourceHolder.failure(error)
           .runEffectClosing(res -> {
             throw new AssertionError("The handler should not be executed!");
           });
 
-        assertThat(handler.error()).contains(error);
+        assertThat(handler.error())
+          .containsInstanceOf(IOException.class)
+          .get(InstanceOfAssertFactories.THROWABLE)
+          .hasMessage(error.getMessage());
       }
     }
 
     @Nested class when_neither_the_resource_nor_the_error_is_present {
       @Test void returns_a_handler_with_nothing() {
-        final EffectHandler<Exception> handler = ResourceHolder.from(null)
+        final var handler = ResourceHolder.from(null)
           .runEffectClosing(res -> {
             throw new AssertionError("The handler should not be executed!");
           });

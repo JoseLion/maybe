@@ -5,10 +5,10 @@ import static org.mockito.AdditionalAnswers.delegatesTo;
 
 import org.mockito.Mockito;
 
-public class Helpers {
+public class Spy {
 
   @SuppressWarnings("unchecked")
-  public static <T> T spyLambda(final T lambda) {
+  public static <T> T lambda(final T lambda) {
     Class<?>[] interfaces = lambda.getClass().getInterfaces();
     assertThat(interfaces).hasSize(1);
 

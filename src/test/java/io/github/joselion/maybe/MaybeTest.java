@@ -1,6 +1,5 @@
 package io.github.joselion.maybe;
 
-import static io.github.joselion.testing.Helpers.spyLambda;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.InstanceOfAssertFactories.optional;
 import static org.mockito.ArgumentMatchers.any;
@@ -20,6 +19,7 @@ import io.github.joselion.maybe.util.ConsumerChecked;
 import io.github.joselion.maybe.util.FunctionChecked;
 import io.github.joselion.maybe.util.RunnableChecked;
 import io.github.joselion.maybe.util.SupplierChecked;
+import io.github.joselion.testing.Spy;
 import io.github.joselion.testing.UnitTest;
 
 @UnitTest class MaybeTest {
@@ -47,7 +47,7 @@ import io.github.joselion.testing.UnitTest;
   @Nested class just {
     @Nested class when_a_value_is_passed {
       @Test void returns_a_Maybe_wrapping_the_value() {
-        final Maybe<String> maybe = Maybe.just(OK);
+        final var maybe = Maybe.just(OK);
 
         assertThat(maybe.value()).contains(OK);
       }
@@ -55,7 +55,7 @@ import io.github.joselion.testing.UnitTest;
 
     @Nested class when_null_is_passed {
       @Test void returns_a_Maybe_wrapping_nothing() {
-        final Maybe<Object> maybe = Maybe.just(null);
+        final var maybe = Maybe.just(null);
 
         assertThat(maybe.value()).isEmpty();
       }
@@ -64,7 +64,7 @@ import io.github.joselion.testing.UnitTest;
 
   @Nested class nothing {
     @Test void returns_a_Maybe_wrapping_nothing() {
-      Maybe<Object> maybe = Maybe.nothing();
+      final var maybe = Maybe.nothing();
 
       assertThat(maybe.value()).isEmpty();
     }
@@ -73,7 +73,7 @@ import io.github.joselion.testing.UnitTest;
   @Nested class fromOptional {
     @Nested class when_the_optional_has_a_value {
       @Test void returns_a_Maybe_wrapping_the_value() {
-        final Maybe<String> maybe = Maybe.fromOptional(Optional.of(OK));
+        final var maybe = Maybe.fromOptional(Optional.of(OK));
 
         assertThat(maybe.value()).contains(OK);
       }
@@ -81,7 +81,7 @@ import io.github.joselion.testing.UnitTest;
 
     @Nested class when_the_optional_is_empty {
       @Test void returns_a_Maybe_wrapping_nothing() {
-        final Maybe<?> maybe = Maybe.fromOptional(Optional.empty());
+        final var maybe = Maybe.fromOptional(Optional.empty());
 
         assertThat(maybe.value()).isEmpty();
       }
@@ -91,8 +91,8 @@ import io.github.joselion.testing.UnitTest;
   @Nested class fromResolver {
     @Nested class when_the_operation_succeeds {
       @Test void returns_a_handler_with_the_value() throws IOException {
-        final SupplierChecked<String, IOException> supplierSpy = spyLambda(() -> OK);
-        final ResolveHandler<String, ?> handler = Maybe.fromResolver(supplierSpy);
+        final var supplierSpy = Spy.<SupplierChecked<String, IOException>>lambda(() -> OK);
+        final var handler = Maybe.fromResolver(supplierSpy);
 
         assertThat(handler.success()).contains(OK);
         assertThat(handler.error()).isEmpty();
@@ -103,8 +103,8 @@ import io.github.joselion.testing.UnitTest;
 
     @Nested class when_the_operation_fails {
       @Test void returns_a_handler_with_the_error() throws IOException {
-        final SupplierChecked<String, IOException> supplierSpy = spyLambda(failSupplier);
-        final ResolveHandler<?, IOException> handler = Maybe.fromResolver(supplierSpy);
+        final var supplierSpy = Spy.lambda(failSupplier);
+        final var handler = Maybe.fromResolver(supplierSpy);
 
         assertThat(handler.success()).isEmpty();
         assertThat(handler.error()).contains(FAIL_EXCEPTION);
@@ -117,8 +117,8 @@ import io.github.joselion.testing.UnitTest;
   @Nested class fromEffect {
     @Nested class when_the_operation_succeeds {
       @Test void returns_a_handler_with_nothing() {
-        final RunnableChecked<RuntimeException> runnableSpy = spyLambda(() -> { });
-        final EffectHandler<RuntimeException> handler = Maybe.fromEffect(runnableSpy);
+        final var runnableSpy = Spy.<RunnableChecked<RuntimeException>>lambda(() -> { });
+        final var handler = Maybe.fromEffect(runnableSpy);
 
         assertThat(handler.error()).isEmpty();
 
@@ -128,8 +128,8 @@ import io.github.joselion.testing.UnitTest;
 
     @Nested class when_the_operation_fails {
       @Test void returns_a_handler_with_the_error() throws IOException {
-        final RunnableChecked<IOException> runnableSpy = spyLambda(failRunnable);
-        final EffectHandler<IOException> handler = Maybe.fromEffect(runnableSpy);
+        final var runnableSpy = Spy.lambda(failRunnable);
+        final var handler = Maybe.fromEffect(runnableSpy);
 
         assertThat(handler.error()).contains(FAIL_EXCEPTION);
 
@@ -140,8 +140,8 @@ import io.github.joselion.testing.UnitTest;
 
   @Nested class partialResolver {
     @Test void returns_a_function_that_takes_a_value_and_returns_a_resolve_handler() throws IOException {
-      final FunctionChecked<String, Integer, RuntimeException> successSpy = spyLambda(String::length);
-      final FunctionChecked<String, String, IOException> failureSpy = spyLambda(failFunction);
+      final var successSpy = Spy.<FunctionChecked<String, Integer, RuntimeException>>lambda(String::length);
+      final var failureSpy = Spy.lambda(failFunction);
 
       assertThat(Maybe.partialResolver(successSpy).apply(OK))
         .isInstanceOf(ResolveHandler.class)
@@ -159,8 +159,8 @@ import io.github.joselion.testing.UnitTest;
 
   @Nested class partialEffect {
     @Test void returns_a_function_that_takes_a_value_and_returns_an_effect_handler() throws IOException {
-      final ConsumerChecked<String, RuntimeException> successSpy = spyLambda(v -> { });
-      final ConsumerChecked<String, IOException> failureSpy = spyLambda(failConsumer);
+      final var successSpy = Spy.<ConsumerChecked<String, RuntimeException>>lambda(v -> { });
+      final var failureSpy = Spy.lambda(failConsumer);
 
       assertThat(Maybe.partialEffect(successSpy).apply(OK))
         .isInstanceOf(EffectHandler.class)
@@ -180,8 +180,8 @@ import io.github.joselion.testing.UnitTest;
   @Nested class withResource {
     @Test void returns_the_resource_spec_with_the_resource() {
       try (
-        AutoCloseableSoftAssertions softly = new AutoCloseableSoftAssertions();
-        FileInputStream fis = Maybe.just("./src/test/resources/readTest.txt")
+        var softly = new AutoCloseableSoftAssertions();
+        var fis = Maybe.just("./src/test/resources/readTest.txt")
           .resolve(FileInputStream::new)
           .orThrow(Error::new);
       ) {
@@ -198,7 +198,7 @@ import io.github.joselion.testing.UnitTest;
   @Nested class map {
     @Nested class when_the_value_is_present {
       @Test void maps_the_value_with_the_passed_function() {
-        final Maybe<Integer> maybe = Maybe.just(OK).map(String::length);
+        final var maybe = Maybe.just(OK).map(String::length);
 
         assertThat(maybe.value()).contains(2);
       }
@@ -206,7 +206,7 @@ import io.github.joselion.testing.UnitTest;
 
     @Nested class when_the_value_is_NOT_present {
       @Test void returns_nothing() {
-        Maybe<Integer> maybe = Maybe.<String>nothing().map(String::length);
+        final var maybe = Maybe.<String>nothing().map(String::length);
 
         assertThat(maybe.value()).isEmpty();
       }
@@ -216,7 +216,7 @@ import io.github.joselion.testing.UnitTest;
   @Nested class flatMap {
     @Nested class when_the_value_is_present {
       @Test void maps_the_value_with_the_passed_maybe_function() {
-        final Maybe<Integer> maybe = Maybe.just(OK)
+        final var maybe = Maybe.just(OK)
           .flatMap(str -> Maybe.just(str.length()));
 
         assertThat(maybe.value()).contains(2);
@@ -225,7 +225,7 @@ import io.github.joselion.testing.UnitTest;
 
     @Nested class when_the_value_is_NOT_present {
       @Test void returns_nothing() {
-        final Maybe<Integer> maybe = Maybe.<String>nothing()
+        final var maybe = Maybe.<String>nothing()
           .flatMap(str -> Maybe.just(str.length()));
 
         assertThat(maybe.value()).isEmpty();
@@ -236,8 +236,8 @@ import io.github.joselion.testing.UnitTest;
   @Nested class resolve {
     @Nested class when_the_value_is_present {
       @Test void the_callback_is_called_with_the_value() {
-        final FunctionChecked<Integer, String, RuntimeException> functionSpy = spyLambda(v -> OK);
-        final ResolveHandler<String, ?> handler = Maybe.just(1).resolve(functionSpy);
+        final var functionSpy = Spy.<FunctionChecked<Integer, String, RuntimeException>>lambda(v -> OK);
+        final var handler = Maybe.just(1).resolve(functionSpy);
 
         assertThat(handler.success()).contains(OK);
         assertThat(handler.error()).isEmpty();
@@ -248,8 +248,8 @@ import io.github.joselion.testing.UnitTest;
 
     @Nested class when_the_value_is_NOT_present {
       @Test void the_callback_is_never_called() throws IOException {
-        final FunctionChecked<String, String, IOException> functionSpy = spyLambda(failFunction);
-        final ResolveHandler<String, IOException> handler = Maybe.<String>nothing().resolve(functionSpy);
+        final var functionSpy = Spy.lambda(failFunction);
+        final var handler = Maybe.<String>nothing().resolve(functionSpy);
 
         assertThat(handler.success()).isEmpty();
         assertThat(handler.error()).isEmpty();
@@ -260,8 +260,8 @@ import io.github.joselion.testing.UnitTest;
 
     @Nested class when_the_new_operation_succeeds {
       @Test void returns_a_handler_with_the_resolved_value() {
-        final FunctionChecked<String, String, RuntimeException> functionSpy = spyLambda(FunctionChecked.identity());
-        final ResolveHandler<String, ?> handler = Maybe.just(OK)
+        final var functionSpy = Spy.lambda(FunctionChecked.<String, RuntimeException>identity());
+        final var handler = Maybe.just(OK)
           .resolve(functionSpy);
 
         assertThat(handler.success()).contains(OK);
@@ -273,8 +273,8 @@ import io.github.joselion.testing.UnitTest;
 
     @Nested class when_the_new_operation_fails {
       @Test void returns_a_handler_with_the_error() throws IOException {
-        final FunctionChecked<String, String, IOException> functionSpy = spyLambda(failFunction);
-        final ResolveHandler<?, IOException> handler = Maybe.just(OK)
+        final var functionSpy = Spy.lambda(failFunction);
+        final var handler = Maybe.just(OK)
           .resolve(functionSpy);
 
         assertThat(handler.success()).isEmpty();
@@ -288,8 +288,8 @@ import io.github.joselion.testing.UnitTest;
   @Nested class runEffect {
     @Nested class when_the_value_is_present {
       @Test void the_callback_is_called_with_the_value() {
-        final ConsumerChecked<String, RuntimeException> consumerSpy = spyLambda(v -> { });
-        final EffectHandler<RuntimeException> handler = Maybe.just(OK)
+        final var consumerSpy = Spy.<ConsumerChecked<String, RuntimeException>>lambda(v -> { });
+        final var handler = Maybe.just(OK)
           .runEffect(consumerSpy);
 
         assertThat(handler.error()).isEmpty();
@@ -300,8 +300,8 @@ import io.github.joselion.testing.UnitTest;
 
     @Nested class when_the_value_is_NOT_present {
       @Test void the_callback_is_never_called() {
-        final ConsumerChecked<Object, RuntimeException> consumerSpy = spyLambda(v -> { });
-        final EffectHandler<RuntimeException> handler = Maybe.nothing()
+        final var consumerSpy = Spy.<ConsumerChecked<Object, RuntimeException>>lambda(v -> { });
+        final var handler = Maybe.nothing()
           .runEffect(consumerSpy);
 
         assertThat(handler.error()).isEmpty();
@@ -312,8 +312,8 @@ import io.github.joselion.testing.UnitTest;
 
     @Nested class when_the_new_operation_succeeds {
       @Test void returns_the_a_handler_with_nothing() {
-        final ConsumerChecked<String, RuntimeException> consumerSpy = spyLambda(v -> { });
-        final EffectHandler<RuntimeException> handler = Maybe.just(OK)
+        final var consumerSpy = Spy.<ConsumerChecked<String, RuntimeException>>lambda(v -> { });
+        final var handler = Maybe.just(OK)
           .runEffect(consumerSpy);
 
         assertThat(handler.error()).isEmpty();
@@ -324,8 +324,8 @@ import io.github.joselion.testing.UnitTest;
 
     @Nested class when_the_new_operation_fails {
       @Test void returns_a_handler_with_the_error() throws IOException {
-        final ConsumerChecked<String, IOException> consumerSpy = spyLambda(failConsumer);
-        final EffectHandler<IOException> handler = Maybe.just(OK)
+        final var consumerSpy = Spy.lambda(failConsumer);
+        final var handler = Maybe.just(OK)
           .runEffect(consumerSpy);
 
         assertThat(handler.error()).contains(FAIL_EXCEPTION);
@@ -338,7 +338,7 @@ import io.github.joselion.testing.UnitTest;
   @Nested class cast {
     @Nested class when_the_value_is_castable_to_the_passed_type {
       @Test void returns_a_maybe_with_the_value_cast() {
-        final Maybe<Number> maybe = Maybe.just(3);
+        final var maybe = Maybe.<Number>just(3);
 
         assertThat(maybe.cast(Integer.class).value()).contains(3);
       }
@@ -346,7 +346,7 @@ import io.github.joselion.testing.UnitTest;
 
     @Nested class when_the_value_is_NOT_castable_to_the_passed_type {
       @Test void returns_nothing() {
-        final Maybe<String> maybe = Maybe.just("3");
+        final var maybe = Maybe.just("3");
 
         assertThat(maybe.cast(Integer.class).value()).isEmpty();
       }
@@ -400,9 +400,9 @@ import io.github.joselion.testing.UnitTest;
   @Nested class equals {
     @Nested class when_the_tested_object_is_the_same_instance {
       @Test void returns_true() {
-        final Maybe<Integer> maybe = Maybe.just(3);
-        final Object other = maybe;
-        final boolean isEqual = maybe.equals(other);
+        final var maybe = Maybe.just(3);
+        final var other = maybe;
+        final var isEqual = maybe.equals(other);
 
         assertThat(isEqual).isTrue();
       }
@@ -410,9 +410,9 @@ import io.github.joselion.testing.UnitTest;
 
     @Nested class when_the_tested_objectis_NOT_the_same_instance {
       @Test void returns_false() {
-        final Maybe<Integer> maybe = Maybe.just(3);
-        final Object other = Integer.valueOf(3);
-        final boolean isEqual = maybe.equals(other);
+        final var maybe = Maybe.just(3);
+        final var other = (Object) Integer.valueOf(3);
+        final var isEqual = maybe.equals(other);
 
         assertThat(isEqual).isFalse();
       }
@@ -420,9 +420,9 @@ import io.github.joselion.testing.UnitTest;
 
     @Nested class when_both_wrapped_values_are_equal {
       @Test void returns_true() {
-        final Maybe<String> maybe = Maybe.just(OK);
-        final Maybe<String> other = Maybe.just(OK);
-        final boolean isEqual = maybe.equals(other);
+        final var maybe = Maybe.just(OK);
+        final var other = Maybe.just(OK);
+        final var isEqual = maybe.equals(other);
 
         assertThat(isEqual).isTrue();
       }
@@ -430,9 +430,9 @@ import io.github.joselion.testing.UnitTest;
 
     @Nested class when_both_wrapped_values_are_NOT_equal {
       @Test void returns_false() {
-        final Maybe<String> maybe = Maybe.just(OK);
-        final Maybe<String> other = Maybe.just("OTHER");
-        final boolean isEqualToOther = maybe.equals(other);
+        final var maybe = Maybe.just(OK);
+        final var other = Maybe.just("OTHER");
+        final var isEqualToOther = maybe.equals(other);
 
         assertThat(isEqualToOther).isFalse();
       }
@@ -442,7 +442,7 @@ import io.github.joselion.testing.UnitTest;
   @Nested class hashCode {
     @Nested class when_the_value_is_present {
       @Test void returns_the_hash_code_of_the_value() {
-        final Maybe<String> maybe = Maybe.just(OK);
+        final var maybe = Maybe.just(OK);
 
         assertThat(maybe).hasSameHashCodeAs(OK);
       }
@@ -450,7 +450,7 @@ import io.github.joselion.testing.UnitTest;
 
     @Nested class when_the_value_is_NOT_present {
       @Test void returns_zero() {
-        final Maybe<?> maybe = Maybe.nothing();
+        final var maybe = Maybe.nothing();
 
         assertThat(maybe.hashCode()).isZero();
       }
@@ -460,7 +460,7 @@ import io.github.joselion.testing.UnitTest;
   @Nested class toString {
     @Nested class when_the_value_is_present {
       @Test void returns_the_string_representation_of_the_value() {
-        final Maybe<String> maybe = Maybe.just(OK);
+        final var maybe = Maybe.just(OK);
 
         assertThat(maybe).hasToString("Maybe[OK]");
       }
@@ -468,7 +468,7 @@ import io.github.joselion.testing.UnitTest;
 
     @Nested class when_the_value_is_NOT_present {
       @Test void returns_the_string_representation_of_nothing() {
-        final Maybe<?> maybe = Maybe.nothing();
+        final var maybe = Maybe.nothing();
 
         assertThat(maybe).hasToString("Maybe.nothing");
       }
