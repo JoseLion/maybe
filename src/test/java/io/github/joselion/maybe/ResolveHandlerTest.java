@@ -1,6 +1,5 @@
 package io.github.joselion.maybe;
 
-import static io.github.joselion.testing.Helpers.spyLambda;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.InstanceOfAssertFactories.INPUT_STREAM;
@@ -27,6 +26,7 @@ import io.github.joselion.maybe.exceptions.WrappingException;
 import io.github.joselion.maybe.util.ConsumerChecked;
 import io.github.joselion.maybe.util.FunctionChecked;
 import io.github.joselion.maybe.util.SupplierChecked;
+import io.github.joselion.testing.Spy;
 import io.github.joselion.testing.UnitTest;
 
 @UnitTest class ResolveHandlerTest {
@@ -46,7 +46,7 @@ import io.github.joselion.testing.UnitTest;
   @Nested class doOnSuccess {
     @Nested class when_the_value_is_present {
       @Test void calls_the_effect_callback() {
-        final Consumer<String> consumerSpy = spyLambda(v -> { });
+        final var consumerSpy = Spy.<Consumer<String>>lambda(v -> { });
 
         Maybe.fromResolver(okOp)
           .doOnSuccess(consumerSpy);
@@ -57,7 +57,7 @@ import io.github.joselion.testing.UnitTest;
 
     @Nested class when_the_error_is_present {
       @Test void never_calls_the_effect_callback() {
-        final Consumer<String> consumerSpy = spyLambda(v -> { });
+        final var consumerSpy = Spy.<Consumer<String>>lambda(v -> { });
 
         Maybe.fromResolver(throwingOp)
           .doOnSuccess(consumerSpy);
@@ -72,7 +72,7 @@ import io.github.joselion.testing.UnitTest;
       @Nested class and_the_error_type_is_provided {
         @Nested class and_the_error_is_an_instance_of_the_provided_type {
           @Test void calls_the_effect_callback() {
-            final Consumer<FileSystemException> consumerSpy = spyLambda(error -> { });
+            final var consumerSpy = Spy.<Consumer<FileSystemException>>lambda(error -> { });
 
             Maybe.fromResolver(throwingOp)
               .doOnError(FileSystemException.class, consumerSpy);
@@ -83,7 +83,7 @@ import io.github.joselion.testing.UnitTest;
 
         @Nested class and_the_error_is_NOT_an_instance_of_the_provided_type {
           @Test void never_calls_the_effect_callback() {
-            final Consumer<RuntimeException> consumerSpy = spyLambda(error -> { });
+            final var consumerSpy = Spy.<Consumer<RuntimeException>>lambda(error -> { });
 
             Maybe.fromResolver(throwingOp)
               .doOnError(RuntimeException.class, consumerSpy);
@@ -95,7 +95,7 @@ import io.github.joselion.testing.UnitTest;
 
       @Nested class and_the_error_type_is_NOT_provided {
         @Test void calls_the_effect_callback() {
-          final Consumer<FileSystemException> consumerSpy = spyLambda(error -> { });
+          final var consumerSpy = Spy.<Consumer<FileSystemException>>lambda(error -> { });
 
           Maybe.fromResolver(throwingOp)
             .doOnError(consumerSpy);
@@ -107,7 +107,7 @@ import io.github.joselion.testing.UnitTest;
 
     @Nested class when_the_value_is_present {
       @Test void never_calls_the_effect_callback() {
-        final Consumer<RuntimeException> cunsumerSpy = spyLambda(error -> { });
+        final var cunsumerSpy = Spy.<Consumer<RuntimeException>>lambda(error -> { });
 
         Maybe.fromResolver(okOp)
           .doOnError(RuntimeException.class, cunsumerSpy)
@@ -123,8 +123,8 @@ import io.github.joselion.testing.UnitTest;
       @Nested class and_the_error_type_is_provided {
         @Nested class and_the_error_is_an_instance_of_the_provided_type {
           @Test void calls_the_handler_function() {
-            final Function<FileSystemException, String> functionSpy = spyLambda(e -> OK);
-            final ResolveHandler<String, FileSystemException> handler = Maybe.fromResolver(throwingOp)
+            final var functionSpy = Spy.<Function<FileSystemException, String>>lambda(e -> OK);
+            final var handler = Maybe.fromResolver(throwingOp)
               .catchError(FileSystemException.class, functionSpy);
 
             assertThat(handler.success()).contains(OK);
@@ -136,8 +136,8 @@ import io.github.joselion.testing.UnitTest;
 
         @Nested class and_the_error_is_NOT_an_instance_of_the_provided_type {
           @Test void never_calls_the_handler_function() {
-            final Function<AccessDeniedException, String> functionSpy = spyLambda(e -> OK);
-            final ResolveHandler<String, FileSystemException> handler = Maybe.fromResolver(throwingOp)
+            final var functionSpy = Spy.<Function<AccessDeniedException, String>>lambda(e -> OK);
+            final var handler = Maybe.fromResolver(throwingOp)
               .catchError(AccessDeniedException.class, functionSpy);
 
             assertThat(handler.success()).isEmpty();
@@ -150,8 +150,8 @@ import io.github.joselion.testing.UnitTest;
 
       @Nested class and_the_error_type_is_NOT_provided {
         @Test void calls_the_handler_function() {
-          final Function<FileSystemException, String> handlerSpy = spyLambda(e -> OK);
-          final ResolveHandler<String, FileSystemException> resolver = Maybe.fromResolver(throwingOp)
+          final var handlerSpy = Spy.<Function<FileSystemException, String>>lambda(e -> OK);
+          final var resolver = Maybe.fromResolver(throwingOp)
             .catchError(handlerSpy);
 
           assertThat(resolver.success()).contains(OK);
@@ -164,8 +164,8 @@ import io.github.joselion.testing.UnitTest;
 
     @Nested class when_the_value_is_present {
       @Test void never_calls_the_handler_function() {
-        final Function<RuntimeException, String> functionSpy = spyLambda(e -> OK);
-        final List<ResolveHandler<String, RuntimeException>> resolvers = List.of(
+        final var functionSpy = Spy.<Function<RuntimeException, String>>lambda(e -> OK);
+        final var resolvers = List.of(
           Maybe.fromResolver(okOp).catchError(RuntimeException.class, functionSpy),
           Maybe.fromResolver(okOp).catchError(functionSpy)
         );
@@ -183,10 +183,10 @@ import io.github.joselion.testing.UnitTest;
   @Nested class resolve {
     @Nested class when_the_value_is_present {
       @Test void calls_the_resolver_callback_and_returns_a_new_handler() {
-        final FunctionChecked<String, Integer, RuntimeException> resolverSpy = spyLambda(String::length);
-        final FunctionChecked<String, Integer, RuntimeException> successSpy = spyLambda(String::length);
-        final FunctionChecked<RuntimeException, Integer, RuntimeException> errorSpy = spyLambda(e -> -1);
-        final List<ResolveHandler<Integer, RuntimeException>> handlers = List.of(
+        final var resolverSpy = Spy.<FunctionChecked<String, Integer, RuntimeException>>lambda(String::length);
+        final var successSpy = Spy.<FunctionChecked<String, Integer, RuntimeException>>lambda(String::length);
+        final var errorSpy = Spy.<FunctionChecked<RuntimeException, Integer, RuntimeException>>lambda(e -> -1);
+        final var handlers = List.of(
           Maybe.fromResolver(okOp).resolve(resolverSpy),
           Maybe.fromResolver(okOp).resolve(successSpy, errorSpy)
         );
@@ -205,8 +205,8 @@ import io.github.joselion.testing.UnitTest;
     @Nested class when_the_error_is_present {
       @Nested class and_the_error_resolver_is_NOT_provided {
         @Test void never_calls_the_resolver_callback_and_creates_a_handler_with_nothing() {
-          final FunctionChecked<String, Integer, RuntimeException> successSpy = spyLambda(String::length);
-          final ResolveHandler<Integer, RuntimeException> handler = Maybe.fromResolver(throwingOp)
+          final var successSpy = Spy.<FunctionChecked<String, Integer, RuntimeException>>lambda(String::length);
+          final var handler = Maybe.fromResolver(throwingOp)
             .resolve(successSpy);
 
           assertThat(handler.success()).isEmpty();
@@ -218,9 +218,9 @@ import io.github.joselion.testing.UnitTest;
 
       @Nested class and_the_error_resolver_is_provided {
         @Test void call_only_the_error_callback_and_returns_a_new_effect_handler() {
-          final FunctionChecked<String, Integer, RuntimeException> successSpy = spyLambda(String::length);
-          final FunctionChecked<FileSystemException, Integer, RuntimeException> errorSpy = spyLambda(e -> -1);
-          final ResolveHandler<Integer, RuntimeException> handler = Maybe.fromResolver(throwingOp)
+          final var successSpy = Spy.<FunctionChecked<String, Integer, RuntimeException>>lambda(String::length);
+          final var errorSpy = Spy.<FunctionChecked<FileSystemException, Integer, RuntimeException>>lambda(e -> -1);
+          final var handler = Maybe.fromResolver(throwingOp)
             .resolve(successSpy, errorSpy);
 
           assertThat(handler.success()).contains(-1);
@@ -236,11 +236,11 @@ import io.github.joselion.testing.UnitTest;
   @Nested class runEffect {
     @Nested class when_the_value_is_present {
       @Test void calls_the_resolver_callback_and_returns_a_new_handler() throws FileSystemException {
-        final ConsumerChecked<String, FileSystemException> effectSpy = spyLambda(v -> throwingOp.get());
-        final ConsumerChecked<String, FileSystemException> successSpy = spyLambda(v -> throwingOp.get());
-        final ConsumerChecked<RuntimeException, FileSystemException> errorSpy = spyLambda(err -> { });
-        final ResolveHandler<String, RuntimeException> handler = Maybe.fromResolver(okOp);
-        final List<EffectHandler<FileSystemException>> newHandlers = List.of(
+        final var effectSpy = Spy.<ConsumerChecked<String, FileSystemException>>lambda(v -> throwingOp.get());
+        final var successSpy = Spy.<ConsumerChecked<String, FileSystemException>>lambda(v -> throwingOp.get());
+        final var errorSpy = Spy.<ConsumerChecked<RuntimeException, FileSystemException>>lambda(err -> { });
+        final var handler = Maybe.fromResolver(okOp);
+        final var newHandlers = List.of(
           handler.runEffect(effectSpy),
           handler.runEffect(successSpy, errorSpy)
         );
@@ -258,10 +258,12 @@ import io.github.joselion.testing.UnitTest;
     @Nested class when_the_error_is_present {
       @Nested class and_the_error_callback_is_provided {
         @Test void calls_only_the_error_callback_and_returns_a_new_handler() throws FileSystemException {
-          final ConsumerChecked<String, FileSystemException> successSpy = spyLambda(v -> { });
-          final ConsumerChecked<FileSystemException, FileSystemException> errorSpy = spyLambda(err -> throwingOp.get());
-          final ResolveHandler<String, FileSystemException> handler = Maybe.fromResolver(throwingOp);
-          final EffectHandler<FileSystemException> newHandler = handler.runEffect(successSpy, errorSpy);
+          final var successSpy = Spy.<ConsumerChecked<String, FileSystemException>>lambda(v -> { });
+          final var errorSpy = Spy.<ConsumerChecked<FileSystemException, FileSystemException>>lambda(
+            err -> throwingOp.get()
+          );
+          final var handler = Maybe.fromResolver(throwingOp);
+          final var newHandler = handler.runEffect(successSpy, errorSpy);
 
           assertThat(newHandler.error()).contains(FAIL_EXCEPTION);
 
@@ -272,9 +274,9 @@ import io.github.joselion.testing.UnitTest;
 
       @Nested class and_the_error_callback_is_NOT_provided {
         @Test void never_calls_the_effect_callback_and_returns_a_new_empty_handler() throws FileSystemException {
-          final ConsumerChecked<String, FileSystemException> effectSpy = spyLambda(v -> throwingOp.get());
-          final ResolveHandler<String, FileSystemException> handler = Maybe.fromResolver(throwingOp);
-          final EffectHandler<FileSystemException> newHandler = handler.runEffect(effectSpy);
+          final var effectSpy = Spy.<ConsumerChecked<String, FileSystemException>>lambda(v -> throwingOp.get());
+          final var handler = Maybe.fromResolver(throwingOp);
+          final var newHandler = handler.runEffect(effectSpy);
 
           assertThat(newHandler.error()).isEmpty();
 
@@ -287,7 +289,7 @@ import io.github.joselion.testing.UnitTest;
   @Nested class map {
     @Nested class when_the_value_is_present {
       @Test void returns_a_new_handler_applying_the_mapper_function() {
-        final ResolveHandler<Integer, ?> handler = ResolveHandler.withSuccess("Hello world!")
+        final var handler = ResolveHandler.withSuccess("Hello world!")
           .map(String::length);
 
         assertThat(handler.success()).contains(12);
@@ -298,7 +300,7 @@ import io.github.joselion.testing.UnitTest;
 
     @Nested class when_the_error_is_present {
       @Test void returns_a_new_handler_with_the_previous_error() {
-        final ResolveHandler<?, FileSystemException> handler = ResolveHandler.withError(FAIL_EXCEPTION)
+        final var handler = ResolveHandler.withError(FAIL_EXCEPTION)
           .map(Object::toString);
 
         assertThat(handler.success()).isEmpty();
@@ -308,7 +310,7 @@ import io.github.joselion.testing.UnitTest;
 
     @Nested class when_neither_the_value_nor_the_error_is_present {
       @Test void returns_an_empty_handler() {
-        final ResolveHandler<?, ?> handler = ResolveHandler.withNothing()
+        final var handler = ResolveHandler.withNothing()
           .map(Object::toString);
 
         assertThat(handler.success()).isEmpty();
@@ -321,7 +323,7 @@ import io.github.joselion.testing.UnitTest;
     @Nested class when_the_value_is_present {
       @Nested class and_the_predicate_matches {
         @Test void returns_a_new_handler_with_the_value() {
-          final ResolveHandler<String, ?> handler = ResolveHandler.withSuccess("Hello world!")
+          final var handler = ResolveHandler.withSuccess("Hello world!")
             .filter(it -> it.contains("world"));
 
           assertThat(handler.success()).contains("Hello world!");
@@ -331,7 +333,7 @@ import io.github.joselion.testing.UnitTest;
 
       @Nested class and_the_predicate_does_NOT_match {
         @Test void returns_an_empty_handler() {
-          final ResolveHandler<String, ?> handler = ResolveHandler.withSuccess("Hello world!")
+          final var handler = ResolveHandler.withSuccess("Hello world!")
             .filter(it -> it.contains("planet"));
 
           assertThat(handler.success()).isEmpty();
@@ -342,7 +344,7 @@ import io.github.joselion.testing.UnitTest;
 
     @Nested class when_the_error_is_present {
       @Test void returns_a_new_handler_with_the_previous_error() {
-        final ResolveHandler<?, FileSystemException> handler = ResolveHandler.withError(FAIL_EXCEPTION)
+        final var handler = ResolveHandler.withError(FAIL_EXCEPTION)
           .filter(Objects::isNull);
 
         assertThat(handler.success()).isEmpty();
@@ -352,7 +354,7 @@ import io.github.joselion.testing.UnitTest;
 
     @Nested class when_neither_the_value_nor_the_error_is_present {
       @Test void returns_an_empty_handler() {
-        final ResolveHandler<?, ?> handler = ResolveHandler.withNothing()
+        final var handler = ResolveHandler.withNothing()
           .filter(Objects::isNull);
 
         assertThat(handler.success()).isEmpty();
@@ -365,8 +367,8 @@ import io.github.joselion.testing.UnitTest;
     @Nested class when_the_value_is_present {
       @Nested class and_the_object_can_be_cast {
         @Test void returns_a_new_handler_with_the_cast_value() {
-          final Object anyValue = "Hello";
-          final ResolveHandler<String, WrappingException> handler = ResolveHandler.withSuccess(anyValue)
+          final var anyValue = (Object) "Hello";
+          final var handler = ResolveHandler.withSuccess(anyValue)
             .cast(String.class);
 
           assertThat(handler.success()).contains("Hello");
@@ -376,8 +378,8 @@ import io.github.joselion.testing.UnitTest;
 
       @Nested class and_the_object_can_NOT_be_cast {
         @Test void returns_a_new_handler_with_the_cast_exception() {
-          final Object anyValue = 3;
-          final ResolveHandler<String, WrappingException> handler = ResolveHandler.withSuccess(anyValue)
+          final var anyValue = (Object) 3;
+          final var handler = ResolveHandler.withSuccess(anyValue)
             .cast(String.class);
 
           assertThat(handler.success()).isEmpty();
@@ -391,7 +393,7 @@ import io.github.joselion.testing.UnitTest;
 
     @Nested class when_the_error_is_present {
       @Test void returns_a_new_handler_with_a_cast_exception() {
-        final ResolveHandler<String, WrappingException> handler = ResolveHandler.withError(FAIL_EXCEPTION)
+        final var handler = ResolveHandler.withError(FAIL_EXCEPTION)
             .cast(String.class);
 
         assertThat(handler.success()).isEmpty();
@@ -404,7 +406,7 @@ import io.github.joselion.testing.UnitTest;
 
     @Nested class when_neither_the_value_nor_the_error_is_present {
       @Test void returns_an_empty_handler() {
-        final ResolveHandler<?, ?> handler = ResolveHandler.withNothing()
+        final var handler = ResolveHandler.withNothing()
           .cast(String.class);
 
         assertThat(handler.success()).isEmpty();
@@ -416,7 +418,7 @@ import io.github.joselion.testing.UnitTest;
   @Nested class orElse {
     @Nested class when_the_value_is_present {
       @Test void returns_the_value() {
-        final ResolveHandler<String, ?> handler = Maybe.fromResolver(okOp);
+        final var handler = Maybe.fromResolver(okOp);
 
         assertThat(handler.orElse(OTHER)).isEqualTo(OK);
         assertThat(handler.orElse(Exception::getMessage)).isEqualTo(OK);
@@ -425,7 +427,7 @@ import io.github.joselion.testing.UnitTest;
 
     @Nested class when_the_error_is_present {
       @Test void returns_the_provided_value() {
-        final ResolveHandler<String, FileSystemException> handler = Maybe.fromResolver(throwingOp);
+        final var handler = Maybe.fromResolver(throwingOp);
 
         assertThat(handler.orElse(OTHER)).isEqualTo(OTHER);
         assertThat(handler.orElse(FileSystemException::getMessage)).isEqualTo(FAIL_EXCEPTION.getMessage());
@@ -436,8 +438,8 @@ import io.github.joselion.testing.UnitTest;
   @Nested class orElseGet {
     @Nested class when_the_value_is_present {
       @Test void never_evaluates_the_supplier_and_returns_the_value() {
-        final Supplier<String> supplierSpy = spyLambda(() -> OTHER);
-        final ResolveHandler<String, ?> handler = Maybe.fromResolver(okOp);
+        final var supplierSpy = Spy.<Supplier<String>>lambda(() -> OTHER);
+        final var handler = Maybe.fromResolver(okOp);
 
         assertThat(handler.orElseGet(supplierSpy)).isEqualTo(OK);
 
@@ -447,8 +449,8 @@ import io.github.joselion.testing.UnitTest;
 
     @Nested class when_the_error_is_present {
       @Test void evaluates_the_supplier_and_returns_the_produced_value() {
-        final Supplier<String> supplierSpy = spyLambda(() -> OTHER);
-        final ResolveHandler<String, FileSystemException> handler = Maybe.fromResolver(throwingOp);
+        final var supplierSpy = Spy.<Supplier<String>>lambda(() -> OTHER);
+        final var handler = Maybe.fromResolver(throwingOp);
 
         assertThat(handler.orElseGet(supplierSpy)).isEqualTo(OTHER);
 
@@ -460,7 +462,7 @@ import io.github.joselion.testing.UnitTest;
   @Nested class orNull {
     @Nested class when_the_value_is_present {
       @Test void returns_the_value() {
-        final ResolveHandler<String, ?> handler = Maybe.fromResolver(okOp);
+        final var handler = Maybe.fromResolver(okOp);
 
         assertThat(handler.orNull()).isEqualTo(OK);
       }
@@ -468,7 +470,7 @@ import io.github.joselion.testing.UnitTest;
 
     @Nested class when_the_error_is_present {
       @Test void returns_null() {
-        final ResolveHandler<String, FileSystemException> handler = Maybe.fromResolver(throwingOp);
+        final var handler = Maybe.fromResolver(throwingOp);
 
         assertThat(handler.orNull()).isNull();
       }
@@ -478,8 +480,8 @@ import io.github.joselion.testing.UnitTest;
   @Nested class orThrow {
     @Nested class when_the_value_is_present {
       @Test void returns_the_value() throws FileSystemException {
-        final Function<RuntimeException, FileSystemException> functionSpy = spyLambda(error -> FAIL_EXCEPTION);
-        final ResolveHandler<String, RuntimeException> handler = Maybe.fromResolver(okOp);
+        final var functionSpy = Spy.<Function<RuntimeException, FileSystemException>>lambda(error -> FAIL_EXCEPTION);
+        final var handler = Maybe.fromResolver(okOp);
 
         assertThat(handler.orThrow()).isEqualTo(OK);
         assertThat(handler.orThrow(functionSpy)).isEqualTo(OK);
@@ -490,9 +492,9 @@ import io.github.joselion.testing.UnitTest;
 
     @Nested class when_the_error_is_present {
       @Test void throws_the_error() {
-        final RuntimeException anotherError = new RuntimeException(OTHER);
-        final Function<FileSystemException, RuntimeException> functionSpy = spyLambda(error -> anotherError);
-        final ResolveHandler<?, FileSystemException> handler = Maybe.fromResolver(throwingOp);
+        final var anotherError = new RuntimeException(OTHER);
+        final var functionSpy = Spy.<Function<FileSystemException, RuntimeException>>lambda(error -> anotherError);
+        final var handler = Maybe.fromResolver(throwingOp);
 
         assertThatThrownBy(handler::orThrow).isEqualTo(FAIL_EXCEPTION);
         assertThatThrownBy(() -> handler.orThrow(functionSpy)).isEqualTo(anotherError);
@@ -535,8 +537,8 @@ import io.github.joselion.testing.UnitTest;
   @Nested class mapToResource {
     @Nested class when_the_resource_is_present {
       @Test void returns_a_resource_holder_with_the_mapped_value() {
-        final String path = "./src/test/resources/readTest.txt";
-        final ResourceHolder<FileInputStream, FileNotFoundException> holder = Maybe.just(path)
+        final var path = "./src/test/resources/readTest.txt";
+        final var holder = Maybe.just(path)
           .resolve(FileInputStream::new)
           .mapToResource(Function.identity());
 
@@ -549,7 +551,7 @@ import io.github.joselion.testing.UnitTest;
 
     @Nested class when_the_error_is_present {
       @Test void returns_a_resource_holder_with_the_propagated_error() {
-        final ResourceHolder<FileInputStream, FileNotFoundException> holder = Maybe.just("invalidFile.txt")
+        final var holder = Maybe.just("invalidFile.txt")
           .resolve(FileInputStream::new)
           .mapToResource(Function.identity());
 
@@ -563,8 +565,8 @@ import io.github.joselion.testing.UnitTest;
 
     @Nested class when_neither_the_resource_nor_the_error_is_present {
       @Test void returns_an_empty_resource_holder() {
-        final String path = "./src/test/resources/readTest.txt";
-        final ResourceHolder<FileInputStream, FileNotFoundException> holder = Maybe.just(path)
+        final var path = "./src/test/resources/readTest.txt";
+        final var holder = Maybe.just(path)
           .resolve(FileInputStream::new)
           .map(file -> null)
           .mapToResource(file -> null);

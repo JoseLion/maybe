@@ -212,11 +212,9 @@ public final class Maybe<T> {
    *         {@link #nothing()} otherwise
    */
   public <U> Maybe<U> map(final Function<T, U> mapper) {
-    if (value.isPresent()) {
-      return Maybe.just(mapper.apply(value.get()));
-    }
-
-    return nothing();
+    return value.map(mapper)
+      .map(Maybe::just)
+      .orElseGet(Maybe::nothing);
   }
 
   /**
@@ -233,11 +231,8 @@ public final class Maybe<T> {
    *         {@link #nothing()} otherwise
    */
   public <U> Maybe<U> flatMap(final Function<T, Maybe<U>> mapper) {
-    if (value.isPresent()) {
-      return mapper.apply(value.get());
-    }
-
-    return nothing();
+    return value.map(mapper)
+      .orElseGet(Maybe::nothing);
   }
 
   /**
@@ -253,11 +248,8 @@ public final class Maybe<T> {
    *         thrown exception to be handled
    */
   public <U, E extends Exception> ResolveHandler<U, E> resolve(final FunctionChecked<T, U, E> resolver) {
-    if (value.isPresent()) {
-      return Maybe.fromResolver(() -> resolver.apply(value.get()));
-    }
-
-    return ResolveHandler.withNothing();
+    return value.map(x -> Maybe.fromResolver(() -> resolver.apply(x)))
+      .orElseGet(ResolveHandler::withNothing);
   }
 
   /**
@@ -270,11 +262,8 @@ public final class Maybe<T> {
    *         handled or nothing
    */
   public <E extends Exception> EffectHandler<E> runEffect(final ConsumerChecked<T, E> effect) {
-    if (value.isPresent()) {
-      return Maybe.fromEffect(() -> effect.accept(value.get()));
-    }
-
-    return EffectHandler.withNothing();
+    return value.map(x -> Maybe.fromEffect(() -> effect.accept(x)))
+      .orElseGet(EffectHandler::withNothing);
   }
 
   /**
@@ -288,8 +277,8 @@ public final class Maybe<T> {
    */
   public <U> Maybe<U> cast(final Class<U> type) {
     try {
-      final T finalValue = this.value.orElseThrow();
-      final U newValue = type.cast(finalValue);
+      final var finalValue = this.value.orElseThrow();
+      final var newValue = type.cast(finalValue);
 
       return Maybe.just(newValue);
     } catch (RuntimeException e) {
@@ -343,8 +332,7 @@ public final class Maybe<T> {
       return true;
     }
 
-    if (obj instanceof Maybe) {
-      final Maybe<?> other = (Maybe<?>) obj;
+    if (obj instanceof final Maybe<?> other) {
       return other.toOptional().equals(value);
     }
 
@@ -371,8 +359,9 @@ public final class Maybe<T> {
    */
   @Override
   public String toString() {
-    return value.isPresent()
-      ? String.format("Maybe[%s]", value.get().toString())
-      : "Maybe.nothing";
+    return value
+      .map(Object::toString)
+      .map("Maybe[%s]"::formatted)
+      .orElse("Maybe.nothing");
   }
 }

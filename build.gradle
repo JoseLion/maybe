@@ -23,10 +23,12 @@ def suffix = isRelease ? '' : '-SNAPSHOT'
 group = 'io.github.joselion'
 version = "3.0.0$suffix"
 
-sourceCompatibility = JavaVersion.VERSION_1_8
-targetCompatibility = JavaVersion.VERSION_1_8
-
 java {
+  toolchain {
+    languageVersion = JavaLanguageVersion.of(18)
+    vendor = JvmVendorSpec.ORACLE
+  }
+
   withJavadocJar()
   withSourcesJar()
 }

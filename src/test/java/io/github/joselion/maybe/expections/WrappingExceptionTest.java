@@ -15,8 +15,8 @@ public class WrappingExceptionTest {
 
   @Nested class wrapped {
     @Test void returns_the_same_exception_as_getCause() {
-      final IOException exception = new IOException("FAIL");
-      final WrappingException wrapping = WrappingException.of(exception);
+      final var exception = new IOException("FAIL");
+      final var wrapping = WrappingException.of(exception);
 
       assertThat(wrapping.wrapped()).isSameAs(wrapping.getCause());
     }
