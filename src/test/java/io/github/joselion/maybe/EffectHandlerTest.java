@@ -17,8 +17,8 @@ import java.util.function.Function;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import io.github.joselion.maybe.util.ConsumerChecked;
-import io.github.joselion.maybe.util.RunnableChecked;
+import io.github.joselion.maybe.util.function.ThrowingConsumer;
+import io.github.joselion.maybe.util.function.ThrowingRunnable;
 import io.github.joselion.testing.Spy;
 import io.github.joselion.testing.UnitTest;
 
@@ -26,11 +26,11 @@ import io.github.joselion.testing.UnitTest;
 
   private static final FileSystemException FAIL_EXCEPTION = new FileSystemException("FAIL");
 
-  private final RunnableChecked<FileSystemException> throwingOp = () -> {
+  private final ThrowingRunnable<FileSystemException> throwingOp = () -> {
     throw FAIL_EXCEPTION;
   };
 
-  private final RunnableChecked<RuntimeException> noOp = () -> { };
+  private final ThrowingRunnable<RuntimeException> noOp = () -> { };
 
   @Nested class doOnSuccess {
     @Nested class when_the_value_is_present {
@@ -168,7 +168,7 @@ import io.github.joselion.testing.UnitTest;
       @Test void calls_the_effect_callback_and_returns_a_new_handler() throws FileSystemException {
         final var effectSpy = Spy.lambda(throwingOp);
         final var successSpy = Spy.lambda(throwingOp);
-        final var errorSpy = Spy.<ConsumerChecked<RuntimeException, FileSystemException>>lambda(
+        final var errorSpy = Spy.<ThrowingConsumer<RuntimeException, FileSystemException>>lambda(
           err -> throwingOp.run()
         );
         final var handler = Maybe.fromEffect(noOp);
@@ -191,8 +191,8 @@ import io.github.joselion.testing.UnitTest;
     @Nested class when_the_error_is_present {
       @Nested class and_the_error_callback_is_provided {
         @Test void calls_only_the_error_callback_and_returns_a_new_handler() throws FileSystemException {
-          final var successSpy = Spy.<RunnableChecked<FileSystemException>>lambda(() -> { });
-          final var errorSpy = Spy.<ConsumerChecked<FileSystemException, FileSystemException>>lambda(
+          final var successSpy = Spy.<ThrowingRunnable<FileSystemException>>lambda(() -> { });
+          final var errorSpy = Spy.<ThrowingConsumer<FileSystemException, FileSystemException>>lambda(
             err -> throwingOp.run()
           );
           final var handler = Maybe.fromEffect(throwingOp);

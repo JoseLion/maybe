@@ -6,8 +6,8 @@ import java.util.function.Function;
 
 import org.eclipse.jdt.annotation.Nullable;
 
-import io.github.joselion.maybe.util.ConsumerChecked;
-import io.github.joselion.maybe.util.RunnableChecked;
+import io.github.joselion.maybe.util.function.ThrowingConsumer;
+import io.github.joselion.maybe.util.function.ThrowingRunnable;
 
 /**
  * EffectHandler is an API to handle the posible error of a {@link Maybe}'s
@@ -152,8 +152,8 @@ public final class EffectHandler<E extends Exception> {
    *         invoked callback
    */
   public <X extends Exception> EffectHandler<X> runEffect(
-    final RunnableChecked<X> onSuccess,
-    final ConsumerChecked<E, X> onError
+    final ThrowingRunnable<X> onSuccess,
+    final ThrowingConsumer<E, X> onError
   ) {
     return error.map(Maybe.partialEffect(onError))
       .orElseGet(() -> Maybe.fromEffect(onSuccess));
@@ -168,7 +168,7 @@ public final class EffectHandler<E extends Exception> {
    * @return a new {@link EffectHandler} representing the result of the success
    *         callback or an empty handler
    */
-  public <X extends Exception> EffectHandler<X> runEffect(final RunnableChecked<X> effect) {
+  public <X extends Exception> EffectHandler<X> runEffect(final ThrowingRunnable<X> effect) {
     return this.runEffect(effect, err -> { });
   }
 

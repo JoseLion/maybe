@@ -9,8 +9,8 @@ import java.util.function.Supplier;
 import org.eclipse.jdt.annotation.Nullable;
 
 import io.github.joselion.maybe.exceptions.WrappingException;
-import io.github.joselion.maybe.util.ConsumerChecked;
-import io.github.joselion.maybe.util.FunctionChecked;
+import io.github.joselion.maybe.util.function.ThrowingConsumer;
+import io.github.joselion.maybe.util.function.ThrowingFunction;
 
 /**
  * ResolveHandler is an API to handle the possible error of a {@link Maybe}'s
@@ -186,8 +186,8 @@ public final class ResolveHandler<T, E extends Exception> {
    *         to be handled, or nothing
    */
   public <S, X extends Exception> ResolveHandler<S, X> resolve(
-    final FunctionChecked<T, S, X> successResolver,
-    final FunctionChecked<E, S, X> errorResolver
+    final ThrowingFunction<T, S, X> successResolver,
+    final ThrowingFunction<E, S, X> errorResolver
   ) {
     return error.map(Maybe.partialResolver(errorResolver))
       .orElseGet(() -> this.resolve(successResolver));
@@ -205,7 +205,7 @@ public final class ResolveHandler<T, E extends Exception> {
    * @return a new handler with either the resolved value, the thrown exception
    *         to be handled, or nothing
    */
-  public <S, X extends Exception> ResolveHandler<S, X> resolve(final FunctionChecked<T, S, X> resolver) {
+  public <S, X extends Exception> ResolveHandler<S, X> resolve(final ThrowingFunction<T, S, X> resolver) {
     return this.toMaybe().resolve(resolver);
   }
 
@@ -220,8 +220,8 @@ public final class ResolveHandler<T, E extends Exception> {
    *         invoked callback
    */
   public <X extends Exception> EffectHandler<X> runEffect(
-    final ConsumerChecked<T, X> onSuccess,
-    final ConsumerChecked<E, X> onError
+    final ThrowingConsumer<T, X> onSuccess,
+    final ThrowingConsumer<E, X> onError
   ) {
     return error.map(Maybe.partialEffect(onError))
       .orElseGet(() -> this.toMaybe().runEffect(onSuccess));
@@ -237,7 +237,7 @@ public final class ResolveHandler<T, E extends Exception> {
    * @return a new {@link EffectHandler} representing the result of the success
    *         callback or an empty handler
    */
-  public <X extends Exception> EffectHandler<X> runEffect(final ConsumerChecked<T, X> effect) {
+  public <X extends Exception> EffectHandler<X> runEffect(final ThrowingConsumer<T, X> effect) {
     return this.runEffect(effect, err -> { });
   }
 
@@ -438,8 +438,8 @@ public final class ResolveHandler<T, E extends Exception> {
    * @return a {@link ResourceHolder} with the mapped resource if the value is
    *         present. An empty {@link ResourceHolder} otherwise
    * 
-   * @see ResourceHolder#resolveClosing(FunctionChecked)
-   * @see ResourceHolder#runEffectClosing(ConsumerChecked)
+   * @see ResourceHolder#resolveClosing(ThrowingFunction)
+   * @see ResourceHolder#runEffectClosing(ThrowingConsumer)
    */
   public <R extends AutoCloseable> ResourceHolder<R, E> mapToResource(final Function<T, R> mapper) {
     if (this.success.isPresent()) {

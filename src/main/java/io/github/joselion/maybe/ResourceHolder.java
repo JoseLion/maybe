@@ -4,8 +4,8 @@ import java.util.Optional;
 
 import org.eclipse.jdt.annotation.Nullable;
 
-import io.github.joselion.maybe.util.ConsumerChecked;
-import io.github.joselion.maybe.util.FunctionChecked;
+import io.github.joselion.maybe.util.function.ThrowingConsumer;
+import io.github.joselion.maybe.util.function.ThrowingFunction;
 
 /**
  * ResourceHolder is a "middle step" API that allows to resolve or run an effect
@@ -76,7 +76,7 @@ public class ResourceHolder<R extends AutoCloseable, E extends Exception> {
 
   /**
    * If the resource is present, resolves the value of a throwing operation
-   * using a {@link FunctionChecked} expression which has the previously
+   * using a {@link ThrowingFunction} expression which has the previously
    * prepared resource in the argument. The resource is automatically closed
    * after the operation finishes, just like a common try-with-resources
    * statement.
@@ -92,7 +92,7 @@ public class ResourceHolder<R extends AutoCloseable, E extends Exception> {
    *         exception to be handled
    */
   @SuppressWarnings("unchecked")
-  public <T, X extends Exception> ResolveHandler<T, X> resolveClosing(final FunctionChecked<R, T, X> resolver) {
+  public <T, X extends Exception> ResolveHandler<T, X> resolveClosing(final ThrowingFunction<R, T, X> resolver) {
     if (this.resource.isPresent()) {
       try (R resArg = this.resource.get()) {
         return ResolveHandler.withSuccess(resolver.apply(resArg));
@@ -113,7 +113,7 @@ public class ResourceHolder<R extends AutoCloseable, E extends Exception> {
 
   /**
    * If the resource is present, runs an effect that may throw an exception
-   * using a {@link ConsumerChecked} expression which has the previously
+   * using a {@link ThrowingConsumer} expression which has the previously
    * prepared resource in the argument. The resource is automatically closed
    * after the operation finishes, just like a common try-with-resources
    * statement.
@@ -128,7 +128,7 @@ public class ResourceHolder<R extends AutoCloseable, E extends Exception> {
    *         handled or nothing
    */
   @SuppressWarnings("unchecked")
-  public <X extends Exception> EffectHandler<X> runEffectClosing(final ConsumerChecked<R, X> effect) {
+  public <X extends Exception> EffectHandler<X> runEffectClosing(final ThrowingConsumer<R, X> effect) {
     if (this.resource.isPresent()) {
       try (R resArg = this.resource.get()) {
         effect.accept(resArg);
