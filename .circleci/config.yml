@@ -61,10 +61,9 @@ commands:
       - run:
           name: Provisioning
           command: |
-            cp gradle.properties.sample gradle.properties
-            sed -i "s/<SIGNING_PASSWORD>/$SIGNING_PASSWORD/g" gradle.properties
-            sed -i "s/<NEXUS_USERNAME_TOKEN>/$NEXUS_USERNAME_TOKEN/g" gradle.properties
-            sed -i "s/<NEXUS_PASSWORD_TOKEN>/$NEXUS_PASSWORD_TOKEN/g" gradle.properties
+            sed -i "s/{SIGNING_PASSWORD}/$SIGNING_PASSWORD/g" gradle.properties
+            sed -i "s/{SONATYPE_USERNAME_TOKEN}/$SONATYPE_USERNAME_TOKEN/g" gradle.properties
+            sed -i "s/{SONATYPE_PASSWORD_TOKEN}/$SONATYPE_PASSWORD_TOKEN/g" gradle.properties
 
       - restore_cache:
           keys:

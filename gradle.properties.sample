@@ -1,6 +1,0 @@
-signing.keyId=031E46E1
-signing.password=<SIGNING_PASSWORD>
-signing.secretKeyRingFile=lion-keyring.asc
-
-sonatypeUsername=<NEXUS_USERNAME_TOKEN>
-sonatypePassword=<NEXUS_PASSWORD_TOKEN>
