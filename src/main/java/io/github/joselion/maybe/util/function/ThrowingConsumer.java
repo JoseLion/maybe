@@ -1,4 +1,4 @@
-package io.github.joselion.maybe.util;
+package io.github.joselion.maybe.util.function;
 
 /**
  * The same as {@link java.util.function.Consumer Consumer}, but the lambda
@@ -13,7 +13,7 @@ package io.github.joselion.maybe.util;
  * @since v0.3.0
  */
 @FunctionalInterface
-public interface ConsumerChecked<T, E extends Exception> {
+public interface ThrowingConsumer<T, E extends Exception> {
 
   /**
    * Accepts this function with the given argument, or throws an exception.

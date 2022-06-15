@@ -1,4 +1,4 @@
-package io.github.joselion.maybe.util;
+package io.github.joselion.maybe.util.function;
 
 /**
  * The same as {@link java.util.function.Supplier Supplier}, but the lambda
@@ -13,7 +13,7 @@ package io.github.joselion.maybe.util;
  * @since v0.1.0
  */
 @FunctionalInterface
-public interface SupplierChecked<T, E extends Exception> {
+public interface ThrowingSupplier<T, E extends Exception> {
 
   /**
    * Gets a result or throws an exception.

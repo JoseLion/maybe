@@ -5,10 +5,10 @@ import java.util.function.Function;
 
 import org.eclipse.jdt.annotation.Nullable;
 
-import io.github.joselion.maybe.util.ConsumerChecked;
-import io.github.joselion.maybe.util.FunctionChecked;
-import io.github.joselion.maybe.util.RunnableChecked;
-import io.github.joselion.maybe.util.SupplierChecked;
+import io.github.joselion.maybe.util.function.ThrowingConsumer;
+import io.github.joselion.maybe.util.function.ThrowingFunction;
+import io.github.joselion.maybe.util.function.ThrowingRunnable;
+import io.github.joselion.maybe.util.function.ThrowingSupplier;
 
 /**
  * Maybe is a monadic wrapper that may contain a value. Its rich API allows to
@@ -82,7 +82,7 @@ public final class Maybe<T> {
   }
 
   /**
-   * Resolves the value of a throwing operation using a {@link SupplierChecked}
+   * Resolves the value of a throwing operation using a {@link ThrowingSupplier}
    * expression. Returning then a {@link ResolveHandler} which allows to handle
    * the possible error and return a safe value.
    * 
@@ -92,7 +92,7 @@ public final class Maybe<T> {
    * @return a {@link ResolveHandler} with either the value resolved or the thrown
    *         exception to be handled
    */
-  public static <T, E extends Exception> ResolveHandler<T, E> fromResolver(final SupplierChecked<T, E> resolver) {
+  public static <T, E extends Exception> ResolveHandler<T, E> fromResolver(final ThrowingSupplier<T, E> resolver) {
     try {
       return ResolveHandler.withSuccess(resolver.get());
     } catch (Exception e) {
@@ -104,7 +104,7 @@ public final class Maybe<T> {
   }
 
   /**
-   * Runs an effect that may throw an exception using a {@link RunnableChecked}
+   * Runs an effect that may throw an exception using a {@link ThrowingRunnable}
    * expression. Returning then an {@link EffectHandler} which allows to handle
    * the possible error.
    * 
@@ -113,7 +113,7 @@ public final class Maybe<T> {
    * @return an {@link EffectHandler} with either the thrown exception to be
    *         handled or nothing
    */
-  public static <E extends Exception> EffectHandler<E> fromEffect(final RunnableChecked<E> effect) {
+  public static <E extends Exception> EffectHandler<E> fromEffect(final ThrowingRunnable<E> effect) {
     try {
       effect.run();
       return EffectHandler.withNothing();
@@ -152,7 +152,7 @@ public final class Maybe<T> {
    *         that receives an {@code S} value, and produces a {@code ResolveHandler<T, E>}
    */
   public static <S, T, E extends Exception> Function<S, ResolveHandler<T, E>> partialResolver(
-    final FunctionChecked<S, T, E> resolver
+    final ThrowingFunction<S, T, E> resolver
   ) {
     return value -> Maybe.fromResolver(() -> resolver.apply(value));
   }
@@ -182,7 +182,7 @@ public final class Maybe<T> {
    *         that receives an {@code S} value, and produces an {@code EffectHandler<E>}
    */
   public static <S, E extends Exception> Function<S, EffectHandler<E>> partialEffect(
-    final ConsumerChecked<S, E> effect
+    final ThrowingConsumer<S, E> effect
   ) {
     return value -> Maybe.fromEffect(() -> effect.accept(value));
   }
@@ -238,7 +238,7 @@ public final class Maybe<T> {
   /**
    * Chain the {@code Maybe} with another resolver, if and only if the previous
    * operation was handled with no errors. The value of the previous operation
-   * is passed as argument of the {@link FunctionChecked}.
+   * is passed as argument of the {@link ThrowingFunction}.
    * 
    * @param <U> the type of value returned by the next operation
    * @param <E> the type of exception the new resolver may throw
@@ -247,7 +247,7 @@ public final class Maybe<T> {
    * @return a {@link ResolveHandler} with either the resolved value, or the
    *         thrown exception to be handled
    */
-  public <U, E extends Exception> ResolveHandler<U, E> resolve(final FunctionChecked<T, U, E> resolver) {
+  public <U, E extends Exception> ResolveHandler<U, E> resolve(final ThrowingFunction<T, U, E> resolver) {
     return value.map(x -> Maybe.fromResolver(() -> resolver.apply(x)))
       .orElseGet(ResolveHandler::withNothing);
   }
@@ -261,7 +261,7 @@ public final class Maybe<T> {
    * @return an {@link EffectHandler} with either the thrown exception to be
    *         handled or nothing
    */
-  public <E extends Exception> EffectHandler<E> runEffect(final ConsumerChecked<T, E> effect) {
+  public <E extends Exception> EffectHandler<E> runEffect(final ThrowingConsumer<T, E> effect) {
     return value.map(x -> Maybe.fromEffect(() -> effect.accept(x)))
       .orElseGet(EffectHandler::withNothing);
   }

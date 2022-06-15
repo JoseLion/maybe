@@ -23,9 +23,9 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import io.github.joselion.maybe.exceptions.WrappingException;
-import io.github.joselion.maybe.util.ConsumerChecked;
-import io.github.joselion.maybe.util.FunctionChecked;
-import io.github.joselion.maybe.util.SupplierChecked;
+import io.github.joselion.maybe.util.function.ThrowingConsumer;
+import io.github.joselion.maybe.util.function.ThrowingFunction;
+import io.github.joselion.maybe.util.function.ThrowingSupplier;
 import io.github.joselion.testing.Spy;
 import io.github.joselion.testing.UnitTest;
 
@@ -37,11 +37,11 @@ import io.github.joselion.testing.UnitTest;
 
   private static final FileSystemException FAIL_EXCEPTION = new FileSystemException("FAIL");
 
-  private final SupplierChecked<String, FileSystemException> throwingOp = () -> {
+  private final ThrowingSupplier<String, FileSystemException> throwingOp = () -> {
     throw FAIL_EXCEPTION;
   };
 
-  private final SupplierChecked<String, RuntimeException> okOp = () -> OK;
+  private final ThrowingSupplier<String, RuntimeException> okOp = () -> OK;
 
   @Nested class doOnSuccess {
     @Nested class when_the_value_is_present {
@@ -183,9 +183,9 @@ import io.github.joselion.testing.UnitTest;
   @Nested class resolve {
     @Nested class when_the_value_is_present {
       @Test void calls_the_resolver_callback_and_returns_a_new_handler() {
-        final var resolverSpy = Spy.<FunctionChecked<String, Integer, RuntimeException>>lambda(String::length);
-        final var successSpy = Spy.<FunctionChecked<String, Integer, RuntimeException>>lambda(String::length);
-        final var errorSpy = Spy.<FunctionChecked<RuntimeException, Integer, RuntimeException>>lambda(e -> -1);
+        final var resolverSpy = Spy.<ThrowingFunction<String, Integer, RuntimeException>>lambda(String::length);
+        final var successSpy = Spy.<ThrowingFunction<String, Integer, RuntimeException>>lambda(String::length);
+        final var errorSpy = Spy.<ThrowingFunction<RuntimeException, Integer, RuntimeException>>lambda(e -> -1);
         final var handlers = List.of(
           Maybe.fromResolver(okOp).resolve(resolverSpy),
           Maybe.fromResolver(okOp).resolve(successSpy, errorSpy)
@@ -205,7 +205,7 @@ import io.github.joselion.testing.UnitTest;
     @Nested class when_the_error_is_present {
       @Nested class and_the_error_resolver_is_NOT_provided {
         @Test void never_calls_the_resolver_callback_and_creates_a_handler_with_nothing() {
-          final var successSpy = Spy.<FunctionChecked<String, Integer, RuntimeException>>lambda(String::length);
+          final var successSpy = Spy.<ThrowingFunction<String, Integer, RuntimeException>>lambda(String::length);
           final var handler = Maybe.fromResolver(throwingOp)
             .resolve(successSpy);
 
@@ -218,8 +218,8 @@ import io.github.joselion.testing.UnitTest;
 
       @Nested class and_the_error_resolver_is_provided {
         @Test void call_only_the_error_callback_and_returns_a_new_effect_handler() {
-          final var successSpy = Spy.<FunctionChecked<String, Integer, RuntimeException>>lambda(String::length);
-          final var errorSpy = Spy.<FunctionChecked<FileSystemException, Integer, RuntimeException>>lambda(e -> -1);
+          final var successSpy = Spy.<ThrowingFunction<String, Integer, RuntimeException>>lambda(String::length);
+          final var errorSpy = Spy.<ThrowingFunction<FileSystemException, Integer, RuntimeException>>lambda(e -> -1);
           final var handler = Maybe.fromResolver(throwingOp)
             .resolve(successSpy, errorSpy);
 
@@ -236,9 +236,9 @@ import io.github.joselion.testing.UnitTest;
   @Nested class runEffect {
     @Nested class when_the_value_is_present {
       @Test void calls_the_resolver_callback_and_returns_a_new_handler() throws FileSystemException {
-        final var effectSpy = Spy.<ConsumerChecked<String, FileSystemException>>lambda(v -> throwingOp.get());
-        final var successSpy = Spy.<ConsumerChecked<String, FileSystemException>>lambda(v -> throwingOp.get());
-        final var errorSpy = Spy.<ConsumerChecked<RuntimeException, FileSystemException>>lambda(err -> { });
+        final var effectSpy = Spy.<ThrowingConsumer<String, FileSystemException>>lambda(v -> throwingOp.get());
+        final var successSpy = Spy.<ThrowingConsumer<String, FileSystemException>>lambda(v -> throwingOp.get());
+        final var errorSpy = Spy.<ThrowingConsumer<RuntimeException, FileSystemException>>lambda(err -> { });
         final var handler = Maybe.fromResolver(okOp);
         final var newHandlers = List.of(
           handler.runEffect(effectSpy),
@@ -258,8 +258,8 @@ import io.github.joselion.testing.UnitTest;
     @Nested class when_the_error_is_present {
       @Nested class and_the_error_callback_is_provided {
         @Test void calls_only_the_error_callback_and_returns_a_new_handler() throws FileSystemException {
-          final var successSpy = Spy.<ConsumerChecked<String, FileSystemException>>lambda(v -> { });
-          final var errorSpy = Spy.<ConsumerChecked<FileSystemException, FileSystemException>>lambda(
+          final var successSpy = Spy.<ThrowingConsumer<String, FileSystemException>>lambda(v -> { });
+          final var errorSpy = Spy.<ThrowingConsumer<FileSystemException, FileSystemException>>lambda(
             err -> throwingOp.get()
           );
           final var handler = Maybe.fromResolver(throwingOp);
@@ -274,7 +274,7 @@ import io.github.joselion.testing.UnitTest;
 
       @Nested class and_the_error_callback_is_NOT_provided {
         @Test void never_calls_the_effect_callback_and_returns_a_new_empty_handler() throws FileSystemException {
-          final var effectSpy = Spy.<ConsumerChecked<String, FileSystemException>>lambda(v -> throwingOp.get());
+          final var effectSpy = Spy.<ThrowingConsumer<String, FileSystemException>>lambda(v -> throwingOp.get());
           final var handler = Maybe.fromResolver(throwingOp);
           final var newHandler = handler.runEffect(effectSpy);
 

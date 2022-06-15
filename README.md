@@ -48,7 +48,7 @@ We'd use `Maybe<T>` for 2 defferent casses:
 - **Resolve:** When we need to obtain a value from a throwing operation.
 - **Effects:** When we need to run an effect from a throwing operation, so no value is returned.
 
-We can create simple instances of Maybe using `Maybe.just(value)` or `Maybe.nothing()` so we can chain throwing operations to it that will create the **handlers**. We also provide the convenience static methods `.fromResolver(..)` and `.fromEffect(..)` that let us create **handlers** directly from lambda expressions. Given the built-in lambda expression do not allow checked exception, we provide a few basic functional interfaces like `FunctionChecked<T, R, E>`, that are just like the built-in ones, but with a `throws E` declaration. You can find them all in the [util packages][util-package-ref] of the library.
+We can create simple instances of Maybe using `Maybe.just(value)` or `Maybe.nothing()` so we can chain throwing operations to it that will create the **handlers**. We also provide the convenience static methods `.fromResolver(..)` and `.fromEffect(..)` that let us create **handlers** directly from lambda expressions. Given the built-in lambda expression do not allow checked exception, we provide a few basic functional interfaces like `ThrowingFunction<T, R, E>`, that are just like the built-in ones, but with a `throws E` declaration. You can find them all in the [util packages][util-package-ref] of the library.
 
 ### Resolve handler
 

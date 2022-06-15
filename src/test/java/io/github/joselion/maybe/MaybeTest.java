@@ -15,10 +15,10 @@ import org.assertj.core.api.AutoCloseableSoftAssertions;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import io.github.joselion.maybe.util.ConsumerChecked;
-import io.github.joselion.maybe.util.FunctionChecked;
-import io.github.joselion.maybe.util.RunnableChecked;
-import io.github.joselion.maybe.util.SupplierChecked;
+import io.github.joselion.maybe.util.function.ThrowingConsumer;
+import io.github.joselion.maybe.util.function.ThrowingFunction;
+import io.github.joselion.maybe.util.function.ThrowingRunnable;
+import io.github.joselion.maybe.util.function.ThrowingSupplier;
 import io.github.joselion.testing.Spy;
 import io.github.joselion.testing.UnitTest;
 
@@ -28,19 +28,19 @@ import io.github.joselion.testing.UnitTest;
 
   private static final IOException FAIL_EXCEPTION = new IOException("FAIL");
 
-  private final FunctionChecked<String, String, IOException> failFunction = val -> {
+  private final ThrowingFunction<String, String, IOException> failFunction = val -> {
     throw FAIL_EXCEPTION;
   };
 
-  private final SupplierChecked<String, IOException> failSupplier = () -> {
+  private final ThrowingSupplier<String, IOException> failSupplier = () -> {
     throw FAIL_EXCEPTION;
   };
 
-  private final ConsumerChecked<String, IOException> failConsumer = it -> {
+  private final ThrowingConsumer<String, IOException> failConsumer = it -> {
     throw FAIL_EXCEPTION;
   };
 
-  private final RunnableChecked<IOException> failRunnable = () -> {
+  private final ThrowingRunnable<IOException> failRunnable = () -> {
     throw FAIL_EXCEPTION;
   };
 
@@ -91,7 +91,7 @@ import io.github.joselion.testing.UnitTest;
   @Nested class fromResolver {
     @Nested class when_the_operation_succeeds {
       @Test void returns_a_handler_with_the_value() throws IOException {
-        final var supplierSpy = Spy.<SupplierChecked<String, IOException>>lambda(() -> OK);
+        final var supplierSpy = Spy.<ThrowingSupplier<String, IOException>>lambda(() -> OK);
         final var handler = Maybe.fromResolver(supplierSpy);
 
         assertThat(handler.success()).contains(OK);
@@ -117,7 +117,7 @@ import io.github.joselion.testing.UnitTest;
   @Nested class fromEffect {
     @Nested class when_the_operation_succeeds {
       @Test void returns_a_handler_with_nothing() {
-        final var runnableSpy = Spy.<RunnableChecked<RuntimeException>>lambda(() -> { });
+        final var runnableSpy = Spy.<ThrowingRunnable<RuntimeException>>lambda(() -> { });
         final var handler = Maybe.fromEffect(runnableSpy);
 
         assertThat(handler.error()).isEmpty();
@@ -140,7 +140,7 @@ import io.github.joselion.testing.UnitTest;
 
   @Nested class partialResolver {
     @Test void returns_a_function_that_takes_a_value_and_returns_a_resolve_handler() throws IOException {
-      final var successSpy = Spy.<FunctionChecked<String, Integer, RuntimeException>>lambda(String::length);
+      final var successSpy = Spy.<ThrowingFunction<String, Integer, RuntimeException>>lambda(String::length);
       final var failureSpy = Spy.lambda(failFunction);
 
       assertThat(Maybe.partialResolver(successSpy).apply(OK))
@@ -159,7 +159,7 @@ import io.github.joselion.testing.UnitTest;
 
   @Nested class partialEffect {
     @Test void returns_a_function_that_takes_a_value_and_returns_an_effect_handler() throws IOException {
-      final var successSpy = Spy.<ConsumerChecked<String, RuntimeException>>lambda(v -> { });
+      final var successSpy = Spy.<ThrowingConsumer<String, RuntimeException>>lambda(v -> { });
       final var failureSpy = Spy.lambda(failConsumer);
 
       assertThat(Maybe.partialEffect(successSpy).apply(OK))
@@ -236,7 +236,7 @@ import io.github.joselion.testing.UnitTest;
   @Nested class resolve {
     @Nested class when_the_value_is_present {
       @Test void the_callback_is_called_with_the_value() {
-        final var functionSpy = Spy.<FunctionChecked<Integer, String, RuntimeException>>lambda(v -> OK);
+        final var functionSpy = Spy.<ThrowingFunction<Integer, String, RuntimeException>>lambda(v -> OK);
         final var handler = Maybe.just(1).resolve(functionSpy);
 
         assertThat(handler.success()).contains(OK);
@@ -260,7 +260,7 @@ import io.github.joselion.testing.UnitTest;
 
     @Nested class when_the_new_operation_succeeds {
       @Test void returns_a_handler_with_the_resolved_value() {
-        final var functionSpy = Spy.lambda(FunctionChecked.<String, RuntimeException>identity());
+        final var functionSpy = Spy.lambda(ThrowingFunction.<String, RuntimeException>identity());
         final var handler = Maybe.just(OK)
           .resolve(functionSpy);
 
@@ -288,7 +288,7 @@ import io.github.joselion.testing.UnitTest;
   @Nested class runEffect {
     @Nested class when_the_value_is_present {
       @Test void the_callback_is_called_with_the_value() {
-        final var consumerSpy = Spy.<ConsumerChecked<String, RuntimeException>>lambda(v -> { });
+        final var consumerSpy = Spy.<ThrowingConsumer<String, RuntimeException>>lambda(v -> { });
         final var handler = Maybe.just(OK)
           .runEffect(consumerSpy);
 
@@ -300,7 +300,7 @@ import io.github.joselion.testing.UnitTest;
 
     @Nested class when_the_value_is_NOT_present {
       @Test void the_callback_is_never_called() {
-        final var consumerSpy = Spy.<ConsumerChecked<Object, RuntimeException>>lambda(v -> { });
+        final var consumerSpy = Spy.<ThrowingConsumer<Object, RuntimeException>>lambda(v -> { });
         final var handler = Maybe.nothing()
           .runEffect(consumerSpy);
 
@@ -312,7 +312,7 @@ import io.github.joselion.testing.UnitTest;
 
     @Nested class when_the_new_operation_succeeds {
       @Test void returns_the_a_handler_with_nothing() {
-        final var consumerSpy = Spy.<ConsumerChecked<String, RuntimeException>>lambda(v -> { });
+        final var consumerSpy = Spy.<ThrowingConsumer<String, RuntimeException>>lambda(v -> { });
         final var handler = Maybe.just(OK)
           .runEffect(consumerSpy);
 

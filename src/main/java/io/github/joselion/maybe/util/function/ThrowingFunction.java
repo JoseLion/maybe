@@ -1,4 +1,4 @@
-package io.github.joselion.maybe.util;
+package io.github.joselion.maybe.util.function;
 
 /**
  * The same as {@link java.util.function.Function Function}, but the lambda
@@ -14,7 +14,7 @@ package io.github.joselion.maybe.util;
  * @since v0.1.0
  */
 @FunctionalInterface
-public interface FunctionChecked<T, R, E extends Exception> {
+public interface ThrowingFunction<T, R, E extends Exception> {
 
   /**
    * Applies this function to the given argument, or throws an exception.
@@ -32,7 +32,7 @@ public interface FunctionChecked<T, R, E extends Exception> {
    * @param <E> the type of exception that the function throws
    * @return a function that always returns its input argument
    */
-  static <T, E extends Exception> FunctionChecked<T, T, E> identity() {
+  static <T, E extends Exception> ThrowingFunction<T, T, E> identity() {
       return t -> t;
   }
 }
