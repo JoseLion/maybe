@@ -15,6 +15,7 @@ import org.assertj.core.api.AutoCloseableSoftAssertions;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import io.github.joselion.maybe.util.Either;
 import io.github.joselion.maybe.util.function.ThrowingConsumer;
 import io.github.joselion.maybe.util.function.ThrowingFunction;
 import io.github.joselion.maybe.util.function.ThrowingRunnable;
@@ -204,7 +205,7 @@ import io.github.joselion.testing.UnitTest;
       }
     }
 
-    @Nested class when_the_value_is_NOT_present {
+    @Nested class when_the_value_is_not_present {
       @Test void returns_nothing() {
         final var maybe = Maybe.<String>nothing().map(String::length);
 
@@ -223,7 +224,7 @@ import io.github.joselion.testing.UnitTest;
       }
     }
 
-    @Nested class when_the_value_is_NOT_present {
+    @Nested class when_the_value_is_not_present {
       @Test void returns_nothing() {
         final var maybe = Maybe.<String>nothing()
           .flatMap(str -> Maybe.just(str.length()));
@@ -246,7 +247,7 @@ import io.github.joselion.testing.UnitTest;
       }
     }
 
-    @Nested class when_the_value_is_NOT_present {
+    @Nested class when_the_value_is_not_present {
       @Test void the_callback_is_never_called() throws IOException {
         final var functionSpy = Spy.lambda(failFunction);
         final var handler = Maybe.<String>nothing().resolve(functionSpy);
@@ -298,7 +299,7 @@ import io.github.joselion.testing.UnitTest;
       }
     }
 
-    @Nested class when_the_value_is_NOT_present {
+    @Nested class when_the_value_is_not_present {
       @Test void the_callback_is_never_called() {
         final var consumerSpy = Spy.<ThrowingConsumer<Object, RuntimeException>>lambda(v -> { });
         final var handler = Maybe.nothing()
@@ -344,7 +345,7 @@ import io.github.joselion.testing.UnitTest;
       }
     }
 
-    @Nested class when_the_value_is_NOT_castable_to_the_passed_type {
+    @Nested class when_the_value_is_not_castable_to_the_passed_type {
       @Test void returns_nothing() {
         final var maybe = Maybe.just("3");
 
@@ -360,7 +361,7 @@ import io.github.joselion.testing.UnitTest;
       }
     }
 
-    @Nested class when_the_value_is_NOT_present {
+    @Nested class when_the_value_is_not_present {
       @Test void returns_false() {
         assertThat(Maybe.nothing().hasValue()).isFalse();
       }
@@ -368,7 +369,7 @@ import io.github.joselion.testing.UnitTest;
   }
 
   @Nested class hasNothing {
-    @Nested class when_the_value_is_NOT_present {
+    @Nested class when_the_value_is_not_present {
       @Test void returns_true() {
         assertThat(Maybe.nothing().hasNothing()).isTrue();
       }
@@ -389,7 +390,7 @@ import io.github.joselion.testing.UnitTest;
       }
     }
 
-    @Nested class when_the_value_is_NOT_present {
+    @Nested class when_the_value_is_not_present {
       @Test void returns_an_empty_Optional() {
         assertThat(Maybe.nothing().toOptional())
           .isEmpty();
@@ -398,7 +399,7 @@ import io.github.joselion.testing.UnitTest;
   }
 
   @Nested class equals {
-    @Nested class when_the_tested_object_is_the_same_instance {
+    @Nested class when_the_tested_object_is_the_same_as_the_value {
       @Test void returns_true() {
         final var maybe = Maybe.just(3);
         final var other = maybe;
@@ -408,7 +409,7 @@ import io.github.joselion.testing.UnitTest;
       }
     }
 
-    @Nested class when_the_tested_objectis_NOT_the_same_instance {
+    @Nested class when_the_tested_object_is_not_the_same_as_the_value {
       @Test void returns_false() {
         final var maybe = Maybe.just(3);
         final var other = (Object) Integer.valueOf(3);
@@ -428,7 +429,7 @@ import io.github.joselion.testing.UnitTest;
       }
     }
 
-    @Nested class when_both_wrapped_values_are_NOT_equal {
+    @Nested class when_both_wrapped_values_are_not_equal {
       @Test void returns_false() {
         final var maybe = Maybe.just(OK);
         final var other = Maybe.just("OTHER");
@@ -448,7 +449,7 @@ import io.github.joselion.testing.UnitTest;
       }
     }
 
-    @Nested class when_the_value_is_NOT_present {
+    @Nested class when_the_value_is_not_present {
       @Test void returns_zero() {
         final var maybe = Maybe.nothing();
 
@@ -466,11 +467,91 @@ import io.github.joselion.testing.UnitTest;
       }
     }
 
-    @Nested class when_the_value_is_NOT_present {
+    @Nested class when_the_value_is_not_present {
       @Test void returns_the_string_representation_of_nothing() {
         final var maybe = Maybe.nothing();
 
         assertThat(maybe).hasToString("Maybe.nothing");
+      }
+    }
+  }
+
+  @Nested class leftOrNull {
+    @Nested class when_the_left_value_is_present {
+      @Test void returns_the_left_value() {
+        final var either = Either.ofLeft("foo");
+
+        assertThat(either.leftOrNull()).isEqualTo("foo");
+      }
+    }
+
+    @Nested class when_the_right_value_is_present {
+      @Test void returns_null() {
+        final var either = Either.ofRight("foo");
+
+        assertThat(either.leftOrNull()).isNull();
+      }
+    }
+  }
+
+  @Nested class rightOrNull {
+    @Nested class when_the_left_value_is_present {
+      @Test void returns_null() {
+        final var either = Either.ofLeft("foo");
+
+        assertThat(either.rightOrNull()).isNull();
+      }
+    }
+
+    @Nested class when_the_right_value_is_present {
+      @Test void returns_the_right_value() {
+        final var either = Either.ofRight("foo");
+
+        assertThat(either.rightOrNull()).isEqualTo("foo");
+      }
+    }
+  }
+
+  @Nested class leftToOptional {
+    @Nested class when_the_left_value_is_present {
+      @Test void returs_an_Optional_with_the_left_value() {
+        final var either = Either.ofLeft("foo");
+
+        assertThat(either.leftToOptional())
+          .isInstanceOf(Optional.class)
+          .contains("foo");
+      }
+    }
+
+    @Nested class when_the_right_value_is_present {
+      @Test void returns_an_empty_Optional() {
+        final var either = Either.ofRight("foo");
+
+        assertThat(either.leftToOptional())
+          .isExactlyInstanceOf(Optional.class)
+          .isEmpty();
+      }
+    }
+  }
+
+  @Nested class rightToOptional {
+    @Nested class when_the_left_value_is_present {
+      @Test void returns_an_empty_Optional() {
+        final var either = Either.ofLeft("foo");
+
+        assertThat(either.rightToOptional())
+          .isInstanceOf(Optional.class)
+          .isEmpty();
+      }
+    }
+
+    @Nested class when_the_right_value_is_present {
+      @Test void returs_an_Optional_with_the_right_value() {
+        final var either = Either.ofRight("foo");
+
+        assertThat(either.rightToOptional())
+          .isExactlyInstanceOf(Optional.class)
+          .contains("foo");
       }
     }
   }

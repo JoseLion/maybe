@@ -81,7 +81,7 @@ import io.github.joselion.testing.UnitTest;
           }
         }
 
-        @Nested class and_the_error_is_NOT_an_instance_of_the_provided_type {
+        @Nested class and_the_error_is_not_an_instance_of_the_provided_type {
           @Test void never_calls_the_effect_callback() {
             final var consumerSpy = Spy.<Consumer<RuntimeException>>lambda(error -> { });
 
@@ -93,7 +93,7 @@ import io.github.joselion.testing.UnitTest;
         }
       }
 
-      @Nested class and_the_error_type_is_NOT_provided {
+      @Nested class and_the_error_type_is_not_provided {
         @Test void calls_the_effect_callback() {
           final var consumerSpy = Spy.<Consumer<FileSystemException>>lambda(error -> { });
 
@@ -134,7 +134,7 @@ import io.github.joselion.testing.UnitTest;
           }
         }
 
-        @Nested class and_the_error_is_NOT_an_instance_of_the_provided_type {
+        @Nested class and_the_error_is_not_an_instance_of_the_provided_type {
           @Test void never_calls_the_handler_function() {
             final var functionSpy = Spy.<Function<AccessDeniedException, String>>lambda(e -> OK);
             final var handler = Maybe.fromResolver(throwingOp)
@@ -148,7 +148,7 @@ import io.github.joselion.testing.UnitTest;
         }
       }
 
-      @Nested class and_the_error_type_is_NOT_provided {
+      @Nested class and_the_error_type_is_not_provided {
         @Test void calls_the_handler_function() {
           final var handlerSpy = Spy.<Function<FileSystemException, String>>lambda(e -> OK);
           final var resolver = Maybe.fromResolver(throwingOp)
@@ -203,7 +203,7 @@ import io.github.joselion.testing.UnitTest;
     }
 
     @Nested class when_the_error_is_present {
-      @Nested class and_the_error_resolver_is_NOT_provided {
+      @Nested class and_the_error_resolver_is_not_provided {
         @Test void never_calls_the_resolver_callback_and_creates_a_handler_with_nothing() {
           final var successSpy = Spy.<ThrowingFunction<String, Integer, RuntimeException>>lambda(String::length);
           final var handler = Maybe.fromResolver(throwingOp)
@@ -272,7 +272,7 @@ import io.github.joselion.testing.UnitTest;
         }
       }
 
-      @Nested class and_the_error_callback_is_NOT_provided {
+      @Nested class and_the_error_callback_is_not_provided {
         @Test void never_calls_the_effect_callback_and_returns_a_new_empty_handler() throws FileSystemException {
           final var effectSpy = Spy.<ThrowingConsumer<String, FileSystemException>>lambda(v -> throwingOp.get());
           final var handler = Maybe.fromResolver(throwingOp);
@@ -331,7 +331,7 @@ import io.github.joselion.testing.UnitTest;
         }
       }
 
-      @Nested class and_the_predicate_does_NOT_match {
+      @Nested class and_the_predicate_does_not_match {
         @Test void returns_an_empty_handler() {
           final var handler = ResolveHandler.withSuccess("Hello world!")
             .filter(it -> it.contains("planet"));
@@ -376,7 +376,7 @@ import io.github.joselion.testing.UnitTest;
         }
       }
 
-      @Nested class and_the_object_can_NOT_be_cast {
+      @Nested class and_the_object_can_not_be_cast {
         @Test void returns_a_new_handler_with_the_cast_exception() {
           final var anyValue = (Object) 3;
           final var handler = ResolveHandler.withSuccess(anyValue)
