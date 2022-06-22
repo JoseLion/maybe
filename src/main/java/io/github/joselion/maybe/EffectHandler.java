@@ -28,25 +28,25 @@ public final class EffectHandler<E extends Exception> {
   }
 
   /**
-   * Internal use method to instanciate a EffectHandler with an error value
+   * Internal use method to instantiate an {@link EffectHandler} that has no
+   * error (yet).
+   *
+   * @param <E> the type of the possible exception
+   * @return a EffectHandler with neither the success nor the error value
+   */
+  static <E extends Exception> EffectHandler<E> empty() {
+    return new EffectHandler<>(null);
+  }
+
+  /**
+   * Internal use method to instantiate an {@link EffectHandler} with an error.
    * 
    * @param <E> the type of the possible exception
    * @param error the error to instanciate the EffectHandler
    * @return a EffectHandler instance with an error value
    */
-  static <E extends Exception> EffectHandler<E> withError(final E error) {
+  static <E extends Exception> EffectHandler<E> ofError(final E error) {
     return new EffectHandler<>(error);
-  }
-
-  /**
-   * Internal use method to instanciate a EffectHandler neither with a success
-   * nor with an error value
-   * 
-   * @param <E> the type of the possible exception
-   * @return a EffectHandler with neither the success nor the error value
-   */
-  static <E extends Exception> EffectHandler<E> withNothing() {
-    return new EffectHandler<>(null);
   }
 
   /**
@@ -59,7 +59,7 @@ public final class EffectHandler<E extends Exception> {
   }
 
   /**
-   * Runs an effect if the operation succeeds. That is, when the error is empty.
+   * Runs an effect if the operation succeeds.
    *
    * @param effect a runnable function
    * @return the same handler to continue chainning operations
@@ -104,39 +104,41 @@ public final class EffectHandler<E extends Exception> {
   }
 
   /**
-   * Catch the error if is present and is an instance of the provided type.
-   * Assuming the error was handled returns a handler with {@code nothing}. The
-   * caught error is passed in the argument of the {@code handler} consumer.
+   * Catch the error if present and if it's instance of the provided type.
+   * The caught error is passed to the argument of the handler consumer. If the
+   * error is caught and handled, the operation returns an empty
+   * {@link EffectHandler}. Otherwise, the same instance is returned.
    * 
    * @param <X> the type of the error to catch
-   * @param ofType a class instance of the error type to catch
-   * @param handler a consumer function that recieves the caught error
-   * @return a handler with nothing if an error instance of the provided type
-   *         was caught. The same handler instance otherwise
+   * @param ofType thetype of the error to catch
+   * @param handler a consumer function that receives the caught error
+   * @return an empty handler if an error instance of the provided type was
+   *         caught. The same handler instance otherwise
    */
   public <X extends E> EffectHandler<E> catchError(final Class<X> ofType, final Consumer<X> handler) {
     return error.filter(ofType::isInstance)
       .map(ofType::cast)
       .map(caught -> {
         handler.accept(caught);
-        return EffectHandler.<E>withNothing();
+        return EffectHandler.<E>empty();
       })
       .orElse(this);
   }
 
   /**
-   * Catch the error if is present. Assuming the error was handled returns a
-   * handler with {@code nothing}. The caught error is passed in the argument
-   * of the {@code handler} consumer.
+   * Catch the error if is present. The caught error is passed in the argument
+   * of the {@code handler} consumer. Since the error was caught and handled,
+   * the operations returns an empty {@link EffectHandler}. Otherwise, the same
+   * instance is returned.
    *
    * @param handler a consumer function that recieves the caught error
-   * @return a handler with nothing if an error instance of the provided type
-   *         was caught. The same handler instance otherwise
+   * @return an empty handler if the error is present. The same handler
+   *         instance otherwise
    */
   public EffectHandler<E> catchError(final Consumer<E> handler) {
     return error.map(caught -> {
       handler.accept(caught);
-      return EffectHandler.<E>withNothing();
+      return EffectHandler.<E>empty();
     })
     .orElse(this);
   }
@@ -160,13 +162,14 @@ public final class EffectHandler<E extends Exception> {
   }
 
   /**
-   * Chain another effect if the previous succeeded. Otherwise, ignore the
-   * current error and return a new handler with {@code nothing}.
+   * Chain another effect if the previous completed with no error. Otherwise,
+   * ignores the current error and return a new {@link EffectHandler} that is
+   * either empty or has a different error cause by the next effect.
    *
    * @param <X> the type of the error the new effect may throw
    * @param effect a runnable checked function to run in case of succeess
-   * @return a new {@link EffectHandler} representing the result of the success
-   *         callback or an empty handler
+   * @return a new {@link EffectHandler} that is either empty or with the
+   *         thrown error
    */
   public <X extends Exception> EffectHandler<X> runEffect(final ThrowingRunnable<X> effect) {
     return this.runEffect(effect, err -> { });
@@ -205,15 +208,5 @@ public final class EffectHandler<E extends Exception> {
     if (error.isPresent()) {
       throw mapper.apply(error.get());
     }
-  }
-
-  /**
-   * Transforms the handler to a {@link Maybe}. Since there's nothing to
-   * resolve, the {@link Maybe} will always have {@code nothing}.
-   * 
-   * @return a Maybe with {@code nothing}
-   */
-  public Maybe<Void> toMaybe() {
-    return Maybe.nothing();
   }
 }

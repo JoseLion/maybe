@@ -2,8 +2,7 @@ package io.github.joselion.maybe;
 
 import java.util.Optional;
 
-import org.eclipse.jdt.annotation.Nullable;
-
+import io.github.joselion.maybe.util.Either;
 import io.github.joselion.maybe.util.function.ThrowingConsumer;
 import io.github.joselion.maybe.util.function.ThrowingFunction;
 
@@ -18,18 +17,14 @@ import io.github.joselion.maybe.util.function.ThrowingFunction;
  */
 public class ResourceHolder<R extends AutoCloseable, E extends Exception> {
 
-  private final Optional<R> resource;
+  private final Either<E, R> value;
 
-  private final Optional<E> error;
-
-  private ResourceHolder(final @Nullable R resource) {
-    this.resource = Optional.ofNullable(resource);
-    this.error = Optional.empty();
+  private ResourceHolder(final R resource) {
+    this.value = Either.ofRight(resource);
   }
 
   private ResourceHolder(final E error) {
-    this.resource = Optional.empty();
-    this.error = Optional.of(error);
+    this.value = Either.ofLeft(error);
   }
 
   /**
@@ -40,7 +35,7 @@ public class ResourceHolder<R extends AutoCloseable, E extends Exception> {
    * @param resource the resource to instantiate the ResourceHolder with
    * @return a new instance of ResourceHolder with the given resource
    */
-  static <R extends AutoCloseable, E extends Exception> ResourceHolder<R, E> from(final @Nullable R resource) {
+  static <R extends AutoCloseable, E extends Exception> ResourceHolder<R, E> from(final R resource) {
     return new ResourceHolder<>(resource);
   }
 
@@ -62,7 +57,7 @@ public class ResourceHolder<R extends AutoCloseable, E extends Exception> {
    * @return the possible stored resource
    */
   Optional<R> resource() {
-    return resource;
+    return value.rightToOptional();
   }
 
   /**
@@ -71,7 +66,7 @@ public class ResourceHolder<R extends AutoCloseable, E extends Exception> {
    * @return the possible propagated error
    */
   Optional<E> error() {
-    return error;
+    return value.leftToOptional();
   }
 
   /**
@@ -93,22 +88,15 @@ public class ResourceHolder<R extends AutoCloseable, E extends Exception> {
    */
   @SuppressWarnings("unchecked")
   public <T, X extends Exception> ResolveHandler<T, X> resolveClosing(final ThrowingFunction<R, T, X> resolver) {
-    if (this.resource.isPresent()) {
-      try (R resArg = this.resource.get()) {
-        return ResolveHandler.withSuccess(resolver.apply(resArg));
-      } catch (Exception e) {
-        final var newError = (X) e;
-
-        return ResolveHandler.withError(newError);
-      }
-    }
-
-    if (this.error.isPresent()) {
-      return ResolveHandler.withError((X) this.error.get());
-    }
-
-
-    return ResolveHandler.withNothing();
+    return value.unwrap(
+      error -> ResolveHandler.ofError((X) error),
+      resource -> {
+        try (var res = resource) {
+          return ResolveHandler.ofSuccess(resolver.apply(res));
+        } catch (final Exception error) {
+          return ResolveHandler.ofError((X) error);
+        }
+      });
   }
 
   /**
@@ -129,22 +117,16 @@ public class ResourceHolder<R extends AutoCloseable, E extends Exception> {
    */
   @SuppressWarnings("unchecked")
   public <X extends Exception> EffectHandler<X> runEffectClosing(final ThrowingConsumer<R, X> effect) {
-    if (this.resource.isPresent()) {
-      try (R resArg = this.resource.get()) {
-        effect.accept(resArg);
-
-        return EffectHandler.withNothing();
-      } catch (Exception e) {
-        final var newError = (X) e;
-
-        return EffectHandler.withError(newError);
+    return value.unwrap(
+      error -> EffectHandler.ofError((X) error),
+      resource -> {
+        try (var res = resource) {
+          effect.accept(res);
+          return EffectHandler.empty();
+        } catch (final Exception error) {
+          return EffectHandler.ofError((X) error);
+        }
       }
-    }
-
-    if (this.error.isPresent()) {
-      return EffectHandler.withError((X) this.error.get());
-    }
-
-    return EffectHandler.withNothing();
+    );
   }
 }

@@ -1,5 +1,6 @@
 package io.github.joselion.maybe;
 
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -94,12 +95,12 @@ public final class Maybe<T> {
    */
   public static <T, E extends Exception> ResolveHandler<T, E> fromResolver(final ThrowingSupplier<T, E> resolver) {
     try {
-      return ResolveHandler.withSuccess(resolver.get());
+      return ResolveHandler.ofSuccess(resolver.get());
     } catch (Exception e) {
       @SuppressWarnings("unchecked")
       final E error = (E) e;
 
-      return ResolveHandler.withError(error);
+      return ResolveHandler.ofError(error);
     }
   }
 
@@ -116,12 +117,12 @@ public final class Maybe<T> {
   public static <E extends Exception> EffectHandler<E> fromEffect(final ThrowingRunnable<E> effect) {
     try {
       effect.run();
-      return EffectHandler.withNothing();
+      return EffectHandler.empty();
     } catch (Exception e) {
       @SuppressWarnings("unchecked")
       final E error = (E) e;
 
-      return EffectHandler.withError(error);
+      return EffectHandler.ofError(error);
     }
   }
 
@@ -247,9 +248,15 @@ public final class Maybe<T> {
    * @return a {@link ResolveHandler} with either the resolved value, or the
    *         thrown exception to be handled
    */
+  @SuppressWarnings("unchecked")
   public <U, E extends Exception> ResolveHandler<U, E> resolve(final ThrowingFunction<T, U, E> resolver) {
-    return value.map(x -> Maybe.fromResolver(() -> resolver.apply(x)))
-      .orElseGet(ResolveHandler::withNothing);
+    try {
+      return value
+        .map(Maybe.partialResolver(resolver))
+        .orElseThrow();
+    } catch (final NoSuchElementException error) {
+      return ResolveHandler.ofError((E) error);
+    }
   }
 
   /**
@@ -261,13 +268,19 @@ public final class Maybe<T> {
    * @return an {@link EffectHandler} with either the thrown exception to be
    *         handled or nothing
    */
+  @SuppressWarnings("unchecked")
   public <E extends Exception> EffectHandler<E> runEffect(final ThrowingConsumer<T, E> effect) {
-    return value.map(x -> Maybe.fromEffect(() -> effect.accept(x)))
-      .orElseGet(EffectHandler::withNothing);
+    try {
+      return value
+        .map(Maybe.partialEffect(effect))
+        .orElseThrow();
+    } catch (final NoSuchElementException error) {
+      return EffectHandler.ofError((E) error);
+    }
   }
 
   /**
-   * If the value is present, casts the value to another type. In case of any
+   * If the value is present, cast the value to another type. In case of an
    * exception during the cast, a Maybe with {@link #nothing()} is returned.
    * 
    * @param <U> the type that the value will be cast to
@@ -277,11 +290,9 @@ public final class Maybe<T> {
    */
   public <U> Maybe<U> cast(final Class<U> type) {
     try {
-      final var finalValue = this.value.orElseThrow();
-      final var newValue = type.cast(finalValue);
-
+      final var newValue = type.cast(value.orElseThrow());
       return Maybe.just(newValue);
-    } catch (RuntimeException e) {
+    } catch (final Exception error) {
       return nothing();
     }
   }

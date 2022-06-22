@@ -3,12 +3,11 @@ package io.github.joselion.maybe;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import org.eclipse.jdt.annotation.Nullable;
 
-import io.github.joselion.maybe.exceptions.WrappingException;
+import io.github.joselion.maybe.util.Either;
 import io.github.joselion.maybe.util.function.ThrowingConsumer;
 import io.github.joselion.maybe.util.function.ThrowingFunction;
 
@@ -25,49 +24,34 @@ import io.github.joselion.maybe.util.function.ThrowingFunction;
  */
 public final class ResolveHandler<T, E extends Exception> {
 
-  private final Optional<T> success;
+  private final Either<E, T> value;
 
-  private final Optional<E> error;
-
-  private ResolveHandler(final @Nullable T success, final @Nullable E error) {
-    this.success = Optional.ofNullable(success);
-    this.error = Optional.ofNullable(error);
+  private ResolveHandler(final Either<E, T> value) {
+    this.value = value;
   }
 
   /**
-   * Internal use method to instantiate a ResolveHandler with a success value
+   * Internal use method to instantiate a ResolveHandler of a success value
    * 
    * @param <T> the type of the success value
    * @param <E> the type of the possible exception
    * @param success the success value to instantiate the ResolveHandler
    * @return a ResolveHandler instance with a success value
    */
-  static <T, E extends Exception> ResolveHandler<T, E> withSuccess(final T success) {
-    return new ResolveHandler<>(success, null);
+  static <T, E extends Exception> ResolveHandler<T, E> ofSuccess(final T success) {
+    return new ResolveHandler<>(Either.ofRight(success));
   }
 
   /**
-   * Internal use method to instantiate a ResolveHandler with an error value
+   * Internal use method to instantiate a ResolveHandler of an error value
    * 
    * @param <T> the type of the success value
    * @param <E> the type of the possible exception
    * @param error the error to instantiate the ResolveHandler
    * @return a ResolveHandler instance with an error value
    */
-  static <T, E extends Exception> ResolveHandler<T, E> withError(final E error) {
-    return new ResolveHandler<>(null, error);
-  }
-
-  /**
-   * Internal use method to instantiate a ResolveHandler neither with a success
-   * nor with an error value
-   * 
-   * @param <T> the type of the success value
-   * @param <E> the type of the possible exception
-   * @return a ResolveHandler with neither the success nor the error value
-   */
-  static <T, E extends Exception> ResolveHandler<T, E> withNothing() {
-    return new ResolveHandler<>(null, null);
+  static <T, E extends Exception> ResolveHandler<T, E> ofError(final E error) {
+    return new ResolveHandler<>(Either.ofLeft(error));
   }
 
   /**
@@ -76,7 +60,7 @@ public final class ResolveHandler<T, E extends Exception> {
    * @return the possible success value
    */
   Optional<T> success() {
-    return success;
+    return value.rightToOptional();
   }
 
   /**
@@ -85,7 +69,7 @@ public final class ResolveHandler<T, E extends Exception> {
    * @return the possible thrown exception
    */
   Optional<E> error() {
-    return error;
+    return value.leftToOptional();
   }
 
   /**
@@ -96,7 +80,7 @@ public final class ResolveHandler<T, E extends Exception> {
    * @return the same handler to continue chainning operations
    */
   public ResolveHandler<T, E> doOnSuccess(final Consumer<T> effect) {
-    success.ifPresent(effect);
+    value.doOnRight(effect);
 
     return this;
   }
@@ -112,7 +96,8 @@ public final class ResolveHandler<T, E extends Exception> {
    * @return the same handler to continue chainning operations
    */
   public <X extends Exception> ResolveHandler<T, E> doOnError(final Class<X> ofType, final Consumer<X> effect) {
-    error.filter(ofType::isInstance)
+    value.leftToOptional()
+      .filter(ofType::isInstance)
       .map(ofType::cast)
       .ifPresent(effect);
 
@@ -127,7 +112,7 @@ public final class ResolveHandler<T, E extends Exception> {
    * @return the same handler to continue chainning operations
    */
   public ResolveHandler<T, E> doOnError(final Consumer<E> effect) {
-    error.ifPresent(effect);
+    value.doOnLeft(effect);
 
     return this;
   }
@@ -145,10 +130,12 @@ public final class ResolveHandler<T, E extends Exception> {
    *         provided type was caught. The same handler instance otherwise
    */
   public <X extends E> ResolveHandler<T, E> catchError(final Class<X> ofType, final Function<X, T> handler) {
-    return error.filter(ofType::isInstance)
+    return value
+      .leftToOptional()
+      .filter(ofType::isInstance)
       .map(ofType::cast)
       .map(handler)
-      .map(ResolveHandler::<T, E>withSuccess)
+      .map(ResolveHandler::<T, E>ofSuccess)
       .orElse(this);
   }
 
@@ -162,9 +149,10 @@ public final class ResolveHandler<T, E extends Exception> {
    *         handler instance otherwise
    */
   public ResolveHandler<T, E> catchError(final Function<E, T> handler) {
-    return error.map(handler)
-      .map(ResolveHandler::<T, E>withSuccess)
-      .orElse(this);
+    return value
+      .mapLeft(handler)
+      .mapLeft(ResolveHandler::<T, E>ofSuccess)
+      .leftOrElse(this);
   }
 
   /**
@@ -173,45 +161,48 @@ public final class ResolveHandler<T, E extends Exception> {
    * <p>
    * The first callback receives the resolved value, the second callback the
    * caught error. Both should resolve another value of the same type {@code S},
-   * but only one of the callbacks is invoked. It depends on which whether the
+   * but only one of the callbacks is invoked. It depends on whether the
    * previous value was resolved or not.
    *
    * @param <S> the type of value returned by the next operation
    * @param <X> the type of exception the new resolver may throw
-   * @param successResolver a checked function that receives the current value
+   * @param onSuccess a checked function that receives the current value
    *                        and resolves another
-   * @param errorResolver a checked function that receives the error and
+   * @param onError a checked function that receives the error and
    *                      resolves another value
-   * @return a new handler with either the resolved value, the thrown exception
-   *         to be handled, or nothing
+   * @return a new handler with either the resolved value or the error
    */
   public <S, X extends Exception> ResolveHandler<S, X> resolve(
-    final ThrowingFunction<T, S, X> successResolver,
-    final ThrowingFunction<E, S, X> errorResolver
+    final ThrowingFunction<T, S, X> onSuccess,
+    final ThrowingFunction<E, S, X> onError
   ) {
-    return error.map(Maybe.partialResolver(errorResolver))
-      .orElseGet(() -> this.resolve(successResolver));
+    return value.unwrap(
+      Maybe.partialResolver(onError),
+      Maybe.partialResolver(onSuccess)
+    );
   }
 
   /**
-   * Chain another resolver if the value is present. Otherwise, ignore the
-   * error and return a new handler with {@code nothing}. This operator is
-   * effectively an alias for {@code .toMaybe().resolve(..)}.
+   * Chain another resolver function if the value was resolved. Otherwise,
+   * returns a handler containing the error so it can be propagated upstream.
    *
    * @param <S> the type of value returned by the next operation
    * @param <X> the type of exception the new resolver may throw
    * @param resolver a checked function that receives the current value and
    *                 resolves another
-   * @return a new handler with either the resolved value, the thrown exception
-   *         to be handled, or nothing
+   * @return a new handler with either the resolved value or an error
    */
+  @SuppressWarnings("unchecked")
   public <S, X extends Exception> ResolveHandler<S, X> resolve(final ThrowingFunction<T, S, X> resolver) {
-    return this.toMaybe().resolve(resolver);
+    return value.unwrap(
+      error -> ResolveHandler.ofError((X) error),
+      Maybe.partialResolver(resolver)
+    );
   }
 
   /**
-   * Chain converting to an effect covering both cases of success or error of
-   * the previous resolver in two different callbacks.
+   * Chain the previous operation to an effect covering both the success or
+   * error cases in two different callbacks.
    *
    * @param <X> the type of the error the effect may throw
    * @param onSuccess a consumer checked function to run in case of succeess
@@ -223,113 +214,79 @@ public final class ResolveHandler<T, E extends Exception> {
     final ThrowingConsumer<T, X> onSuccess,
     final ThrowingConsumer<E, X> onError
   ) {
-    return error.map(Maybe.partialEffect(onError))
-      .orElseGet(() -> this.toMaybe().runEffect(onSuccess));
+    return value.unwrap(
+      Maybe.partialEffect(onError),
+      Maybe.partialEffect(onSuccess)
+    );
   }
 
   /**
-   * Chain converting to an effect if the previous resolver succeeded.
-   * Otherwise, ignore the current error and return a new handler with
-   * {@code nothing}.
+   * Chain the previous operation to an effect if the value was resolved.
+   * Otherwise, returns a handler containing the error so it can be propagated
+   * upstream.
    *
    * @param <X> the type of the error the effect may throw
    * @param effect a consume checked function to run in case of succeess
    * @return a new {@link EffectHandler} representing the result of the success
-   *         callback or an empty handler
+   *         callback or containg the error
    */
+  @SuppressWarnings("unchecked")
   public <X extends Exception> EffectHandler<X> runEffect(final ThrowingConsumer<T, X> effect) {
-    return this.runEffect(effect, err -> { });
+    return value.unwrap(
+      error -> EffectHandler.ofError((X) error),
+      Maybe.partialEffect(effect)
+    );
   }
 
   /**
    * If the value is present, map it to another value through the {@code mapper}
    * function. If the error is present, the {@code mapper} is never applied and
    * the next handler will still contain the error.
-   * <p>
-   * If neither the value nor the error is present, it returns an empty handler.
    * 
    * @param <U> the type the value will be mapped to
    * @param mapper a function that receives the resolved value and produces another
-   * @return a new handler with either the mapped value, the previous error, or
-   *         nothing
+   * @return a new handler with either the mapped value, or the previous error
    */
   public <U> ResolveHandler<U, E> map(final Function<T, U> mapper) {
-    if (success.isPresent()) {
-      return withSuccess(mapper.apply(success.get()));
-    }
-
-    if (error.isPresent()) {
-      return withError(error.get());
-    }
-
-    return withNothing();
-  }
-
-  /**
-   * If a value is present, and the value matches the given {@code predicate},
-   * returns the same handler to continue chaining operations. Otherwise, it
-   * returns an empty handler.
-   * <p>
-   * If the error is present, the {@code predicate} is never applied and it
-   * returns the same handler to continue chaining operations
-   * <p>
-   * If neither the value nor the error are present, it returns an empty handler.
-   * 
-   * @param predicate a predicate to apply to the resolved value
-   * @return a new handler with either the value if it matched the predicate,
-   *         the previous error, or nothing
-   */
-  public ResolveHandler<T, E> filter(final Predicate<T> predicate) {
-    if (success.isPresent()) {
-      return success.filter(predicate)
-        .map(value -> this)
-        .orElseGet(ResolveHandler::withNothing);
-    }
-
-    return error.isPresent()
-      ? this
-      : withNothing();
+    return value
+      .mapRight(mapper)
+      .unwrap(
+        ResolveHandler::ofError,
+        ResolveHandler::ofSuccess
+      );
   }
 
   /**
    * If the value is present, cast the value to anoter type. If the cast fails
    * or if the error is present, it returns a new handler which contains a
-   * {@link WrappingException} instance. The type of the wrapped exception will
-   * be a {@link ClassCastException} if the cast operation failed, or the
-   * previous expection type {@link E} given it was present.
-   * <p>
-   * If neither the value nor the error is present, it returns an empty handler.
+   * {@link ClassCastException} error.
    * 
    * @param <U> the type the value will be cast to
    * @param type the class instance of the type to cast
-   * @return a new handler with either the cast value, a {@link WrappingException},
-   *         or nothing
+   * @return a new handler with either the cast value or a ClassCastException
+   *         error
    */
-  public <U> ResolveHandler<U, WrappingException> cast(final Class<U> type) {
-    if (success.isPresent()) {
-      try {
-        final var newValue = type.cast(success.get());
-        return withSuccess(newValue);
-      } catch (ClassCastException e) {
-        return withError(WrappingException.of(e));
+  public <U> ResolveHandler<U, ClassCastException> cast(final Class<U> type) {
+    return value.unwrap(
+      error -> ofError(new ClassCastException(error.getMessage())),
+      success -> {
+        try {
+          return ofSuccess(type.cast(success));
+        } catch (ClassCastException error) {
+          return ofError(error);
+        }
       }
-    }
-
-    if (error.isPresent()) {
-      return withError(WrappingException.of(error.get()));
-    }
-
-    return withNothing();
+    );
   }
 
   /**
    * Returns the resolved value if present. Another value otherwise.
    * 
-   * @param other the value to return if the operation failed to resolve
+   * @param fallback the value to return if the operation failed to resolve
    * @return the resolved value if present. Another value otherwise
    */
-  public T orElse(final T other) {
-    return success.orElse(other);
+  public T orElse(final T fallback) {
+    return value.rightOrElse(fallback);
   }
 
   /**
@@ -342,7 +299,7 @@ public final class ResolveHandler<T, E extends Exception> {
    * @return the resolved value if present. Another value otherwise
    */
   public T orElse(final Function<E, T> mapper) {
-    return success.orElseGet(() -> mapper.apply(error.orElseThrow()));
+    return value.unwrap(mapper, Function.identity());
   }
 
   /**
@@ -357,7 +314,9 @@ public final class ResolveHandler<T, E extends Exception> {
    * @return the resolved value if present. Another value otherwise
    */
   public T orElseGet(final Supplier<T> supplier) {
-    return success.orElseGet(supplier);
+    return value
+      .rightToOptional()
+      .orElseGet(supplier);
   }
 
   /**
@@ -373,7 +332,7 @@ public final class ResolveHandler<T, E extends Exception> {
    * @return the resolved value if present. Just {@code null} otherwise.
    */
   public @Nullable T orNull() {
-    return success.orElse(null);
+    return value.rightOrNull();
   }
 
   /**
@@ -383,7 +342,9 @@ public final class ResolveHandler<T, E extends Exception> {
    * @throws E the error thrown by the {@code resolve} operation
    */
   public T orThrow() throws E {
-    return success.orElseThrow(error::orElseThrow);
+    return value
+      .rightToOptional()
+      .orElseThrow(value::leftOrNull);
   }
 
   /**
@@ -396,62 +357,57 @@ public final class ResolveHandler<T, E extends Exception> {
    * @throws X a mapped exception
    */
   public <X extends Throwable> T orThrow(final Function<E, X> mapper) throws X {
-    return success.orElseThrow(() -> mapper.apply(error.orElseThrow()));
+    return value
+      .rightToOptional()
+      .orElseThrow(() -> mapper.apply(value.leftOrNull()));
   }
 
   /**
-   * Transforms the handler to a {@link Maybe}. If the value was resolved, the
-   * {@link Maybe} will contain it. It will have {@code nothing} otherwise.
+   * Transforms the handler to a {@link Maybe} that contains either the
+   * resolved value or the error.
    * 
-   * @return the resolved value wrapped in a {@link Maybe} if present. A
-   *         {@link Maybe} with nothing otherwise
+   * @return the resolved value wrapped in a {@link Maybe} or holding the error
    */
   public Maybe<T> toMaybe() {
-    return success
+    return value
+      .rightToOptional()
       .map(Maybe::just)
       .orElseGet(Maybe::nothing);
   }
 
   /**
    * Transforms the handler to an {@link Optional}. If the value was resolved,
-   * the {@link Optional} will contain it. It will be {@code empty} otherwise.
+   * the {@link Optional} will contain it. Returs an {@code empty} optional
+   * otherwise.
    * 
    * @return the resolved value wrapped in an {@link Optional} if present. An
-   *         {@code empty} {@link Optional} otherwise.
+   *         {@code empty} optional otherwise.
    */
   public Optional<T> toOptional() {
-    return this.success;
+    return value.rightToOptional();
   }
 
   /**
-   * Map the value to an {@link AutoCloseable} resource to use it in another
-   * {@code resolveClosing} or {@code runEffectClosing} that will close the
-   * resource at the end of the operation.
-   * <p>
-   * If the value is not present, the {@link ResourceHolder} returned will be
-   * empty. This means that any further {@code resolveClosing} operation or
-   * {@code runEffectClosing} operation will not be executed either.
+   * Map the value to an {@link AutoCloseable} resource to be use in either a
+   * {@code resolveClosing} or a {@code runEffectClosing} operation, which will
+   * close the resource when it completes. If the value was not resolved, the
+   * error is propagated to the {@link ResourceHolder}.
    * 
    * @param <R> the type of the {@link AutoCloseable} resource
    * @param mapper a function that receives the resolved value and produces an
    *               autoclosable resource
    * @return a {@link ResourceHolder} with the mapped resource if the value is
-   *         present. An empty {@link ResourceHolder} otherwise
+   *         present or the error otherwise.
    * 
    * @see ResourceHolder#resolveClosing(ThrowingFunction)
    * @see ResourceHolder#runEffectClosing(ThrowingConsumer)
    */
   public <R extends AutoCloseable> ResourceHolder<R, E> mapToResource(final Function<T, R> mapper) {
-    if (this.success.isPresent()) {
-      final R mapped = mapper.apply(this.success.get());
-
-      return ResourceHolder.from(mapped);
-    }
-
-    if (this.error.isPresent()) {
-      return ResourceHolder.failure(error.get());
-    }
-
-    return ResourceHolder.from(null);
+    return value
+      .mapRight(mapper)
+      .unwrap(
+        ResourceHolder::failure,
+        ResourceHolder::from
+      );
   }
 }
