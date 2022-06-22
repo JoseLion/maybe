@@ -271,11 +271,4 @@ import io.github.joselion.testing.UnitTest;
       }
     }
   }
-
-  @Nested class toMaybe {
-    @Test void returns_a_maybe_with_nothing() {
-      assertThat(Maybe.fromEffect(throwingOp).toMaybe().value())
-        .isEmpty();
-    }
-  }
 }

@@ -2,89 +2,91 @@ package io.github.joselion.maybe;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.InstanceOfAssertFactories.THROWABLE;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.ArrayList;
 
-import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import io.github.joselion.maybe.util.function.ThrowingConsumer;
+import io.github.joselion.maybe.util.function.ThrowingFunction;
+import io.github.joselion.testing.Spy;
 import io.github.joselion.testing.UnitTest;
 
 @UnitTest class ResourceHolderTest {
 
   private static final String FILE_PATH = "./src/test/resources/readTest.txt";
 
+  private static final IOException FAIL_EXCEPTION = new IOException("FAIL");
+
+  private final ThrowingFunction<FileInputStream, String, RuntimeException> okResolver = res -> "OK";
+
+  private final ThrowingFunction<FileInputStream, Object, IOException> errorResolver = res -> {
+    throw FAIL_EXCEPTION;
+  };
+
+  private final ThrowingConsumer<FileInputStream, RuntimeException> noOpEffect = res -> { };
+
+  private final ThrowingConsumer<FileInputStream, IOException> errorEffect = res -> {
+    throw FAIL_EXCEPTION;
+  };
+
   @Nested class resolveClosing {
     @Nested class when_the_resource_is_present {
       @Nested class when_the_operation_succeeds {
         @Test void returns_a_handler_with_the_value() {
           final var fis = getFIS();
+          final var resolverSpy = Spy.lambda(okResolver);
           final var handler = Maybe.withResource(fis)
-            .resolveClosing(res -> {
-              assertThat(res)
-                .isEqualTo(fis)
-                .hasContent("foo");
-              return "OK";
-            });
+            .resolveClosing(resolverSpy);
 
           assertThat(handler.success()).contains("OK");
           assertThat(handler.error()).isEmpty();
-
           assertThatThrownBy(fis::read)
             .isExactlyInstanceOf(IOException.class)
             .hasMessage("Stream Closed");
+
+          verify(resolverSpy).apply(fis);
         }
       }
 
       @Nested class when_the_operation_fails {
-        @Test void returns_a_handler_with_the_error() {
+        @Test void returns_a_handler_with_the_error() throws IOException {
           final var fis = getFIS();
-          final var exception = new IOException("FAIL");
+          final var resolverSpy = Spy.lambda(errorResolver);
           final var handler = Maybe.withResource(fis)
-            .resolveClosing(res -> {
-              assertThat(res)
-                .isEqualTo(fis)
-                .hasContent("foo");
-              throw exception;
-            });
+            .resolveClosing(resolverSpy);
 
           assertThat(handler.success()).isEmpty();
-          assertThat(handler.error()).contains(exception);
+          assertThat(handler.error()).contains(FAIL_EXCEPTION);
           assertThatThrownBy(fis::read)
             .isExactlyInstanceOf(IOException.class)
             .hasMessage("Stream Closed");
+
+          verify(resolverSpy).apply(fis);
         }
       }
     }
 
     @Nested class when_the_error_is_present {
-      @Test void returns_a_handler_with_the_propagated_error() {
+      @Test void returns_a_handler_with_the_propagated_error() throws Exception {
         final var error = new IOException("Something went wrong...");
+        final var resolverSpy = Spy.<ThrowingFunction<AutoCloseable, ?, ?>>lambda(fis -> "");
         final var handler = ResourceHolder.failure(error)
-          .resolveClosing(fis -> {
-            throw new AssertionError("The handler should not be executed!");
-          });
+          .resolveClosing(resolverSpy);
 
         assertThat(handler.success()).isEmpty();
         assertThat(handler.error())
-          .containsInstanceOf(IOException.class)
-          .get(InstanceOfAssertFactories.THROWABLE)
+          .get(THROWABLE)
+          .isExactlyInstanceOf(IOException.class)
           .hasMessage(error.getMessage());
-      }
-    }
 
-    @Nested class when_neither_the_resource_nor_the_error_is_present {
-      @Test void returns_a_handler_with_nothing() {
-        final var handler = ResourceHolder.from(null)
-          .resolveClosing(res -> {
-            throw new AssertionError("The handler should not be executed!");
-          });
-
-        assertThat(handler.success()).isEmpty();
-        assertThat(handler.error()).isEmpty();
+        verify(resolverSpy, never()).apply(any());
       }
     }
   }
@@ -93,70 +95,50 @@ import io.github.joselion.testing.UnitTest;
     @Nested class when_the_resource_is_present {
       @Nested class when_the_operation_succeeds {
         @Test void returns_a_handler_with_nothing() {
-          final var counter = new ArrayList<>();
           final var fis = getFIS();
+          final var effectSpy = Spy.lambda(noOpEffect);
           final var handler = Maybe.withResource(fis)
-            .runEffectClosing(res -> {
-              assertThat(res)
-                .isEqualTo(fis)
-                .hasContent("foo");
-              counter.add(1);
-            });
-
-          assertThat(counter).containsExactly(1);
+            .runEffectClosing(effectSpy);
 
           assertThat(handler.error()).isEmpty();
-
           assertThatThrownBy(fis::read)
             .isExactlyInstanceOf(IOException.class)
             .hasMessage("Stream Closed");
+
+          verify(effectSpy).accept(fis);
         }
       }
 
       @Nested class when_the_operation_fails {
-        @Test void returns_a_handler_with_the_error() {
+        @Test void returns_a_handler_with_the_error() throws IOException {
           final var fis = getFIS();
-          final var exception = new IOException("FAIL");
+          final var effectSpy = Spy.lambda(errorEffect);
           final var handler = Maybe.withResource(fis)
-            .runEffectClosing(res -> {
-              assertThat(res)
-                .isEqualTo(fis)
-                .hasContent("foo");
-              throw exception;
-            });
+            .runEffectClosing(effectSpy);
 
-          assertThat(handler.error()).contains(exception);
-
+          assertThat(handler.error()).contains(FAIL_EXCEPTION);
           assertThatThrownBy(fis::read)
             .isExactlyInstanceOf(IOException.class)
             .hasMessage("Stream Closed");
+
+          verify(effectSpy).accept(fis);
         }
       }
     }
 
     @Nested class when_the_error_is_present {
-      @Test void returns_a_handler_with_the_propagated_error() {
+      @Test void returns_a_handler_with_the_propagated_error() throws Exception {
         final var error = new IOException("Something went wrong...");
+        final var effectSpy = Spy.<ThrowingConsumer<AutoCloseable, ?>>lambda(res -> { });
         final var handler = ResourceHolder.failure(error)
-          .runEffectClosing(res -> {
-            throw new AssertionError("The handler should not be executed!");
-          });
+          .runEffectClosing(effectSpy);
 
         assertThat(handler.error())
-          .containsInstanceOf(IOException.class)
-          .get(InstanceOfAssertFactories.THROWABLE)
+          .get(THROWABLE)
+          .isExactlyInstanceOf(IOException.class)
           .hasMessage(error.getMessage());
-      }
-    }
 
-    @Nested class when_neither_the_resource_nor_the_error_is_present {
-      @Test void returns_a_handler_with_nothing() {
-        final var handler = ResourceHolder.from(null)
-          .runEffectClosing(res -> {
-            throw new AssertionError("The handler should not be executed!");
-          });
-
-        assertThat(handler.error()).isEmpty();
+        verify(effectSpy, never()).accept(any());
       }
     }
   }

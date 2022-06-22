@@ -14,7 +14,6 @@ import java.io.FileNotFoundException;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.FileSystemException;
 import java.util.List;
-import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -22,7 +21,6 @@ import java.util.function.Supplier;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import io.github.joselion.maybe.exceptions.WrappingException;
 import io.github.joselion.maybe.util.function.ThrowingConsumer;
 import io.github.joselion.maybe.util.function.ThrowingFunction;
 import io.github.joselion.maybe.util.function.ThrowingSupplier;
@@ -204,13 +202,16 @@ import io.github.joselion.testing.UnitTest;
 
     @Nested class when_the_error_is_present {
       @Nested class and_the_error_resolver_is_not_provided {
-        @Test void never_calls_the_resolver_callback_and_creates_a_handler_with_nothing() {
+        @Test void never_calls_the_resolver_callback_and_returns_a_handler_with_the_error() {
           final var successSpy = Spy.<ThrowingFunction<String, Integer, RuntimeException>>lambda(String::length);
           final var handler = Maybe.fromResolver(throwingOp)
             .resolve(successSpy);
 
           assertThat(handler.success()).isEmpty();
-          assertThat(handler.error()).isEmpty();
+          assertThat(handler.error())
+            .get(THROWABLE)
+            .isExactlyInstanceOf(FAIL_EXCEPTION.getClass())
+            .isEqualTo(FAIL_EXCEPTION);
 
           verify(successSpy, never()).apply(any());
         }
@@ -273,12 +274,15 @@ import io.github.joselion.testing.UnitTest;
       }
 
       @Nested class and_the_error_callback_is_not_provided {
-        @Test void never_calls_the_effect_callback_and_returns_a_new_empty_handler() throws FileSystemException {
+        @Test void never_calls_the_effect_callback_and_returns_a_handler_with_the_error() throws FileSystemException {
           final var effectSpy = Spy.<ThrowingConsumer<String, FileSystemException>>lambda(v -> throwingOp.get());
           final var handler = Maybe.fromResolver(throwingOp);
           final var newHandler = handler.runEffect(effectSpy);
 
-          assertThat(newHandler.error()).isEmpty();
+          assertThat(newHandler.error())
+            .get(THROWABLE)
+            .isExactlyInstanceOf(FAIL_EXCEPTION.getClass())
+            .isEqualTo(FAIL_EXCEPTION);
 
           verify(effectSpy, never()).accept(any());
         }
@@ -289,7 +293,7 @@ import io.github.joselion.testing.UnitTest;
   @Nested class map {
     @Nested class when_the_value_is_present {
       @Test void returns_a_new_handler_applying_the_mapper_function() {
-        final var handler = ResolveHandler.withSuccess("Hello world!")
+        final var handler = ResolveHandler.ofSuccess("Hello world!")
           .map(String::length);
 
         assertThat(handler.success()).contains(12);
@@ -300,65 +304,11 @@ import io.github.joselion.testing.UnitTest;
 
     @Nested class when_the_error_is_present {
       @Test void returns_a_new_handler_with_the_previous_error() {
-        final var handler = ResolveHandler.withError(FAIL_EXCEPTION)
+        final var handler = ResolveHandler.ofError(FAIL_EXCEPTION)
           .map(Object::toString);
 
         assertThat(handler.success()).isEmpty();
         assertThat(handler.error()).contains(FAIL_EXCEPTION);
-      }
-    }
-
-    @Nested class when_neither_the_value_nor_the_error_is_present {
-      @Test void returns_an_empty_handler() {
-        final var handler = ResolveHandler.withNothing()
-          .map(Object::toString);
-
-        assertThat(handler.success()).isEmpty();
-        assertThat(handler.error()).isEmpty();
-      }
-    }
-  }
-
-  @Nested class filter {
-    @Nested class when_the_value_is_present {
-      @Nested class and_the_predicate_matches {
-        @Test void returns_a_new_handler_with_the_value() {
-          final var handler = ResolveHandler.withSuccess("Hello world!")
-            .filter(it -> it.contains("world"));
-
-          assertThat(handler.success()).contains("Hello world!");
-          assertThat(handler.error()).isEmpty();
-        }
-      }
-
-      @Nested class and_the_predicate_does_not_match {
-        @Test void returns_an_empty_handler() {
-          final var handler = ResolveHandler.withSuccess("Hello world!")
-            .filter(it -> it.contains("planet"));
-
-          assertThat(handler.success()).isEmpty();
-          assertThat(handler.error()).isEmpty();
-        }
-      }
-    }
-
-    @Nested class when_the_error_is_present {
-      @Test void returns_a_new_handler_with_the_previous_error() {
-        final var handler = ResolveHandler.withError(FAIL_EXCEPTION)
-          .filter(Objects::isNull);
-
-        assertThat(handler.success()).isEmpty();
-        assertThat(handler.error()).contains(FAIL_EXCEPTION);
-      }
-    }
-
-    @Nested class when_neither_the_value_nor_the_error_is_present {
-      @Test void returns_an_empty_handler() {
-        final var handler = ResolveHandler.withNothing()
-          .filter(Objects::isNull);
-
-        assertThat(handler.success()).isEmpty();
-        assertThat(handler.error()).isEmpty();
       }
     }
   }
@@ -368,7 +318,7 @@ import io.github.joselion.testing.UnitTest;
       @Nested class and_the_object_can_be_cast {
         @Test void returns_a_new_handler_with_the_cast_value() {
           final var anyValue = (Object) "Hello";
-          final var handler = ResolveHandler.withSuccess(anyValue)
+          final var handler = ResolveHandler.ofSuccess(anyValue)
             .cast(String.class);
 
           assertThat(handler.success()).contains("Hello");
@@ -378,39 +328,28 @@ import io.github.joselion.testing.UnitTest;
 
       @Nested class and_the_object_can_not_be_cast {
         @Test void returns_a_new_handler_with_the_cast_exception() {
-          final var anyValue = (Object) 3;
-          final var handler = ResolveHandler.withSuccess(anyValue)
+          final var handler = ResolveHandler.ofSuccess(3)
             .cast(String.class);
 
           assertThat(handler.success()).isEmpty();
           assertThat(handler.error())
-            .map(WrappingException::getCause)
-            .containsInstanceOf(ClassCastException.class)
-            .isNotEmpty();
+            .get(THROWABLE)
+            .isExactlyInstanceOf(ClassCastException.class)
+            .hasMessage("Cannot cast java.lang.Integer to java.lang.String");
         }
       }
     }
 
     @Nested class when_the_error_is_present {
       @Test void returns_a_new_handler_with_a_cast_exception() {
-        final var handler = ResolveHandler.withError(FAIL_EXCEPTION)
+        final var handler = ResolveHandler.ofError(FAIL_EXCEPTION)
             .cast(String.class);
 
         assertThat(handler.success()).isEmpty();
         assertThat(handler.error())
-          .map(WrappingException::getCause)
-          .containsInstanceOf(FileSystemException.class)
-          .isNotEmpty();
-      }
-    }
-
-    @Nested class when_neither_the_value_nor_the_error_is_present {
-      @Test void returns_an_empty_handler() {
-        final var handler = ResolveHandler.withNothing()
-          .cast(String.class);
-
-        assertThat(handler.success()).isEmpty();
-        assertThat(handler.error()).isEmpty();
+          .get(THROWABLE)
+          .isExactlyInstanceOf(ClassCastException.class)
+          .hasMessage(FAIL_EXCEPTION.getMessage());
       }
     }
   }
@@ -560,19 +499,6 @@ import io.github.joselion.testing.UnitTest;
           .get(THROWABLE)
           .isExactlyInstanceOf(FileNotFoundException.class)
           .hasMessageStartingWith("invalidFile.txt");
-      }
-    }
-
-    @Nested class when_neither_the_resource_nor_the_error_is_present {
-      @Test void returns_an_empty_resource_holder() {
-        final var path = "./src/test/resources/readTest.txt";
-        final var holder = Maybe.just(path)
-          .resolve(FileInputStream::new)
-          .map(file -> null)
-          .mapToResource(file -> null);
-
-        assertThat(holder.resource()).isEmpty();
-        assertThat(holder.error()).isEmpty();
       }
     }
   }

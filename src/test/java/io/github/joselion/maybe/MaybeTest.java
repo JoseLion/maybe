@@ -1,6 +1,7 @@
 package io.github.joselion.maybe;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.InstanceOfAssertFactories.THROWABLE;
 import static org.assertj.core.api.InstanceOfAssertFactories.optional;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
@@ -9,6 +10,7 @@ import static org.mockito.Mockito.verify;
 
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import org.assertj.core.api.AutoCloseableSoftAssertions;
@@ -248,12 +250,15 @@ import io.github.joselion.testing.UnitTest;
     }
 
     @Nested class when_the_value_is_not_present {
-      @Test void the_callback_is_never_called() throws IOException {
+      @Test void the_callback_is_never_called_and_returns_a_handler_with_an_error() throws IOException {
         final var functionSpy = Spy.lambda(failFunction);
         final var handler = Maybe.<String>nothing().resolve(functionSpy);
 
         assertThat(handler.success()).isEmpty();
-        assertThat(handler.error()).isEmpty();
+        assertThat(handler.error())
+          .get(THROWABLE)
+          .isExactlyInstanceOf(NoSuchElementException.class)
+          .hasMessage("No value present");
 
         verify(functionSpy, never()).apply(any());
       }
@@ -300,12 +305,15 @@ import io.github.joselion.testing.UnitTest;
     }
 
     @Nested class when_the_value_is_not_present {
-      @Test void the_callback_is_never_called() {
+      @Test void the_callback_is_never_called_and_returns_a_handler_with_an_error() {
         final var consumerSpy = Spy.<ThrowingConsumer<Object, RuntimeException>>lambda(v -> { });
         final var handler = Maybe.nothing()
           .runEffect(consumerSpy);
 
-        assertThat(handler.error()).isEmpty();
+        assertThat(handler.error())
+          .get(THROWABLE)
+          .isExactlyInstanceOf(NoSuchElementException.class)
+          .hasMessage("No value present");
 
         verify(consumerSpy, never()).accept(any());
       }
