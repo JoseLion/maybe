@@ -388,6 +388,21 @@ public final class ResolveHandler<T, E extends Exception> {
   }
 
   /**
+   * Transforms the handler to an {@link Either}, in which the left side might
+   * contain the error and the right side might contain the resolved value.
+   * <p>
+   * The benefit of transforming to {@code Either} is that its implementation
+   * ensures that only one of the two possible values is present at the same
+   * time, never both nor none.
+   * 
+   * @return an {@code Either} with the resolved value on the right side or the
+   *         error on the left
+   */
+  public Either<E, T> toEither() {
+    return value;
+  }
+
+  /**
    * Map the value to an {@link AutoCloseable} resource to be use in either a
    * {@code resolveClosing} or a {@code runEffectClosing} operation, which will
    * close the resource when it completes. If the value was not resolved, the
