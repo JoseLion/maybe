@@ -473,6 +473,30 @@ import io.github.joselion.testing.UnitTest;
     }
   }
 
+  @Nested class toEither {
+    @Nested class when_the_value_is_present {
+      @Test void returns_an_Either_with_the_value_on_its_right_side() {
+        final var either = Maybe.fromResolver(okOp).toEither();
+
+        assertThat(either.isLeft()).isFalse();
+        assertThat(either.isRight()).isTrue();
+        assertThat(either.leftOrNull()).isNull();
+        assertThat(either.rightOrNull()).isEqualTo(OK);
+      }
+    }
+
+    @Nested class when_the_error_is_present {
+      @Test void returns_an_Either_with_the_error_on_its_left_side() {
+        final var either = Maybe.fromResolver(throwingOp).toEither();
+
+        assertThat(either.isLeft()).isTrue();
+        assertThat(either.isRight()).isFalse();
+        assertThat(either.leftOrNull()).isEqualTo(FAIL_EXCEPTION);
+        assertThat(either.rightOrNull()).isNull();
+      }
+    }
+  }
+
   @Nested class mapToResource {
     @Nested class when_the_resource_is_present {
       @Test void returns_a_resource_holder_with_the_mapped_value() {
