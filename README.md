@@ -1,6 +1,6 @@
 [![JoseLion](https://circleci.com/gh/JoseLion/maybe.svg?style=svg)](https://app.circleci.com/pipelines/github/JoseLion/maybe)
-[![Maven Central](https://img.shields.io/maven-central/v/com.github.joselion/maybe.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22com.github.joselion%22%20AND%20a:%22maybe%22)
-[![javadoc](https://javadoc.io/badge2/com.github.joselion/maybe/javadoc.svg)](https://javadoc.io/doc/com.github.joselion/maybe)
+[![Maven Central](https://img.shields.io/maven-central/v/io.github.joselion/maybe.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22io.github.joselion%22%20AND%20a:%22maybe%22)
+[![javadoc](https://javadoc.io/badge2/io.github.joselion/maybe/javadoc.svg)](https://javadoc.io/doc/io.github.joselion/maybe)
 [![codecov](https://codecov.io/gh/JoseLion/maybe/branch/master/graph/badge.svg)](https://codecov.io/gh/JoseLion/maybe)
 
 # Maybe - Safely handle exceptions
@@ -14,29 +14,42 @@ The wrapper intends to help us avoid the imperative _try/catch_ syntax, while pr
 * Type-safe differentiation between resolving a value vs. runnning effects.
 * Easy and rich API similar to Java's `Optional`.
 * Full interoperability with `java.util.Optional`.
+* Includes an entirely safe `Either<L, R>` type where only one side can be present at a time
 * Method reference friendly - The API provides methods with overloads that makes it easier to use [method reference](https://docs.oracle.com/javase/tutorial/java/javaOO/methodreferences.html) syntax.
 
 ## Requirements
 
-> The only requirement to use this library is Java 8 or higher.
+As of v3 this library uses new Java features, so `Java 18+` is required. This library moves along with Java and the requirement might increase as new Java versions aare released.
+
+> If you need a JDK 8+ compatible version you can use v2 instead. I'll try to maintain v2 as long as possible to provide a backawards compatible version. However, it's my strong belive that Java developers need start moving their codebase to newer Java versions rather than staying on their Java 8-ish confort zone, and open-source libraries has a great impact on this by puting the requirement bars so low, allowing Java updates to be neglated.
+
+## Breaking Changes (from v2 to v3)
+
+- **⚠️ IMPORTANT:** Due to changes on GitHub policies (and by consequence on Maven), it's no longer allowed to use `com.github` as a valid group ID prefix. To honor that and maintain consistency, **as of v3**, the artifact ID is now `io.github.joselion.maybe`. If you want to use a version **before v3**, you can still find it using the ID `com.github.joselion.maybe`.
+- A `ResolveHandler` can no longer be empty. It either has the resolved value or an error.
+- The method `ResolveHandler#filter` was removed to avoid the posibility of an inconsitent empty handler.
+- The `WrapperException` type was removed. Errors now propagate downstream with the API.
+- The method `EffectHandler#toMaybe` was removed as it didn't make sense for effects.
+- All `*Checked.java` functions were renamed to `Throwing*.java`
+  - For example, `FunctionChecked<T, R, E>` was renamed to `ThrowingFunction<T, R, E>`
 
 ## Install
 
-[![Maven Central](https://img.shields.io/maven-central/v/com.github.joselion/maybe.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22com.github.joselion%22%20AND%20a:%22maybe%22)
+[![Maven Central](https://img.shields.io/maven-central/v/io.github.joselion/maybe.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22io.github.joselion%22%20AND%20a:%22maybe%22)
 
-Maybe is available in [Maven Central](https://mvnrepository.com/artifact/com.github.joselion/maybe). You can checkout the latest version with the badge above.
+Maybe is available in [Maven Central](https://mvnrepository.com/artifact/io.github.joselion/maybe). You can checkout the latest version with the badge above.
 
 **Gradle**
 
 ```gradle
-implementation('com.github.joselion:maybe:x.y.z')
+implementation('io.github.joselion:maybe:x.y.z')
 ```
 
 **Maven**
 
 ```xml
 <dependency>
-  <groupId>com.github.joselion</groupId>
+  <groupId>io.github.joselion</groupId>
   <artifactId>maybe</artifactId>
   <version>x.y.z</version>
 </dependency>
@@ -103,6 +116,46 @@ Maybe.just(path)
   .orElse(err -> ...);
 ```
 
+## The `Either<L, R>` type
+
+An awesome extra of `Maybe`, is that it provides a useful [Either<L, R>][either-ref] type which guarantees that the only one of the sides (left `L` or right `R`) is present per instance. That is possible thanks to:
+
+1. `Either<L, R>` is a [sealed interface](https://docs.oracle.com/en/java/javase/15/language/sealed-classes-and-interfaces.html). It cannot be implemented by any class nor anonimously instantiated in any way.
+2. There only exist 2 implementations of `Either<L, R>`: `Either.Left` and `Either.Right`. In those implementations, only one field is used to store the instance value.
+3. It's not possible to create an `Either<L, R>` instance of a `null` value.
+
+The `Either<L, R>` makes a lot of sense when resolving values from throwing operations. At the end of the day, you can end up with either the resolved value (`Rigth`) or the thrown exception (`Left`). You can convert from a `ResolveHandler<T, E>` to an `Either<E, T>` usong the `ResolveHandler#toEither` terminal operator.
+
+To use `Either` on its own, use the factory methods to create an instance and the API to handle/unwrap the value:
+
+```java
+public Either<String, Integer> fizzOrNumber(final int value) {
+  return value % 7
+    ? Either.ofLeft("fizz")
+    : Either.ofRight(value);
+}
+
+public static void main (final String[] args) {
+  final var sum = IntStream.range(1, 25)
+    .boxed()
+    .map(this::fizzOrNumber)
+    .map(either ->
+      either
+        .onLeft(fizz -> log.info("Multiple of 7: {}", fizz))
+        .onRight(value -> log.info("Value: {}", value))
+        .unwrap(
+          fizz -> 0,
+          Function.identity()
+        )
+    )
+    .reduce(0, Integer::sum);
+
+  log.info("The sum of non-fizz values is: {}", sum);
+}
+```
+
+Take a look at the [documentation][either-ref] to see all the methods available in the `Either<L, R>` API.
+
 ## Optional interoperability
 
 The API provides full interoperability with Java's `Optional`. You can use `Maybe.fromOptional(..)` to create an instance from an optional value, or you can use the terminal operator `.toOptional()` to unwrap the value to an optional too. However, there's a change you might want to create a `Maybe<T>` withing the Optional API or another library like [Project Reactor](https://projectreactor.io/), like from `.map(..)` method. To make this esier the API provides overloads to that create partial applications, and when fully applied return the specific handler.
@@ -161,10 +214,10 @@ public Properties parsePropertiesFile(final String filePath) {
 
 ## API Reference
 
-You can find more details of the API in the [latest Javadocs](https://javadoc.io/doc/com.github.joselion/maybe).If you need to check the Javadocs of an older version you can also use the full URL as shown below. Just replace `<x.y.z>` with the version you want to see:
+You can find more details of the API in the [latest Javadocs](https://javadoc.io/doc/io.github.joselion/maybe).If you need to check the Javadocs of an older version you can also use the full URL as shown below. Just replace `<x.y.z>` with the version you want to see:
 
 ```
-https://javadoc.io/doc/com.github.joselion/maybe/<x.y.z>
+https://javadoc.io/doc/io.github.joselion/maybe/<x.y.z>
 ```
 
 ## Something's missing?
@@ -180,7 +233,8 @@ Contributions are very welcome! To do so, please fork this repository and open a
 [Apache License 2.0](https://github.com/JoseLion/maybe/blob/master/LICENSE)
 
 <!-- References -->
-[resolve-handler-ref]: https://javadoc.io/doc/com.github.joselion/maybe/latest/com/github/joselion/maybe/ResolveHandler.html
-[effect-handler-ref]: https://javadoc.io/doc/com.github.joselion/maybe/latest/com/github/joselion/maybe/EffectHandler.html
-[resource-holder-ref]: https://javadoc.io/doc/com.github.joselion/maybe/latest/com/github/joselion/maybe/ResourceHolder.html
-[util-package-ref]: https://javadoc.io/doc/com.github.joselion/maybe/latest/com/github/joselion/maybe/util/package-summary.html
+[resolve-handler-ref]: https://javadoc.io/doc/io.github.joselion/maybe/latest/com/github/joselion/maybe/ResolveHandler.html
+[effect-handler-ref]: https://javadoc.io/doc/io.github.joselion/maybe/latest/com/github/joselion/maybe/EffectHandler.html
+[resource-holder-ref]: https://javadoc.io/doc/io.github.joselion/maybe/latest/com/github/joselion/maybe/ResourceHolder.html
+[util-package-ref]: https://javadoc.io/doc/io.github.joselion/maybe/latest/com/github/joselion/maybe/util/package-summary.html
+[either-ref]: https://javadoc.io/doc/io.github.joselion/maybe/latest/com/github/joselion/maybe/Either.html
