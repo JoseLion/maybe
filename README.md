@@ -130,7 +130,7 @@ To use `Either` on its own, use the factory methods to create an instance and th
 
 ```java
 public Either<String, Integer> fizzOrNumber(final int value) {
-  return value % 7
+  return value % 7 == 0
     ? Either.ofLeft("fizz")
     : Either.ofRight(value);
 }

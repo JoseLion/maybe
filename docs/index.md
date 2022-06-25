@@ -25,7 +25,7 @@ As of v3 this library uses new Java features, so `Java 18+` is required. This li
 
 ## Breaking Changes (from v2 to v3)
 
-- **⚠️ IMPORTANT:** Due to changes on GitHub policies (and by consequence on Maven), it's no longer allowed to use `com.github` as a valid group ID prefix. To honor that and maintain consistency, as of v3, the artifact ID is now `io.github.joselion.maybe`. If you want to use a version before v3, you can still find it using the ID `com.github.joselion.maybe`.
+- **⚠️ IMPORTANT:** Due to changes on GitHub policies (and by consequence on Maven), it's no longer allowed to use `com.github` as a valid group ID prefix. To honor that and maintain consistency, **as of v3**, the artifact ID is now `io.github.joselion.maybe`. If you want to use a version **before v3**, you can still find it using the ID `com.github.joselion.maybe`.
 - A `ResolveHandler` can no longer be empty. It either has the resolved value or an error.
 - The method `ResolveHandler#filter` was removed to avoid the posibility of an inconsitent empty handler.
 - The `WrapperException` type was removed. Errors now propagate downstream with the API.
@@ -130,7 +130,7 @@ To use `Either` on its own, use the factory methods to create an instance and th
 
 ```java
 public Either<String, Integer> fizzOrNumber(final int value) {
-  return value % 7
+  return value % 7 == 0
     ? Either.ofLeft("fizz")
     : Either.ofRight(value);
 }
