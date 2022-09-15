@@ -1,7 +1,7 @@
 [![JoseLion](https://circleci.com/gh/JoseLion/maybe.svg?style=svg)](https://app.circleci.com/pipelines/github/JoseLion/maybe)
 [![Maven Central](https://img.shields.io/maven-central/v/io.github.joselion/maybe.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22io.github.joselion%22%20AND%20a:%22maybe%22)
 [![javadoc](https://javadoc.io/badge2/io.github.joselion/maybe/javadoc.svg)](https://javadoc.io/doc/io.github.joselion/maybe)
-[![codecov](https://codecov.io/gh/JoseLion/maybe/branch/master/graph/badge.svg)](https://codecov.io/gh/JoseLion/maybe)
+[![codecov](https://codecov.io/gh/JoseLion/maybe/branch/main/graph/badge.svg)](https://codecov.io/gh/JoseLion/maybe)
 
 # Maybe - Safely handle exceptions
 
@@ -226,11 +226,11 @@ Suggestions are always welcome! Please create an [issue](https://github.com/Jose
 
 ## Contributions
 
-Contributions are very welcome! To do so, please fork this repository and open a Pull Request to the `master` branch.
+Contributions are very welcome! To do so, please fork this repository and open a Pull Request to the `main` branch.
 
 ## License
 
-[Apache License 2.0](https://github.com/JoseLion/maybe/blob/master/LICENSE)
+[Apache License 2.0](https://github.com/JoseLion/maybe/blob/main/LICENSE)
 
 <!-- References -->
 [resolve-handler-ref]: https://javadoc.io/doc/io.github.joselion/maybe/latest/com/github/joselion/maybe/ResolveHandler.html
