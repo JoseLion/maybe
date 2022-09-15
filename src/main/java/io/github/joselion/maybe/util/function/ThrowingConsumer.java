@@ -13,13 +13,13 @@ package io.github.joselion.maybe.util.function;
  * @since v0.3.0
  */
 @FunctionalInterface
-public interface ThrowingConsumer<T, E extends Exception> {
+public interface ThrowingConsumer<T, E extends Throwable> {
 
   /**
    * Accepts this function with the given argument, or throws an exception.
    * 
    * @param t the consumer argument
-   * @throws E which extends from {@link Exception}
+   * @throws E which extends from {@link Throwable}
    */
   void accept(T t) throws E;
 }

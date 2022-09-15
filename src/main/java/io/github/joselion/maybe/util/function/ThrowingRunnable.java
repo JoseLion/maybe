@@ -12,12 +12,12 @@ package io.github.joselion.maybe.util.function;
  * @since v0.1.0
  */
 @FunctionalInterface
-public interface ThrowingRunnable<E extends Exception> {
+public interface ThrowingRunnable<E extends Throwable> {
 
   /**
    * Runs the operation, or throws an exception.
    * 
-   * @throws E which extends from {@link Exception}
+   * @throws E which extends from {@link Throwable}
    */
   void run() throws E;
 }

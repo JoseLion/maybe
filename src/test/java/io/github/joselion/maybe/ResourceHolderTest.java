@@ -74,7 +74,7 @@ import io.github.joselion.testing.UnitTest;
     }
 
     @Nested class when_the_error_is_present {
-      @Test void returns_a_handler_with_the_propagated_error() throws Exception {
+      @Test void returns_a_handler_with_the_propagated_error() throws Throwable {
         final var error = new IOException("Something went wrong...");
         final var resolverSpy = Spy.<ThrowingFunction<AutoCloseable, ?, ?>>lambda(fis -> "");
         final var handler = ResourceHolder.failure(error)
@@ -127,7 +127,7 @@ import io.github.joselion.testing.UnitTest;
     }
 
     @Nested class when_the_error_is_present {
-      @Test void returns_a_handler_with_the_propagated_error() throws Exception {
+      @Test void returns_a_handler_with_the_propagated_error() throws Throwable {
         final var error = new IOException("Something went wrong...");
         final var effectSpy = Spy.<ThrowingConsumer<AutoCloseable, ?>>lambda(res -> { });
         final var handler = ResourceHolder.failure(error)

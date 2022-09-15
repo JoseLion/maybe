@@ -93,13 +93,12 @@ public final class Maybe<T> {
    * @return a {@link ResolveHandler} with either the value resolved or the thrown
    *         exception to be handled
    */
-  public static <T, E extends Exception> ResolveHandler<T, E> fromResolver(final ThrowingSupplier<T, E> resolver) {
+  public static <T, E extends Throwable> ResolveHandler<T, E> fromResolver(final ThrowingSupplier<T, E> resolver) {
     try {
       return ResolveHandler.ofSuccess(resolver.get());
-    } catch (Exception e) {
+    } catch (Throwable e) { // NOSONAR
       @SuppressWarnings("unchecked")
-      final E error = (E) e;
-
+      final var error = (E) e;
       return ResolveHandler.ofError(error);
     }
   }
@@ -114,14 +113,13 @@ public final class Maybe<T> {
    * @return an {@link EffectHandler} with either the thrown exception to be
    *         handled or nothing
    */
-  public static <E extends Exception> EffectHandler<E> fromEffect(final ThrowingRunnable<E> effect) {
+  public static <E extends Throwable> EffectHandler<E> fromEffect(final ThrowingRunnable<E> effect) {
     try {
       effect.run();
       return EffectHandler.empty();
-    } catch (Exception e) {
+    } catch (Throwable e) { // NOSONAR
       @SuppressWarnings("unchecked")
-      final E error = (E) e;
-
+      final var error = (E) e;
       return EffectHandler.ofError(error);
     }
   }
@@ -152,7 +150,7 @@ public final class Maybe<T> {
    * @return a partially applied {@link ResolveHandler}. This means, a function
    *         that receives an {@code S} value, and produces a {@code ResolveHandler<T, E>}
    */
-  public static <S, T, E extends Exception> Function<S, ResolveHandler<T, E>> partialResolver(
+  public static <S, T, E extends Throwable> Function<S, ResolveHandler<T, E>> partialResolver(
     final ThrowingFunction<S, T, E> resolver
   ) {
     return value -> Maybe.fromResolver(() -> resolver.apply(value));
@@ -182,7 +180,7 @@ public final class Maybe<T> {
    * @return a partially applied {@link EffectHandler}. This means, a function
    *         that receives an {@code S} value, and produces an {@code EffectHandler<E>}
    */
-  public static <S, E extends Exception> Function<S, EffectHandler<E>> partialEffect(
+  public static <S, E extends Throwable> Function<S, EffectHandler<E>> partialEffect(
     final ThrowingConsumer<S, E> effect
   ) {
     return value -> Maybe.fromEffect(() -> effect.accept(value));
@@ -199,7 +197,7 @@ public final class Maybe<T> {
    * @return a {@link ResourceHolder} which let's you choose to resolve a value
    *         or run an effect using the prepared resource
    */
-  public static <R extends AutoCloseable, E extends Exception> ResourceHolder<R, E> withResource(final R resource) {
+  public static <R extends AutoCloseable, E extends Throwable> ResourceHolder<R, E> withResource(final R resource) {
     return ResourceHolder.from(resource);
   }
 
@@ -249,7 +247,7 @@ public final class Maybe<T> {
    *         thrown exception to be handled
    */
   @SuppressWarnings("unchecked")
-  public <U, E extends Exception> ResolveHandler<U, E> resolve(final ThrowingFunction<T, U, E> resolver) {
+  public <U, E extends Throwable> ResolveHandler<U, E> resolve(final ThrowingFunction<T, U, E> resolver) {
     try {
       return value
         .map(Maybe.partialResolver(resolver))
@@ -269,7 +267,7 @@ public final class Maybe<T> {
    *         handled or nothing
    */
   @SuppressWarnings("unchecked")
-  public <E extends Exception> EffectHandler<E> runEffect(final ThrowingConsumer<T, E> effect) {
+  public <E extends Throwable> EffectHandler<E> runEffect(final ThrowingConsumer<T, E> effect) {
     try {
       return value
         .map(Maybe.partialEffect(effect))
@@ -292,7 +290,7 @@ public final class Maybe<T> {
     try {
       final var newValue = type.cast(value.orElseThrow());
       return Maybe.just(newValue);
-    } catch (final Exception error) {
+    } catch (final ClassCastException error) {
       return nothing();
     }
   }

@@ -360,7 +360,7 @@ import io.github.joselion.testing.UnitTest;
         final var handler = Maybe.fromResolver(okOp);
 
         assertThat(handler.orElse(OTHER)).isEqualTo(OK);
-        assertThat(handler.orElse(Exception::getMessage)).isEqualTo(OK);
+        assertThat(handler.orElse(RuntimeException::getMessage)).isEqualTo(OK);
       }
     }
 
