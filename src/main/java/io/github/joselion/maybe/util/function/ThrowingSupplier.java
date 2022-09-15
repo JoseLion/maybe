@@ -13,13 +13,13 @@ package io.github.joselion.maybe.util.function;
  * @since v0.1.0
  */
 @FunctionalInterface
-public interface ThrowingSupplier<T, E extends Exception> {
+public interface ThrowingSupplier<T, E extends Throwable> {
 
   /**
    * Gets a result or throws an exception.
    * 
    * @return a result
-   * @throws E which extends from {@link Exception}
+   * @throws E which extends from {@link Throwable}
    */
   T get() throws E;
 }

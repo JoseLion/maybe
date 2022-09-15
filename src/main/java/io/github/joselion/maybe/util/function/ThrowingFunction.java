@@ -14,14 +14,14 @@ package io.github.joselion.maybe.util.function;
  * @since v0.1.0
  */
 @FunctionalInterface
-public interface ThrowingFunction<T, R, E extends Exception> {
+public interface ThrowingFunction<T, R, E extends Throwable> {
 
   /**
    * Applies this function to the given argument, or throws an exception.
    * 
    * @param t the function argument
    * @return the function result
-   * @throws E which extends from {@link Exception}
+   * @throws E which extends from {@link Throwable}
    */
   R apply(T t) throws E;
 
@@ -32,7 +32,7 @@ public interface ThrowingFunction<T, R, E extends Exception> {
    * @param <E> the type of exception that the function throws
    * @return a function that always returns its input argument
    */
-  static <T, E extends Exception> ThrowingFunction<T, T, E> identity() {
+  static <T, E extends Throwable> ThrowingFunction<T, T, E> identity() {
       return t -> t;
   }
 }

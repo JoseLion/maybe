@@ -19,7 +19,7 @@ import io.github.joselion.maybe.util.function.ThrowingRunnable;
  * @author Jose Luis Leon
  * @since v0.3.2
  */
-public final class EffectHandler<E extends Exception> {
+public final class EffectHandler<E extends Throwable> {
 
   private final Optional<E> error;
 
@@ -34,7 +34,7 @@ public final class EffectHandler<E extends Exception> {
    * @param <E> the type of the possible exception
    * @return a EffectHandler with neither the success nor the error value
    */
-  static <E extends Exception> EffectHandler<E> empty() {
+  static <E extends Throwable> EffectHandler<E> empty() {
     return new EffectHandler<>(null);
   }
 
@@ -45,7 +45,7 @@ public final class EffectHandler<E extends Exception> {
    * @param error the error to instanciate the EffectHandler
    * @return a EffectHandler instance with an error value
    */
-  static <E extends Exception> EffectHandler<E> ofError(final E error) {
+  static <E extends Throwable> EffectHandler<E> ofError(final E error) {
     return new EffectHandler<>(error);
   }
 
@@ -82,7 +82,7 @@ public final class EffectHandler<E extends Exception> {
    * @param effect a consumer function that recieves the caught error
    * @return the same handler to continue chainning operations
    */
-  public <X extends Exception> EffectHandler<E> doOnError(final Class<X> ofType, final Consumer<X> effect) {
+  public <X extends Throwable> EffectHandler<E> doOnError(final Class<X> ofType, final Consumer<X> effect) {
     error.filter(ofType::isInstance)
       .map(ofType::cast)
       .ifPresent(effect);
@@ -153,7 +153,7 @@ public final class EffectHandler<E extends Exception> {
    * @return a new {@link EffectHandler} representing the result of one of the
    *         invoked callback
    */
-  public <X extends Exception> EffectHandler<X> runEffect(
+  public <X extends Throwable> EffectHandler<X> runEffect(
     final ThrowingRunnable<X> onSuccess,
     final ThrowingConsumer<E, X> onError
   ) {
@@ -171,7 +171,7 @@ public final class EffectHandler<E extends Exception> {
    * @return a new {@link EffectHandler} that is either empty or with the
    *         thrown error
    */
-  public <X extends Exception> EffectHandler<X> runEffect(final ThrowingRunnable<X> effect) {
+  public <X extends Throwable> EffectHandler<X> runEffect(final ThrowingRunnable<X> effect) {
     return this.runEffect(effect, err -> { });
   }
 

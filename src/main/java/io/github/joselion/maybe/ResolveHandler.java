@@ -22,7 +22,7 @@ import io.github.joselion.maybe.util.function.ThrowingFunction;
  * @author Jose Luis Leon
  * @since v0.3.2
  */
-public final class ResolveHandler<T, E extends Exception> {
+public final class ResolveHandler<T, E extends Throwable> {
 
   private final Either<E, T> value;
 
@@ -38,7 +38,7 @@ public final class ResolveHandler<T, E extends Exception> {
    * @param success the success value to instantiate the ResolveHandler
    * @return a ResolveHandler instance with a success value
    */
-  static <T, E extends Exception> ResolveHandler<T, E> ofSuccess(final T success) {
+  static <T, E extends Throwable> ResolveHandler<T, E> ofSuccess(final T success) {
     return new ResolveHandler<>(Either.ofRight(success));
   }
 
@@ -50,7 +50,7 @@ public final class ResolveHandler<T, E extends Exception> {
    * @param error the error to instantiate the ResolveHandler
    * @return a ResolveHandler instance with an error value
    */
-  static <T, E extends Exception> ResolveHandler<T, E> ofError(final E error) {
+  static <T, E extends Throwable> ResolveHandler<T, E> ofError(final E error) {
     return new ResolveHandler<>(Either.ofLeft(error));
   }
 
@@ -95,7 +95,7 @@ public final class ResolveHandler<T, E extends Exception> {
    * @param effect a consumer function that receives the caught error
    * @return the same handler to continue chainning operations
    */
-  public <X extends Exception> ResolveHandler<T, E> doOnError(final Class<X> ofType, final Consumer<X> effect) {
+  public <X extends Throwable> ResolveHandler<T, E> doOnError(final Class<X> ofType, final Consumer<X> effect) {
     value.leftToOptional()
       .filter(ofType::isInstance)
       .map(ofType::cast)
@@ -172,7 +172,7 @@ public final class ResolveHandler<T, E extends Exception> {
    *                      resolves another value
    * @return a new handler with either the resolved value or the error
    */
-  public <S, X extends Exception> ResolveHandler<S, X> resolve(
+  public <S, X extends Throwable> ResolveHandler<S, X> resolve(
     final ThrowingFunction<T, S, X> onSuccess,
     final ThrowingFunction<E, S, X> onError
   ) {
@@ -193,7 +193,7 @@ public final class ResolveHandler<T, E extends Exception> {
    * @return a new handler with either the resolved value or an error
    */
   @SuppressWarnings("unchecked")
-  public <S, X extends Exception> ResolveHandler<S, X> resolve(final ThrowingFunction<T, S, X> resolver) {
+  public <S, X extends Throwable> ResolveHandler<S, X> resolve(final ThrowingFunction<T, S, X> resolver) {
     return value.unwrap(
       error -> ResolveHandler.ofError((X) error),
       Maybe.partialResolver(resolver)
@@ -210,7 +210,7 @@ public final class ResolveHandler<T, E extends Exception> {
    * @return an {@link EffectHandler} representing the result of one of the
    *         invoked callback
    */
-  public <X extends Exception> EffectHandler<X> runEffect(
+  public <X extends Throwable> EffectHandler<X> runEffect(
     final ThrowingConsumer<T, X> onSuccess,
     final ThrowingConsumer<E, X> onError
   ) {
@@ -231,7 +231,7 @@ public final class ResolveHandler<T, E extends Exception> {
    *         callback or containg the error
    */
   @SuppressWarnings("unchecked")
-  public <X extends Exception> EffectHandler<X> runEffect(final ThrowingConsumer<T, X> effect) {
+  public <X extends Throwable> EffectHandler<X> runEffect(final ThrowingConsumer<T, X> effect) {
     return value.unwrap(
       error -> EffectHandler.ofError((X) error),
       Maybe.partialEffect(effect)

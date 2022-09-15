@@ -15,7 +15,7 @@ import io.github.joselion.maybe.util.function.ThrowingFunction;
  * @author Jose Luis Leon
  * @since v1.3.0
  */
-public class ResourceHolder<R extends AutoCloseable, E extends Exception> {
+public class ResourceHolder<R extends AutoCloseable, E extends Throwable> {
 
   private final Either<E, R> value;
 
@@ -35,7 +35,7 @@ public class ResourceHolder<R extends AutoCloseable, E extends Exception> {
    * @param resource the resource to instantiate the ResourceHolder with
    * @return a new instance of ResourceHolder with the given resource
    */
-  static <R extends AutoCloseable, E extends Exception> ResourceHolder<R, E> from(final R resource) {
+  static <R extends AutoCloseable, E extends Throwable> ResourceHolder<R, E> from(final R resource) {
     return new ResourceHolder<>(resource);
   }
 
@@ -47,7 +47,7 @@ public class ResourceHolder<R extends AutoCloseable, E extends Exception> {
    * @param error the error to instantiate the failed ResourceHolder
    * @return a new instance of the failed ResourceHolder with the error
    */
-  static <R extends AutoCloseable, E extends Exception> ResourceHolder<R, E> failure(final E error) {
+  static <R extends AutoCloseable, E extends Throwable> ResourceHolder<R, E> failure(final E error) {
     return new ResourceHolder<>(error);
   }
 
@@ -87,14 +87,15 @@ public class ResourceHolder<R extends AutoCloseable, E extends Exception> {
    *         exception to be handled
    */
   @SuppressWarnings("unchecked")
-  public <T, X extends Exception> ResolveHandler<T, X> resolveClosing(final ThrowingFunction<R, T, X> resolver) {
+  public <T, X extends Throwable> ResolveHandler<T, X> resolveClosing(final ThrowingFunction<R, T, X> resolver) {
     return value.unwrap(
       error -> ResolveHandler.ofError((X) error),
       resource -> {
         try (var res = resource) {
           return ResolveHandler.ofSuccess(resolver.apply(res));
-        } catch (final Exception error) {
-          return ResolveHandler.ofError((X) error);
+        } catch (final Throwable e) { //NOSONAR
+          final var error = (X) e;
+          return ResolveHandler.ofError(error);
         }
       });
   }
@@ -116,15 +117,16 @@ public class ResourceHolder<R extends AutoCloseable, E extends Exception> {
    *         handled or nothing
    */
   @SuppressWarnings("unchecked")
-  public <X extends Exception> EffectHandler<X> runEffectClosing(final ThrowingConsumer<R, X> effect) {
+  public <X extends Throwable> EffectHandler<X> runEffectClosing(final ThrowingConsumer<R, X> effect) {
     return value.unwrap(
       error -> EffectHandler.ofError((X) error),
       resource -> {
         try (var res = resource) {
           effect.accept(res);
           return EffectHandler.empty();
-        } catch (final Exception error) {
-          return EffectHandler.ofError((X) error);
+        } catch (final Throwable e) { // NOSONAR
+          final var error = (X) e;
+          return EffectHandler.ofError(error);
         }
       }
     );

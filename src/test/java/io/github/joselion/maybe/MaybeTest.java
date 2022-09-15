@@ -192,7 +192,7 @@ import io.github.joselion.testing.UnitTest;
           .isPresent()
           .containsInstanceOf(FileInputStream.class)
           .containsSame(fis);
-      } catch (Exception error) {
+      } catch (Throwable error) {
         throw new Error(error);
       }
     }
