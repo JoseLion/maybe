@@ -17,11 +17,7 @@ plugins {
   id 'se.solrike.sonarlint' version '1.0.0-beta.5'
 }
 
-def isRelease = project.hasProperty('releaseVersion')
-def suffix = isRelease ? '' : '-SNAPSHOT'
-
 group = 'io.github.joselion'
-version = "3.0.0$suffix"
 
 java {
   toolchain {

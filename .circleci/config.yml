@@ -53,6 +53,34 @@ commands:
             - ~/jdk/<<parameters.version>>.tar.gz
           key: v1-<<parameters.version>>-{{ checksum "~/jdk/<<parameters.version>>.sha256" }}
 
+  install-nodejs:
+    description: Install NodeJS and Yarn dependencies
+
+    steps:
+      - run:
+          name: Install NodeJS
+          command: |
+            curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
+            echo 'export NVM_DIR="$HOME/.nvm"' >> $BASH_ENV
+            echo '[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" --install' >> $BASH_ENV
+            source $BASH_ENV
+      - run:
+          name: Install yarn
+          command: npm install -g yarn
+
+      - restore_cache:
+          keys:
+            - yarn-v1-{{ checksum "yarn.lock" }}
+
+      - run:
+          name: Install packages
+          command: yarn install --immutable
+
+      - save_cache:
+          paths:
+            - ~/repos/atomic-flyway/.yarn/cache
+          key: yarn-v1-{{ checksum "yarn.lock" }}
+
   setup:
     description: "Setup the environment to run tasks on CI"
 
@@ -120,7 +148,7 @@ jobs:
           name: Upload reports
           command: bash <(curl -s https://codecov.io/bash)
 
-  publish-snapshot:
+  publish:
     executor: default
 
     steps:
@@ -128,35 +156,18 @@ jobs:
 
       - setup
 
-      - run:
-          name: Publish to Sonatype Snapshot OSSRH
-          command: ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository
-
-  publish-release:
-    executor: default
-
-    steps:
-      - install-jdk
-
-      - setup
+      - install-nodejs
 
       - run:
           name: Publish to Maven Central
-          command: ./gradlew -PreleaseVersion publishToSonatype closeAndReleaseSonatypeStagingRepository
+          command: yarn release
 
 workflows:
   main:
     jobs:
       - build
 
-      - publish-snapshot:
-          requires:
-            - build
-          filters:
-            branches:
-              only: main
-
-      - publish-release:
+      - publish:
           requires:
             - build
           filters:
