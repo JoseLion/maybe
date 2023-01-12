@@ -2,6 +2,8 @@
 [![Maven Central](https://img.shields.io/maven-central/v/io.github.joselion/maybe.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22io.github.joselion%22%20AND%20a:%22maybe%22)
 [![javadoc](https://javadoc.io/badge2/io.github.joselion/maybe/javadoc.svg)](https://javadoc.io/doc/io.github.joselion/maybe)
 [![codecov](https://codecov.io/gh/JoseLion/maybe/branch/main/graph/badge.svg)](https://codecov.io/gh/JoseLion/maybe)
+[![License](https://img.shields.io/github/license/JoseLion/maybe)](./LICENSE)
+[![Snyk Vulnerabilities](https://img.shields.io/snyk/vulnerabilities/github/JoseLion/maybe)](https://snyk.io/)
 
 # Maybe - Safely handle exceptions
 
@@ -16,6 +18,10 @@ The wrapper intends to help us avoid the imperative _try/catch_ syntax, while pr
 * Full interoperability with `java.util.Optional`.
 * Includes an entirely safe `Either<L, R>` type where only one side can be present at a time
 * Method reference friendly - The API provides methods with overloads that makes it easier to use [method reference](https://docs.oracle.com/javase/tutorial/java/javaOO/methodreferences.html) syntax.
+
+## Presentation
+
+- [JCon 2021 - Handling exception, the functional way](https://youtu.be/vaRjOukcIDA)
 
 ## Requirements
 
