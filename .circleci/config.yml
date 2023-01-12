@@ -3,44 +3,48 @@ version: 2.1
 executors:
   default:
     working_directory: ~/repo/maybe
-
     docker:
       - image: cimg/base:stable
         environment:
           JVM_OPTS: -Xmx4096m
           TERM: dumb
+    resource_class: large
 
 commands:
   install-jdk:
-    description: Install and setup the JVM environmnet
+    description: Install and setup the JDK environmnet
     parameters:
-      version:
-        description: The JDK version to use
+      major:
+        description: The JDK major version to use
         type: string
-        default: jdk-18
+        default: "18"
+      version:
+        description: The JDK full version to use
+        type: string
+        default: "18.0.2.1"
 
     steps:
       - run:
           name: Get JDK SHA256
           command: |
             mkdir ~/jdk
-            wget "https://download.oracle.com/java/18/latest/<<parameters.version>>_linux-x64_bin.tar.gz.sha256" -O ~/jdk/<<parameters.version>>.sha256
+            wget "https://download.oracle.com/java/<<parameters.major>>/archive/jdk-<<parameters.version>>_linux-x64_bin.tar.gz.sha256" -O ~/jdk/jdk-<<parameters.major>>.sha256
       - restore_cache:
-          key: v1-<<parameters.version>>-{{ checksum "~/jdk/<<parameters.version>>.sha256" }}
+          key: v1-<<parameters.major>>-{{ checksum "~/jdk/jdk-<<parameters.major>>.sha256" }}
 
       - run:
-          name: Download JDK 18
+          name: Download JDK
           command: |
-            if [ ! -f ~/jdk/<<parameters.version>>.tar.gz ]; then
-              wget -nc https://download.oracle.com/java/18/latest/<<parameters.version>>_linux-x64_bin.tar.gz -O ~/jdk/<<parameters.version>>.tar.gz
+            if [ ! -f ~/jdk/jdk-<<parameters.major>>.tar.gz ]; then
+              wget -nc https://download.oracle.com/java/<<parameters.major>>/archive/jdk-<<parameters.version>>_linux-x64_bin.tar.gz -O ~/jdk/jdk-<<parameters.major>>.tar.gz
             fi
       - run:
           name: Install JDK
           command: |
-            sudo tar xvf ~/jdk/<<parameters.version>>.tar.gz -C ~/jdk/
-            sudo mkdir /opt/<<parameters.version>>
-            sudo mv ~/jdk/<<parameters.version>>*/* /opt/<<parameters.version>>
-            echo 'export JAVA_HOME=/opt/<<parameters.version>>' >> $BASH_ENV
+            sudo tar xvf ~/jdk/jdk-<<parameters.major>>.tar.gz -C ~/jdk/
+            sudo mkdir /opt/jdk-<<parameters.major>>
+            sudo mv ~/jdk/jdk-<<parameters.major>>*/* /opt/jdk-<<parameters.major>>
+            echo 'export JAVA_HOME=/opt/jdk-<<parameters.major>>' >> $BASH_ENV
             echo 'export PATH=$PATH:$JAVA_HOME/bin' >> $BASH_ENV
             source $BASH_ENV
       - run:
@@ -50,8 +54,8 @@ commands:
             java --version
       - save_cache:
           paths:
-            - ~/jdk/<<parameters.version>>.tar.gz
-          key: v1-<<parameters.version>>-{{ checksum "~/jdk/<<parameters.version>>.sha256" }}
+            - ~/jdk/jdk-<<parameters.major>>.tar.gz
+          key: v1-<<parameters.major>>-{{ checksum "~/jdk/jdk-<<parameters.major>>.sha256" }}
 
   install-nodejs:
     description: Install NodeJS and Yarn dependencies
@@ -64,6 +68,7 @@ commands:
             echo 'export NVM_DIR="$HOME/.nvm"' >> $BASH_ENV
             echo '[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" --install' >> $BASH_ENV
             source $BASH_ENV
+
       - run:
           name: Install yarn
           command: npm install -g yarn
