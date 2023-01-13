@@ -17,11 +17,11 @@ commands:
       major:
         description: The JDK major version to use
         type: string
-        default: "18"
+        default: "19"
       version:
         description: The JDK full version to use
         type: string
-        default: "18.0.2.1"
+        default: "19.0.1"
 
     steps:
       - run:
@@ -64,7 +64,7 @@ commands:
       - run:
           name: Install NodeJS
           command: |
-            curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
+            curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh | bash
             echo 'export NVM_DIR="$HOME/.nvm"' >> $BASH_ENV
             echo '[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" --install' >> $BASH_ENV
             source $BASH_ENV
@@ -83,11 +83,11 @@ commands:
 
       - save_cache:
           paths:
-            - ~/repos/atomic-flyway/.yarn/cache
+            - ~/repos/maybe/.yarn/cache
           key: yarn-v1-{{ checksum "yarn.lock" }}
 
   setup:
-    description: "Setup the environment to run tasks on CI"
+    description: Setup the environment to run tasks on CI
 
     steps:
       - checkout:
@@ -102,9 +102,7 @@ commands:
 
       - restore_cache:
           keys:
-            - v4-dependencies-{{ checksum "buildscript-gradle.lockfile" }}-{{ checksum "gradle.lockfile" }}
-            - v4-dependencies-{{ checksum "buildscript-gradle.lockfile" }}-
-            - v4-dependencies-
+            - v5-dependencies-{{ checksum "gradle/wrapper/gradle-wrapper.properties" }}-{{ checksum "buildscript-gradle.lockfile" }}-{{ checksum "gradle.lockfile" }}
 
       - run:
           name: Dependencies
@@ -114,7 +112,7 @@ commands:
           paths:
             - ~/repo/maybe/.gradle
             - ~/.gradle
-          key: v4-dependencies-{{ checksum "buildscript-gradle.lockfile" }}-{{ checksum "gradle.lockfile" }}
+          key: v5-dependencies-{{ checksum "gradle/wrapper/gradle-wrapper.properties" }}-{{ checksum "buildscript-gradle.lockfile" }}-{{ checksum "gradle.lockfile" }}
 
 jobs:
   build:

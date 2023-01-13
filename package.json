@@ -5,20 +5,12 @@
   "repository": "git@github.com:JoseLion/maybe.git",
   "author": "JoseLion <joseluis5000l@gmail.com>",
   "license": "MIT",
+  "packageManager": "yarn@3.3.1",
   "scripts": {
     "release": "semantic-release"
   },
   "devDependencies": {
-    "gradle-semantic-release-plugin": "^1.7.3",
-    "semantic-release": "^19.0.5"
-  },
-  "packageManager": "yarn@3.2.3",
-  "release": {
-    "branches": [
-      "release"
-    ],
-    "plugins": [
-      "gradle-semantic-release-plugin"
-    ]
+    "gradle-semantic-release-plugin": "^1.7.6",
+    "semantic-release": "^20.0.2"
   }
 }

@@ -171,6 +171,10 @@ public sealed interface Either<L, R> {
 
   /**
    * The {@code Left} implementation of {@link Either}
+   *
+   * @param <L> the {@code Left} data type
+   * @param <R> the {@code Right} data type
+   * @param value the left value
    */
   record Left<L, R>(L value) implements Either<L, R> {
 
@@ -258,6 +262,10 @@ public sealed interface Either<L, R> {
 
   /**
    * The {@code Right} implementation of {@link Either}
+   *
+   * @param <L> the {@code Left} data type
+   * @param <R> the {@code Right} data type
+   * @param value the right value
    */
   record Right<L, R>(R value) implements Either<L, R> {
 

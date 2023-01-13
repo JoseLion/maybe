@@ -11,7 +11,10 @@ import io.github.joselion.maybe.util.function.ThrowingFunction;
  * using a previously passed {@link AutoCloseable} resource. This resource will
  * be automatically closed after the {@code resolve} or the {@code effect}
  * operation is finished.
- * 
+ *
+ * @param <R> The autoclosable type
+ * @param <E> The throwable type
+ *
  * @author Jose Luis Leon
  * @since v1.3.0
  */
