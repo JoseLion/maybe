@@ -6,7 +6,6 @@ executors:
     docker:
       - image: cimg/base:stable
         environment:
-          JVM_OPTS: -Xmx4096m
           TERM: dumb
     resource_class: large
 
@@ -17,11 +16,11 @@ commands:
       major:
         description: The JDK major version to use
         type: string
-        default: "19"
+        default: "20"
       version:
         description: The JDK full version to use
         type: string
-        default: "19.0.1"
+        default: "20.0.1"
 
     steps:
       - run:
@@ -29,6 +28,7 @@ commands:
           command: |
             mkdir ~/jdk
             wget "https://download.oracle.com/java/<<parameters.major>>/archive/jdk-<<parameters.version>>_linux-x64_bin.tar.gz.sha256" -O ~/jdk/jdk-<<parameters.major>>.sha256
+
       - restore_cache:
           key: v1-<<parameters.major>>-{{ checksum "~/jdk/jdk-<<parameters.major>>.sha256" }}
 
@@ -38,6 +38,7 @@ commands:
             if [ ! -f ~/jdk/jdk-<<parameters.major>>.tar.gz ]; then
               wget -nc https://download.oracle.com/java/<<parameters.major>>/archive/jdk-<<parameters.version>>_linux-x64_bin.tar.gz -O ~/jdk/jdk-<<parameters.major>>.tar.gz
             fi
+
       - run:
           name: Install JDK
           command: |
@@ -47,11 +48,13 @@ commands:
             echo 'export JAVA_HOME=/opt/jdk-<<parameters.major>>' >> $BASH_ENV
             echo 'export PATH=$PATH:$JAVA_HOME/bin' >> $BASH_ENV
             source $BASH_ENV
+
       - run:
           name: Check Java version
           command: |
             echo $JAVA_HOME
             java --version
+
       - save_cache:
           paths:
             - ~/jdk/jdk-<<parameters.major>>.tar.gz

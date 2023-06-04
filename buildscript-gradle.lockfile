@@ -1,15 +1,17 @@
 # This is a Gradle generated file for dependency locking.
 # Manual edits can break the build and are not advised.
 # This file is expected to be part of source control.
-io.github.gradle-nexus.publish-plugin:io.github.gradle-nexus.publish-plugin.gradle.plugin:1.1.0=classpath
-io.github.gradle-nexus:publish-plugin:1.1.0=classpath
-io.github.joselion.pretty-jupiter:io.github.joselion.pretty-jupiter.gradle.plugin:2.2.0=classpath
-io.github.joselion.strict-null-check:io.github.joselion.strict-null-check.gradle.plugin:2.1.0=classpath
-io.github.joselion:pretty-jupiter:2.2.0=classpath
-io.github.joselion:strict-null-check:2.1.0=classpath
+io.github.furstenheim:copy_down:1.1=classpath
+io.github.gradle-nexus.publish-plugin:io.github.gradle-nexus.publish-plugin.gradle.plugin:1.3.0=classpath
+io.github.gradle-nexus:publish-plugin:1.3.0=classpath
+io.github.joselion.pretty-jupiter:io.github.joselion.pretty-jupiter.gradle.plugin:2.2.1=classpath
+io.github.joselion.strict-null-check:io.github.joselion.strict-null-check.gradle.plugin:2.2.0=classpath
+io.github.joselion:pretty-jupiter:2.2.1=classpath
+io.github.joselion:strict-null-check:2.2.0=classpath
 org.apache.commons:commons-lang3:3.11=classpath
 org.apache.commons:commons-text:1.9=classpath
+org.jsoup:jsoup:1.15.2=classpath
 org.sonarsource.sonarlint.core:sonarlint-core:8.0.2.42487=classpath
-se.solrike.sonarlint:se.solrike.sonarlint.gradle.plugin:1.0.0-beta.8=classpath
-se.solrike.sonarlint:sonarlint-gradle-plugin:1.0.0-beta.8=classpath
+se.solrike.sonarlint:se.solrike.sonarlint.gradle.plugin:1.0.0-beta.15=classpath
+se.solrike.sonarlint:sonarlint-gradle-plugin:1.0.0-beta.15=classpath
 empty=
