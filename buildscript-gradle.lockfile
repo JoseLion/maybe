@@ -8,6 +8,8 @@ io.github.joselion.pretty-jupiter:io.github.joselion.pretty-jupiter.gradle.plugi
 io.github.joselion.strict-null-check:io.github.joselion.strict-null-check.gradle.plugin:2.2.0=classpath
 io.github.joselion:pretty-jupiter:2.2.1=classpath
 io.github.joselion:strict-null-check:2.2.0=classpath
+me.champeau.gradle.mrjar:plugin:0.1.1=classpath
+me.champeau.mrjar:me.champeau.mrjar.gradle.plugin:0.1.1=classpath
 org.apache.commons:commons-lang3:3.11=classpath
 org.apache.commons:commons-text:1.9=classpath
 org.jsoup:jsoup:1.15.2=classpath
