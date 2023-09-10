@@ -11,56 +11,40 @@ plugins {
   id 'maven-publish'
   id 'signing'
 
-  id 'io.github.joselion.pretty-jupiter' version '2.2.1'
-  id 'io.github.joselion.strict-null-check' version '2.2.0'
-  id 'io.github.gradle-nexus.publish-plugin' version '1.3.0'
+  id 'io.github.joselion.pretty-jupiter' version '3.0.1'
+  id 'io.github.joselion.strict-null-check' version '3.0.0'
+  id 'io.github.gradle-nexus.publish-plugin' version '2.0.0-rc-1'
   id 'se.solrike.sonarlint' version '1.0.0-beta.15'
 }
 
 group = 'io.github.joselion'
 
 java {
+  sourceCompatibility = JavaLanguageVersion.of(17)
   toolchain {
     languageVersion = JavaLanguageVersion.of(20)
     vendor = JvmVendorSpec.ORACLE
   }
-
   withJavadocJar()
   withSourcesJar()
 }
 
 javadoc {
-  if(JavaVersion.current().isJava9Compatible()) {
-    options.addBooleanOption('html5', true)
-  }
-
   title = 'Maybe - Safely handle exceptions'
   options {
+    addBooleanOption('html5', true)
     addStringOption('Xwerror', '-quiet')
     tags('apiNote')
   }
 }
 
 jar {
-  from sourceSets.main.allSource
+  from(sourceSets.main.allSource)
   manifest {
     attributes(
       'Implementation-Title': project.name,
-      'Implementation-Version': project.version
+      'Implementation-Version': project.version,
     )
-  }
-}
-
-strictNullCheck {
-  packageJavadoc = """\
-    |@author Jose Luis Leon
-    |@since v1.0.2
-  |"""
-  .stripMargin()
-
-  versions {
-    eclipseAnnotations = '2.2.700'
-    findBugs = '3.0.2'
   }
 }
 
@@ -75,13 +59,19 @@ sonarlint {
   ]
 }
 
-checkstyle {
-  toolVersion = '10.12.0'
-  sourceSets = sourceSets
+strictNullCheck {
+  packageInfo {
+    useEclipse()
+    javadoc = """\
+      @author Jose Luis Leon
+      @since v1.0.2
+      """.stripIndent()
+  }
+  source.addEclipse()
 }
 
-jacoco {
-  toolVersion = '0.8.10'
+checkstyle {
+  setToolVersion('10.12.3')
 }
 
 dependencyLocking {
@@ -96,19 +86,23 @@ dependencies {
   sonarlintPlugins('org.sonarsource.java:sonar-java-plugin:7.20.0.31692')
 
   testImplementation('org.assertj:assertj-core:3.24.2')
-  testImplementation('org.mockito:mockito-inline:5.2.0')
+  testImplementation('org.mockito:mockito-core:5.5.0')
 }
 
 testing {
   suites {
     test {
-      useJUnitJupiter('5.9.3')
+      useJUnitJupiter('5.10.0')
     }
   }
 }
 
 prettyJupiter {
   duration.threshold = 150
+}
+
+jacoco {
+  toolVersion('0.8.10')
 }
 
 jacocoTestReport {
@@ -121,7 +115,7 @@ jacocoTestReport {
 publishing {
   publications {
     mavenJava(MavenPublication) {
-      from components.java
+      from(components.java)
 
       pom {
         name = 'maybe'
@@ -168,8 +162,8 @@ signing {
 nexusPublishing {
   repositories {
     sonatype {
-      nexusUrl.set(uri('https://s01.oss.sonatype.org/service/local/'))
-      snapshotRepositoryUrl.set(uri('https://s01.oss.sonatype.org/content/repositories/snapshots/'))
+      nexusUrl = uri('https://s01.oss.sonatype.org/service/local/')
+      snapshotRepositoryUrl = uri('https://s01.oss.sonatype.org/content/repositories/snapshots/')
     }
   }
 }
