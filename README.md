@@ -19,13 +19,13 @@ The wrapper intends to help us avoid the imperative _try/catch_ syntax, while pr
 * Includes an entirely safe `Either<L, R>` type where only one side can be present at a time
 * Method reference friendly - The API provides methods with overloads that makes it easier to use [method reference](https://docs.oracle.com/javase/tutorial/java/javaOO/methodreferences.html) syntax.
 
-## Presentation
+## Presentations
 
 - [JCon 2021 - Handling exception, the functional way](https://youtu.be/vaRjOukcIDA)
 
 ## Requirements
 
-As of v3 this library uses new Java features, so `Java 18+` is required. This library moves along with Java and the requirement might increase as new Java versions aare released.
+As of v3 this library uses new Java features, so `Java 17+` is required. This library moves along with Java and the requirement might increase as new Java versions are released.
 
 > If you need a JDK 8+ compatible version you can use v2 instead. I'll try to maintain v2 as long as possible to provide a backawards compatible version. However, it's my strong belive that Java developers need start moving their codebase to newer Java versions rather than staying on their Java 8-ish confort zone, and open-source libraries has a great impact on this by puting the requirement bars so low, allowing Java updates to be neglated.
 
@@ -63,9 +63,10 @@ implementation('io.github.joselion:maybe:x.y.z')
 
 ## Basics
 
-We'd use `Maybe<T>` for 2 defferent casses:
+We'd use `Maybe<T>` for 3 different cases:
 - **Resolve:** When we need to obtain a value from a throwing operation.
 - **Effects:** When we need to run an effect from a throwing operation, so no value is returned.
+- **Auto-closeables:** When we need to handle resources that need to closed (as in `try-with-resource` blocks)
 
 We can create simple instances of Maybe using `Maybe.just(value)` or `Maybe.nothing()` so we can chain throwing operations to it that will create the **handlers**. We also provide the convenience static methods `.fromResolver(..)` and `.fromEffect(..)` that let us create **handlers** directly from lambda expressions. Given the built-in lambda expression do not allow checked exception, we provide a few basic functional interfaces like `ThrowingFunction<T, R, E>`, that are just like the built-in ones, but with a `throws E` declaration. You can find them all in the [util packages][util-package-ref] of the library.
 
@@ -108,6 +109,42 @@ Maybe.fromEffect(() -> {
 ```
 
 In the example above the `.send(..)` methods may throw a `MessagingException`. With the effect API we handle the error running another effect, i.e. reporting the error to another service.
+
+### Auto-closeable resource
+
+Maybe also offers a way to work with [AutoCloseable](https://docs.oracle.com/javase/8/docs/api/java/lang/AutoCloseable.html) resources in a similar way the `try-with-resource` statement does, but with a more functional approach. We do this by creating a [ResourceHolder][resource-holder-ref] instance from an autoclosable value, which will hold on to the value to close it at the end. The resource API let us resolve or run effects using the resource, so we can ultimately handle the throwing operation with either the [ResolveHandler][resolve-handler-ref] or the [EffectHandler][effect-handler-ref].
+
+```java
+Maybe.withResource(myResource)
+  .resolveClosing(res -> {
+    // Return something using `res`
+  });
+
+Maybe.withResource(myResource)
+  .runEffectClosing(res -> {
+    // do somthing with `res`
+  });
+```
+
+In many cases, the resource you need will also throw an exception when we obtain it. We encourage you to first handle the exception that obtaining the resource may throw, and then map the value to a [ResourceHolder][resource-holder-ref] to handle the next operation. For this [ResolveHandler][resolve-handler-ref] provides a `.mapToResource(..)` method so you can map resolved values to resources.
+
+```java
+public Properties parsePropertiesFile(final String filePath) {
+  return Maybe.just(filePath)
+    .resolve(FileInputStream::new)
+    .catchError(err -> /* Handle the error */)
+    .mapToResource(Function.identity())
+    .resolveClosing(inputStream -> {
+      final Properties props = new Properties();
+      props.load(inputStream);
+
+      return props;
+    })
+    .orElseGet(Properties::new);
+}
+```
+
+> We know the first resolved value extends from `AutoCloseable`, but the compiler doesn't. We need to explicitly map the value with `Function.identity()` so the compiler can safely ensure that the resource can be closed.
 
 ### Catching multiple exceptions
 
@@ -181,42 +218,6 @@ Optional.ofNullable(rawValue)
   .map(Maybe.partialResolver(Base64.getDecoder()::decode))
   .map(decoded -> decoded.catchError(...));
 ```
-
-## Autocloseable resources
-
-Maybe also offers a way to work with [AutoCloseable](https://docs.oracle.com/javase/8/docs/api/java/lang/AutoCloseable.html) resources in a similar way the `try-with-resource` statement does, but with a more functional approach. We do this by creating a [ResourceHolder][resource-holder-ref] instance from an autoclosable value, which will hold on to the value to close it at the end. The resource API let us resolve or run effects using the resource, so we can ultimately handle the throwing operation with either the [ResolveHandler][resolve-handler-ref] or the [EffectHandler][effect-handler-ref].
-
-```java
-Maybe.withResource(myResource)
-  .resolveClosing(res -> {
-    // Return something using `res`
-  });
-
-Maybe.withResource(myResource)
-  .runEffectClosing(res -> {
-    // do somthing with `res`
-  });
-```
-
-In many cases, the resource you need will also throw an exception when we obtain it. We encourage you to first handle the exception that obtaining the resource may throw, and then map the value to a [ResourceHolder][resource-holder-ref] to handle the next operation. For this [ResolveHandler][resolve-handler-ref] provides a `.mapToResource(..)` method so you can map resolved values to resources.
-
-```java
-public Properties parsePropertiesFile(final String filePath) {
-  return Maybe.just(filePath)
-    .resolve(FileInputStream::new)
-    .catchError(err -> /* Handle the error */)
-    .mapToResource(Function.identity())
-    .resolveClosing(inputStream -> {
-      final Properties props = new Properties();
-      props.load(inputStream);
-
-      return props;
-    })
-    .orElseGet(Properties::new);
-}
-```
-
-> We know the first resolved value extends from `AutoCloseable`, but the compiler doesn't. We need to explicitly map the value with `Function.identity()` so the compiler can safely ensure that the resource can be closed.
 
 ## API Reference
 
