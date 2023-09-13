@@ -134,7 +134,7 @@ public final class Maybe<T> {
    * In other words, the following code
    * <pre>
    *  Optional.of(value)
-   *    .map(str -&gt; Maybe.fromResolver(() -&gt; decode(str)));
+   *    .map(str -> Maybe.fromResolver(() -> decode(str)));
    * </pre>
    * Is equivalent to
    * <pre>
@@ -166,7 +166,7 @@ public final class Maybe<T> {
    * In other words, the following code
    * <pre>
    *  Optional.of(value)
-   *    .map(msg -&gt; Maybe.fromEffect(() -&gt; sendMessage(msg)));
+   *    .map(msg -> Maybe.fromEffect(() -> sendMessage(msg)));
    * </pre>
    * Is equivalent to
    * <pre>
@@ -341,8 +341,7 @@ public final class Maybe<T> {
       return true;
     }
 
-    if (obj instanceof Maybe<?>) {
-      final var other = (Maybe<?>) obj;
+    if (obj instanceof final Maybe<?> other) {
       return other.toOptional().equals(value);
     }
 
@@ -371,7 +370,7 @@ public final class Maybe<T> {
   public String toString() {
     return value
       .map(Object::toString)
-      .map(it -> String.format("Maybe[%s]", it))
+      .map("Maybe[%s]"::formatted)
       .orElse("Maybe.nothing");
   }
 }

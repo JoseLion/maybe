@@ -243,8 +243,8 @@ import io.github.joselion.testing.UnitTest;
   @Nested class unwrap {
     @Nested class when_the_left_value_is_present {
       @Test void returns_the_value_using_the_onLeft_handler() {
-        final var onLeftSpy = Spy.<Function<String, String>>lambda("The value is: %s"::formatted);
-        final var onRightSpy = Spy.<Function<Object, String>>lambda("The value is: %s"::formatted);
+        final var onLeftSpy = Spy.<Function<String, String>>lambda("The value is: "::concat);
+        final var onRightSpy = Spy.<Function<Object, String>>lambda(x -> "The value is: ".concat(x.toString()));
         final var value = Either.ofLeft("foo").unwrap(onLeftSpy, onRightSpy);
 
         assertThat(value).isEqualTo("The value is: foo");
@@ -256,8 +256,8 @@ import io.github.joselion.testing.UnitTest;
 
     @Nested class when_the_right_value_is_present {
       @Test void returns_the_value_using_the_onRight_handler() {
-        final var onLeftSpy = Spy.<Function<Object, String>>lambda("The value is: %s"::formatted);
-        final var onRightSpy = Spy.<Function<String, String>>lambda("The value is: %s"::formatted);
+        final var onLeftSpy = Spy.<Function<Object, String>>lambda(x -> "The value is: ".concat(x.toString()));
+        final var onRightSpy = Spy.<Function<String, String>>lambda("The value is: "::concat);
         final var value = Either.ofRight("foo").unwrap(onLeftSpy, onRightSpy);
 
         assertThat(value).isEqualTo("The value is: foo");
