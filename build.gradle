@@ -96,6 +96,11 @@ repositories {
 
 dependencies {
   sonarlintCorePlugins('org.sonarsource.java:sonar-java-plugin:7.24.0.32100')
+  constraints {
+    sonarlintCore('org.apache.tomcat.embed:tomcat-embed-core:9.0.80') {
+      because('version 9.0.75 has a security vulnerability')
+    }
+  }
 
   testImplementation('org.assertj:assertj-core:3.24.2')
   testImplementation('org.mockito:mockito-core:5.5.0')
