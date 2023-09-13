@@ -3,5 +3,8 @@
 
 <suppressions>
   <!-- Tests -->
-  <suppress checks="InnerTypeLast" files=".*[\\/]src[\\/]test[\\/]" />
+  <suppress
+    checks="InnerTypeLast|MethodName|TypeName"
+    files=".*[\\/]src[\\/]test[\\/]"
+  />
 </suppressions>
