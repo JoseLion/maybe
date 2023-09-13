@@ -26,7 +26,7 @@ jobs:
       - run: ./gradlew sonarlintMain sonarlintTest
       - run: ./gradlew test
       - run: ./gradlew build
-      - run: ./gradlew jacocoTestReport
+      - run: ./gradlew jacocoTestReport --rerun
       - uses: codecov/codecov-action@v3
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
