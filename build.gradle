@@ -5,16 +5,16 @@ buildscript {
 }
 
 plugins {
-  id 'checkstyle'
-  id 'jacoco'
-  id 'java-library'
-  id 'maven-publish'
-  id 'signing'
+  id('checkstyle')
+  id('jacoco')
+  id('java-library')
+  id('maven-publish')
+  id('signing')
 
-  id 'io.github.joselion.pretty-jupiter' version '3.0.1'
-  id 'io.github.joselion.strict-null-check' version '3.0.0'
-  id 'io.github.gradle-nexus.publish-plugin' version '2.0.0-rc-1'
-  id 'se.solrike.sonarlint' version '1.0.0-beta.15'
+  id('io.github.joselion.pretty-jupiter') version '3.0.1'
+  id('io.github.joselion.strict-null-check') version '3.0.0'
+  id('io.github.gradle-nexus.publish-plugin') version '2.0.0-rc-1'
+  id('name.remal.sonarlint') version '3.3.8'
 }
 
 group = 'io.github.joselion'
@@ -54,15 +54,21 @@ jar {
   }
 }
 
-sonarlint {
-  excludeRules = [
-    'java:S107', // Allow constructors with more than 7 parameters
-    'java:S3776', // Allow methods with more than 15 lines
-    'java:S4032', // Allow packages only containing `package-info.java`
-  ]
-  includeRules = [
-    'java:S4266', // "Stream.collect()" calls should not be redundant
-  ]
+sonarLint {
+  setToolVersion('9.2.0.74516')
+  languages {
+    include('java')
+  }
+  rules {
+    enable(
+      'java:S4266', // "Stream.collect()" calls should not be redundant
+    )
+    disable(
+      'java:S107', // Allow constructors with more than 7 parameters
+      'java:S3776', // Allow methods with more than 15 lines
+      'java:S4032', // Allow packages only containing `package-info.java`
+    )
+  }
 }
 
 strictNullCheck {
@@ -89,7 +95,12 @@ repositories {
 }
 
 dependencies {
-  sonarlintPlugins('org.sonarsource.java:sonar-java-plugin:7.20.0.31692')
+  sonarlintCorePlugins('org.sonarsource.java:sonar-java-plugin:7.24.0.32100')
+  constraints {
+    sonarlintCore('org.apache.tomcat.embed:tomcat-embed-core:9.0.80') {
+      because('version 9.0.75 has a security vulnerability')
+    }
+  }
 
   testImplementation('org.assertj:assertj-core:3.24.2')
   testImplementation('org.mockito:mockito-core:5.5.0')
