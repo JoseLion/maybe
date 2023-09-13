@@ -6,7 +6,11 @@
   <property name="severity" value="error" />
 
   <!-- Filters -->
-  <module name="SuppressWithPlainTextCommentFilter"/>
+  <module name="SuppressWithPlainTextCommentFilter" />
+  <module name="SuppressionFilter">
+    <property name="file" value="${config_loc}/suppressions.xml" default="config/checkstyle/suppressions.xml" />
+    <property name="optional" value="false" />
+  </module>
 
   <!-- Miscellaneous -->
   <module name="NewlineAtEndOfFile" />
@@ -25,7 +29,7 @@
   </module>
   <module name="LineLength">
     <property name="max" value="120" />
-    <property name="ignorePattern" value="^package.*|^import.*"/>
+    <property name="ignorePattern" value="^package.*|^import.*" />
   </module>
 
   <!-- Whitespace -->
@@ -39,9 +43,21 @@
     <module name="NeedBraces" />
     <module name="RightCurly" />
 
+    <!-- Class Design -->
+    <module name="InnerTypeLast" />
+    <module name="InterfaceIsType" />
+    <module name="OneTopLevelClass" />
+    <module name="VisibilityModifier" />
+
     <!-- Coding -->
     <module name="EqualsHashCode" />
     <module name="InnerAssignment" />
+    <module name="OneStatementPerLine" />
+    <module name="UnnecessaryParentheses" />
+    <module name="UnnecessarySemicolonAfterOuterTypeDeclaration" />
+    <module name="UnnecessarySemicolonAfterTypeMemberDeclaration" />
+    <module name="UnnecessarySemicolonInEnumeration" />
+    <module name="UnnecessarySemicolonInTryWithResources" />
 
     <!-- Javadoc Comments -->
     <module name="InvalidJavadocPosition" />
@@ -49,32 +65,39 @@
     <!-- Imports -->
     <module name="AvoidStarImport" />
     <module name="ImportOrder">
-      <property name="groups" value="/^java\./,javax,com,org"/>
-      <property name="ordered" value="true"/>
-      <property name="separated" value="true"/>
-      <property name="sortStaticImportsAlphabetically" value="true"/>
-      <property name="option" value="top"/>
+      <property name="groups" value="/^java\./,javax,org,com" />
+      <property name="ordered" value="true" />
+      <property name="separated" value="true" />
+      <property name="sortStaticImportsAlphabetically" value="true" />
+      <property name="option" value="top" />
     </module>
-    <module name="RedundantImport"/>
-    <module name="UnusedImports"/>
+    <module name="RedundantImport" />
+    <module name="UnusedImports" />
 
     <!-- Miscellaneous -->
     <module name="FinalParameters" />
+    <module name="NoCodeInFile" />
     <module name="UpperEll" />
 
     <!-- Modifiers -->
-    <module name="ModifierOrder"/>
+    <module name="ModifierOrder" />
     <module name="RedundantModifier" />
 
     <!-- Naming Conventions -->
     <module name="LocalFinalVariableName" />
 
     <!-- Whitespace -->
+    <module name="EmptyLineSeparator">
+      <property name="allowMultipleEmptyLines" value="false" />
+    </module>
     <module name="GenericWhitespace" />
     <module name="MethodParamPad" />
+    <module name="NoLineWrap" />
     <module name="NoWhitespaceAfter" />
     <module name="NoWhitespaceBefore" />
+    <module name="NoWhitespaceBeforeCaseDefaultColon" />
     <module name="ParenPad" />
+    <module name="SingleSpaceSeparator" />
     <module name="TypecastParenPad" />
     <module name="WhitespaceAfter" />
     <module name="WhitespaceAround" />
