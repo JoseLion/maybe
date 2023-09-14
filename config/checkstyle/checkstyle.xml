@@ -84,7 +84,25 @@
     <module name="RedundantModifier" />
 
     <!-- Naming Conventions -->
+    <module name="ClassTypeParameterName" />
+    <module name="ConstantName" />
+    <module name="IllegalIdentifierName" />
+    <module name="InterfaceTypeParameterName" />
+    <module name="LambdaParameterName" />
     <module name="LocalFinalVariableName" />
+    <module name="LocalVariableName" />
+    <module name="MemberName" />
+    <module name="MethodName" />
+    <module name="MethodTypeParameterName" />
+    <module name="PackageName">
+      <property name="format" value="^[a-z]+(\.[a-z][a-z0-9]*)*$" />
+    </module>
+    <module name="ParameterName" />
+    <module name="PatternVariableName" />
+    <module name="RecordComponentName" />
+    <module name="RecordTypeParameterName" />
+    <module name="StaticVariableName" />
+    <module name="TypeName" />
 
     <!-- Whitespace -->
     <module name="EmptyLineSeparator">
