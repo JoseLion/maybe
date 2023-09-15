@@ -1,4 +1,6 @@
-[![JoseLion](https://circleci.com/gh/JoseLion/maybe.svg?style=shield)](https://app.circleci.com/pipelines/github/JoseLion/maybe)
+[![CI](https://github.com/JoseLion/maybe/actions/workflows/ci.yml/badge.svg)](https://github.com/JoseLion/maybe/actions/workflows/ci.yml)
+[![Release](https://github.com/JoseLion/maybe/actions/workflows/release.yml/badge.svg)](https://github.com/JoseLion/maybe/actions/workflows/release.yml)
+[![Pages](https://github.com/JoseLion/maybe/actions/workflows/pages.yml/badge.svg)](https://github.com/JoseLion/maybe/actions/workflows/pages.yml)
 [![Maven Central](https://img.shields.io/maven-central/v/io.github.joselion/maybe.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22io.github.joselion%22%20AND%20a:%22maybe%22)
 [![javadoc](https://javadoc.io/badge2/io.github.joselion/maybe/javadoc.svg)](https://javadoc.io/doc/io.github.joselion/maybe)
 [![codecov](https://codecov.io/gh/JoseLion/maybe/branch/main/graph/badge.svg)](https://codecov.io/gh/JoseLion/maybe)
