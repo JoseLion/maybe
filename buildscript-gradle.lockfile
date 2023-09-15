@@ -4,12 +4,12 @@
 io.github.gradle-nexus.publish-plugin:io.github.gradle-nexus.publish-plugin.gradle.plugin:2.0.0-rc-1=classpath
 io.github.gradle-nexus:publish-plugin:2.0.0-rc-1=classpath
 io.github.joselion.pretty-jupiter:io.github.joselion.pretty-jupiter.gradle.plugin:3.0.1=classpath
-io.github.joselion.strict-null-check:io.github.joselion.strict-null-check.gradle.plugin:3.0.0=classpath
+io.github.joselion.strict-null-check:io.github.joselion.strict-null-check.gradle.plugin:3.0.1=classpath
 io.github.joselion:maybe:3.2.0=classpath
 io.github.joselion:pretty-jupiter:3.0.1=classpath
-io.github.joselion:strict-null-check:3.0.0=classpath
+io.github.joselion:strict-null-check:3.0.1=classpath
 me.champeau.gradle.mrjar:plugin:0.1.1=classpath
 me.champeau.mrjar:me.champeau.mrjar.gradle.plugin:0.1.1=classpath
-name.remal.gradle-plugins.sonarlint:sonarlint:3.3.8=classpath
-name.remal.sonarlint:name.remal.sonarlint.gradle.plugin:3.3.8=classpath
+name.remal.gradle-plugins.sonarlint:sonarlint:3.3.9=classpath
+name.remal.sonarlint:name.remal.sonarlint.gradle.plugin:3.3.9=classpath
 empty=
