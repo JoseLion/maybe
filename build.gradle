@@ -14,15 +14,18 @@ plugins {
   id('io.github.joselion.pretty-jupiter') version '3.0.1'
   id('io.github.joselion.strict-null-check') version '3.0.0'
   id('io.github.gradle-nexus.publish-plugin') version '2.0.0-rc-1'
+  id('me.champeau.mrjar') version '0.1.1'
   id('name.remal.sonarlint') version '3.3.8'
 }
 
 group = 'io.github.joselion'
 
+multiRelease {
+  targetVersions(11, 17, 20)
+}
+
 java {
-  sourceCompatibility = JavaLanguageVersion.of(17)
   toolchain {
-    languageVersion = JavaLanguageVersion.of(20)
     vendor = JvmVendorSpec.ORACLE
   }
   withJavadocJar()
@@ -101,18 +104,22 @@ dependencies {
       because('version 9.0.75 has a security vulnerability')
     }
   }
-
-  testImplementation('org.assertj:assertj-core:3.24.2')
-  testImplementation('org.mockito:mockito-core:5.5.0')
 }
 
 testing {
   suites {
     test {
       useJUnitJupiter('5.10.0')
+      dependencies {
+        implementation('org.assertj:assertj-core:3.24.2')
+        implementation('org.mockito:mockito-core:5.5.0')
+      }
     }
   }
 }
+
+java17Test.useJUnitPlatform()
+java20Test.useJUnitPlatform()
 
 prettyJupiter {
   duration.threshold = 150

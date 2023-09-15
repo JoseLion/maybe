@@ -21,7 +21,7 @@ import org.eclipse.jdt.annotation.Nullable;
  * @author Jose Luis Leon
  * @since v3.0.0
  */
-public interface Either<L, R> {
+public sealed interface Either<L, R> {
 
   /**
    * Factory method to create an {@code Either} instance that contains a
@@ -174,23 +174,17 @@ public interface Either<L, R> {
    *
    * @param <L> the {@code Left} data type
    * @param <R> the {@code Right} data type
+   * @param value the left value
    */
-  final class Left<L, R> implements Either<L, R> {
-
-    private final L value;
+  record Left<L, R>(L value) implements Either<L, R> {
 
     /**
      * Compact constructor to validate the value is not null.
      *
      * @param value the value of the instance
      */
-    Left(final L value) {
+    public Left {
       Objects.requireNonNull(value, "An Either cannot be created with a null value");
-      this.value = value;
-    }
-
-    L value() {
-      return this.value;
     }
 
     @Override
@@ -248,8 +242,7 @@ public interface Either<L, R> {
         return true;
       }
 
-      if (obj instanceof Left<?, ?>) {
-        final var left = (Left<?, ?>) obj;
+      if (obj instanceof final Left<?, ?> left) {
         return this.value.equals(left.leftOrNull());
       }
 
@@ -263,7 +256,7 @@ public interface Either<L, R> {
 
     @Override
     public String toString() {
-      return String.format("Either[Left: %s]", this.value);
+      return "Either[Left: %s]".formatted(this.value);
     }
   }
 
@@ -272,23 +265,17 @@ public interface Either<L, R> {
    *
    * @param <L> the {@code Left} data type
    * @param <R> the {@code Right} data type
+   * @param value the right value
    */
-  final class Right<L, R> implements Either<L, R> {
-
-    private final R value;
+  record Right<L, R>(R value) implements Either<L, R> {
 
     /**
      * Compact constructor to validate the value is not null.
      *
      * @param value the value of the instance
      */
-    Right(final R value) {
+    public Right {
       Objects.requireNonNull(value, "An Either cannot be created with a null value");
-      this.value = value;
-    }
-
-    R value() {
-      return this.value;
     }
 
     @Override
@@ -346,8 +333,7 @@ public interface Either<L, R> {
         return true;
       }
 
-      if (obj instanceof Right<?, ?>) {
-        final var right = (Right<?, ?>) obj;
+      if (obj instanceof final Right<?, ?> right) {
         return this.value.equals(right.rightOrNull());
       }
 
@@ -361,7 +347,7 @@ public interface Either<L, R> {
 
     @Override
     public String toString() {
-      return String.format("Either[Right: %s]", this.value);
+      return "Either[Right: %s]".formatted(this.value);
     }
   }
 }
