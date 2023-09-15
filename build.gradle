@@ -12,10 +12,10 @@ plugins {
   id('signing')
 
   id('io.github.joselion.pretty-jupiter') version '3.0.1'
-  id('io.github.joselion.strict-null-check') version '3.0.0'
+  id('io.github.joselion.strict-null-check') version '3.0.1'
   id('io.github.gradle-nexus.publish-plugin') version '2.0.0-rc-1'
   id('me.champeau.mrjar') version '0.1.1'
-  id('name.remal.sonarlint') version '3.3.8'
+  id('name.remal.sonarlint') version '3.3.9'
 }
 
 group = 'io.github.joselion'
