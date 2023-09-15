@@ -9,31 +9,33 @@
 
 # Maybe - Safely handle exceptions
 
-`Maybe<T>` is a monadic wrapper similar to `java.util.Optional`, but with a different intention. By leveraging `Optional<T>` benefits, it provides a functional API that safely allows us to perform operations that may throw checked and unchecked exceptions.
+`Maybe<T>` is a monadic wrapper similar to `java.util.Optional`, but with a different intention. By leveraging `Optional<T>` benefits, it provides a functional API that safely allows to work with operations that throw checked (and unchecked) exceptions.
 
-The wrapper intends to help us avoid the imperative _try/catch_ syntax, while promoting safe exception handling and functional programming principles.
+The motivation of `Maybe<T>` is to help developers avoid imperative _try/catch_ blocks while promoting safe exception handling which lives by functional programming principles.
 
 ## Features
 
 * Type-safe differentiation between resolving a value vs. runnning effects.
-* Easy and rich API similar to Java's `Optional`.
+* Rich and intuitive API based on `java.util.Optional`.
 * Full interoperability with `java.util.Optional`.
-* Includes an entirely safe `Either<L, R>` type where only one side can be present at a time
+* Includes a safe `Either<L, R>` type where only one side can be present at a time.
 * Method reference friendly - The API provides methods with overloads that makes it easier to use [method reference](https://docs.oracle.com/javase/tutorial/java/javaOO/methodreferences.html) syntax.
 
 ## Presentations
 
 - [JCon 2021 - Handling exception, the functional way](https://youtu.be/vaRjOukcIDA)
 
-## Requirements
+## Compatibility
 
-As of v3 this library uses new Java features, so `Java 17+` is required. This library moves along with Java and the requirement might increase as new Java versions are released.
+As of **`v3.3.0`**, this library is compatible with JDK11+ by using [Multi-Release JARs](https://openjdk.org/jeps/238). However, using at least JDK17 to enjoy the new Java enhancements and features is highly recommended.
 
-> If you need a JDK 8+ compatible version you can use v2 instead. I'll try to maintain v2 as long as possible to provide a backawards compatible version. However, it's my strong belive that Java developers need start moving their codebase to newer Java versions rather than staying on their Java 8-ish confort zone, and open-source libraries has a great impact on this by puting the requirement bars so low, allowing Java updates to be neglated.
+For example, the JDK17+ version of `Either<L, R>` uses a combination of [sealed classes](https://docs.oracle.com/en/java/javase/17/language/sealed-classes-and-interfaces.html) and [records classes](https://docs.oracle.com/en/java/javase/17/language/records.html), effectively making it an [algebraic data type](https://en.wikipedia.org/wiki/Algebraic_data_type) in Java. It means that `Either<L, R>` is an interface no other class can implement. The only implementations are the `Left` and `Right` records, which live within the interface. In short, it's a composite type created by combining other types. 
+
+> If you need a JDK8-compatible version of `Maybe<T>`, you can use v2 instead. However, much like Java 8, v2 has reached its end-of-life, so it will not get any more features, patches, or updates.
 
 ## Breaking Changes (from v2 to v3)
 
-- **⚠️ IMPORTANT:** Due to changes on GitHub policies (and by consequence on Maven), it's no longer allowed to use `com.github` as a valid group ID prefix. To honor that and maintain consistency, **as of v3**, the artifact ID is now `io.github.joselion.maybe`. If you want to use a version **before v3**, you can still find it using the ID `com.github.joselion.maybe`.
+- Due to changes on GitHub policies (and by consequence on Maven), it's no longer allowed to use `com.github` as a valid group ID prefix. To honor that and maintain consistency, **as of v3**, the artifact ID was renamed to `io.github.joselion.maybe`. If you want to use a version **before v3**, you can still find it using `com.github.joselion:maybe` artifact.
 - A `ResolveHandler` can no longer be empty. It either has the resolved value or an error.
 - The method `ResolveHandler#filter` was removed to avoid the posibility of an inconsitent empty handler.
 - The `WrapperException` type was removed. Errors now propagate downstream with the API.
@@ -70,11 +72,11 @@ We'd use `Maybe<T>` for 3 different cases:
 - **Effects:** When we need to run an effect from a throwing operation, so no value is returned.
 - **Auto-closeables:** When we need to handle resources that need to closed (as in `try-with-resource` blocks)
 
-We can create simple instances of Maybe using `Maybe.just(value)` or `Maybe.nothing()` so we can chain throwing operations to it that will create the **handlers**. We also provide the convenience static methods `.fromResolver(..)` and `.fromEffect(..)` that let us create **handlers** directly from lambda expressions. Given the built-in lambda expression do not allow checked exception, we provide a few basic functional interfaces like `ThrowingFunction<T, R, E>`, that are just like the built-in ones, but with a `throws E` declaration. You can find them all in the [util packages][util-package-ref] of the library.
+We can create simple instances of Maybe using `Maybe.just(value)` or `Maybe.nothing()` so we can chain throwing operations to it that will create the **handlers**. We also provide the convenience static methods `.fromResolver(..)` and `.fromEffect(..)` to create **handlers** directly from lambda expressions. Given the built-in lambda expression do not allow checked exception, we provide a few basic functional interfaces like `ThrowingFunction<T, R, E>`, that are just like the built-in ones, but with a `throws E` declaration. You can find them all in the [util packages][util-package-ref] of the library.
 
 ### Resolve handler
 
-Once a resolver operation runs we'll get a [ResolveHandler][resolve-handler-ref] instance. This is the API that let us handle the possible exception and produce a final value, or chain more operations to it.
+Once a resolver operation runs we'll get a [ResolveHandler][resolve-handler-ref] instance. This is the API that lets you handle the possible exception and produce a final value, or chain more operations to it.
 
 ```java
 final Path path = Paths.get("foo.txt");
@@ -95,7 +97,7 @@ The method `.readAllLines(..)` on example above reads from a file, which may thr
 
 ### Effect handler
 
-When an effect operation runs we'll get a [EffectHandler][effect-handler-ref] instences. Likewise, this is the API that allow us to handle any possinble exception the effect may throw. This handler is very similar to the [ResolveHandler][resolve-handler-ref], but given an effect will never resolve a value, it does not have any of the methods related to manipulating or unwrapping the value.
+When an effect operation runs we'll get a [EffectHandler][effect-handler-ref] instences. Likewise, this is the API to handle any possinble exception the effect may throw. This handler is very similar to the [ResolveHandler][resolve-handler-ref], but given an effect will never resolve a value, it does not have any of the methods related to manipulating or unwrapping the value.
 
 ```java
 Maybe.fromEffect(() -> {
@@ -114,7 +116,7 @@ In the example above the `.send(..)` methods may throw a `MessagingException`. W
 
 ### Auto-closeable resource
 
-Maybe also offers a way to work with [AutoCloseable](https://docs.oracle.com/javase/8/docs/api/java/lang/AutoCloseable.html) resources in a similar way the `try-with-resource` statement does, but with a more functional approach. We do this by creating a [ResourceHolder][resource-holder-ref] instance from an autoclosable value, which will hold on to the value to close it at the end. The resource API let us resolve or run effects using the resource, so we can ultimately handle the throwing operation with either the [ResolveHandler][resolve-handler-ref] or the [EffectHandler][effect-handler-ref].
+Maybe also offers a way to work with [AutoCloseable](https://docs.oracle.com/javase/8/docs/api/java/lang/AutoCloseable.html) resources in a similar way the `try-with-resource` statement does, but with a more functional approach. We do this by creating a [ResourceHolder][resource-holder-ref] instance from an autoclosable value, which will hold on to the value to close it at the end. The resource API lets you resolve or run effects using the resource, so we can ultimately handle the throwing operation with either the [ResolveHandler][resolve-handler-ref] or the [EffectHandler][effect-handler-ref].
 
 ```java
 Maybe.withResource(myResource)
