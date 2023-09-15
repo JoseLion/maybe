@@ -21,10 +21,10 @@ jobs:
           java-version: 20
           check-latest: true
           cache: gradle
-      - run: ./gradlew compileJava compileTestJava
-      - run: ./gradlew checkstyleMain checkstyleTest
-      - run: ./gradlew sonarlintMain sonarlintTest
-      - run: ./gradlew test
+      - run: ./gradlew compileJava compileJava17Java compileJava20Java compileTestJava compileJava17TestJava compileJava20TestJava
+      - run: ./gradlew checkstyleMain checkstyleJava17 checkstyleJava20 checkstyleTest checkstyleJava17Test checkstyleJava20Test
+      - run: ./gradlew sonarlintMain sonarlintJava17 sonarlintJava20 sonarlintTest sonarlintJava17Test sonarlintJava20Test
+      - run: ./gradlew test java17Test java20Test
       - run: ./gradlew build
       - run: ./gradlew jacocoTestReport --rerun
       - uses: codecov/codecov-action@v3

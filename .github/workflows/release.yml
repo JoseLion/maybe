@@ -39,7 +39,7 @@ jobs:
           sed -i "s/{SIGNING_PASSWORD}/${{ secrets.SIGNING_PASSWORD }}/g" gradle.properties
           sed -i "s/{SONATYPE_USERNAME_TOKEN}/${{ secrets.SONATYPE_USERNAME_TOKEN }}/g" gradle.properties
           sed -i "s/{SONATYPE_PASSWORD_TOKEN}/${{ secrets.SONATYPE_PASSWORD_TOKEN }}/g" gradle.properties
-      - run: ./gradlew build
+      - run: ./gradlew assemble
       - run: yarn install --immutable
       - run: yarn release
         env:
