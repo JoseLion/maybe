@@ -34,16 +34,15 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: yarn
-      - name: Provision
-        run: |
-          sed -i "s/{SIGNING_PASSWORD}/${{ secrets.SIGNING_PASSWORD }}/g" gradle.properties
-          sed -i "s/{SONATYPE_USERNAME_TOKEN}/${{ secrets.SONATYPE_USERNAME_TOKEN }}/g" gradle.properties
-          sed -i "s/{SONATYPE_PASSWORD_TOKEN}/${{ secrets.SONATYPE_PASSWORD_TOKEN }}/g" gradle.properties
       - run: ./gradlew assemble
       - run: yarn install --immutable
       - run: yarn release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ORG_GRADLE_PROJECT_signingKey: ${{ secrets.SIGNING_KEY }}
+          ORG_GRADLE_PROJECT_signingPassword: ${{ secrets.SIGNING_PASSWORD }}
+          ORG_GRADLE_PROJECT_sonatypeUsername: ${{ secrets.SONATYPE_USERNAME_TOKEN }}
+          ORG_GRADLE_PROJECT_sonatypePassword: ${{ secrets.SONATYPE_PASSWORD_TOKEN }}
 
   pages:
     uses: ./.github/workflows/pages.yml
