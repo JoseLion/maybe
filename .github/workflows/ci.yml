@@ -1,4 +1,3 @@
----
 name: CI
 
 on:
@@ -18,13 +17,13 @@ jobs:
       - uses: actions/setup-java@v3
         with:
           distribution: oracle
-          java-version: 20
+          java-version: 21
           check-latest: true
           cache: gradle
-      - run: ./gradlew compileJava compileJava17Java compileJava20Java compileTestJava compileJava17TestJava compileJava20TestJava
-      - run: ./gradlew checkstyleMain checkstyleJava17 checkstyleJava20 checkstyleTest checkstyleJava17Test checkstyleJava20Test
-      - run: ./gradlew sonarlintMain sonarlintJava17 sonarlintJava20 sonarlintTest sonarlintJava17Test sonarlintJava20Test
-      - run: ./gradlew test java17Test java20Test
+      - run: ./gradlew compileJava compileJava17Java compileJava21Java compileTestJava compileJava17TestJava compileJava21TestJava
+      - run: ./gradlew checkstyleMain checkstyleJava17 checkstyleJava21 checkstyleTest checkstyleJava17Test checkstyleJava21Test
+      - run: ./gradlew sonarlintMain sonarlintJava17 sonarlintJava21 sonarlintTest sonarlintJava17Test sonarlintJava21Test
+      - run: ./gradlew test java17Test java21Test
       - run: ./gradlew build
       - run: ./gradlew jacocoTestReport --rerun
       - uses: codecov/codecov-action@v3

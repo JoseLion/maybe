@@ -27,10 +27,10 @@ jobs:
       - uses: actions/setup-java@v3
         with:
           distribution: oracle
-          java-version: 20
+          java-version: 21
           check-latest: true
           cache: gradle
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
           cache: yarn
