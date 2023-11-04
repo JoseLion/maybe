@@ -46,9 +46,9 @@ For example, the JDK17+ version of `Either<L, R>` uses a combination of [sealed 
 
 ## Install
 
-[![Maven Central](https://img.shields.io/maven-central/v/io.github.joselion/maybe.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22io.github.joselion%22%20AND%20a:%22maybe%22)
+[![Maven Central](https://img.shields.io/maven-central/v/io.github.joselion/maybe?logo=sonatype)](https://central.sonatype.com/artifact/io.github.joselion/maybe)
 
-Maybe is available in [Maven Central](https://mvnrepository.com/artifact/io.github.joselion/maybe). You can checkout the latest version with the badge above.
+Maybe is available in [Maven Central](https://central.sonatype.com/artifact/io.github.joselion/maybe). You can checkout the latest version with the badge above.
 
 **Gradle**
 
