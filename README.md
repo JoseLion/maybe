@@ -1,4 +1,5 @@
 [![CI](https://github.com/JoseLion/maybe/actions/workflows/ci.yml/badge.svg)](https://github.com/JoseLion/maybe/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/JoseLion/maybe/actions/workflows/codeql.yml/badge.svg)](https://github.com/JoseLion/maybe/actions/workflows/codeql.yml)
 [![Release](https://github.com/JoseLion/maybe/actions/workflows/release.yml/badge.svg)](https://github.com/JoseLion/maybe/actions/workflows/release.yml)
 [![Pages](https://github.com/JoseLion/maybe/actions/workflows/pages.yml/badge.svg)](https://github.com/JoseLion/maybe/actions/workflows/pages.yml)
 [![Maven Central](https://img.shields.io/maven-central/v/io.github.joselion/maybe?logo=sonatype)](https://central.sonatype.com/artifact/io.github.joselion/maybe)
