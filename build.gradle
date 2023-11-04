@@ -11,17 +11,17 @@ plugins {
   id('maven-publish')
   id('signing')
 
-  id('io.github.joselion.pretty-jupiter') version '3.0.1'
-  id('io.github.joselion.strict-null-check') version '3.0.1'
-  id('io.github.gradle-nexus.publish-plugin') version '2.0.0-rc-1'
-  id('me.champeau.mrjar') version '0.1.1'
-  id('name.remal.sonarlint') version '3.3.9'
+  alias(libs.plugins.mrjar)
+  alias(libs.plugins.prettyJupiter)
+  alias(libs.plugins.publishPlugin)
+  alias(libs.plugins.sonarlint)
+  alias(libs.plugins.strictNullCheck)
 }
 
 group = 'io.github.joselion'
 
 multiRelease {
-  targetVersions(11, 17, 20)
+  targetVersions(11, 17, 21)
 }
 
 java {
@@ -56,6 +56,18 @@ jar {
   }
 }
 
+strictNullCheck {
+  addEclipse()
+  packageInfo {
+    useEclipse()
+    javadoc = """\
+      @author Jose Luis Leon
+      @since v1.0.2
+      """
+      .stripIndent()
+  }
+}
+
 sonarLint {
   setToolVersion(libs.versions.sonarlint.core.get())
   languages {
@@ -73,18 +85,6 @@ sonarLint {
   }
 }
 
-strictNullCheck {
-  packageInfo {
-    useEclipse()
-    javadoc = """\
-      @author Jose Luis Leon
-      @since v1.0.2
-      """
-      .stripIndent()
-  }
-  source.addEclipse()
-}
-
 checkstyle {
   setToolVersion(libs.versions.checkstyle.get())
 }
@@ -99,11 +99,6 @@ repositories {
 
 dependencies {
   sonarlintCorePlugins(libs.sonarlint.java)
-  constraints {
-    sonarlintCore(libs.tomcat.jasper) {
-      because('version 9.0.75 has a security vulnerability')
-    }
-  }
 }
 
 testing {
@@ -119,11 +114,7 @@ testing {
 }
 
 java17Test.useJUnitPlatform()
-java20Test.useJUnitPlatform()
-
-prettyJupiter {
-  duration.threshold = 150
-}
+java21Test.useJUnitPlatform()
 
 jacoco {
   setToolVersion(libs.versions.jacoco.get())
