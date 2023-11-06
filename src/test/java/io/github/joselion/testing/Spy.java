@@ -1,17 +1,17 @@
 package io.github.joselion.testing;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.AdditionalAnswers.delegatesTo;
 
 import org.mockito.Mockito;
 
+import io.github.joselion.maybe.helpers.Common;
+
 public class Spy {
 
-  @SuppressWarnings("unchecked")
   public static <T> T lambda(final T lambda) {
-    Class<?>[] interfaces = lambda.getClass().getInterfaces();
-    assertThat(interfaces).hasSize(1);
+    final var interfaces = lambda.getClass().getInterfaces();
+    final var toMock = Common.<Class<T>>cast(interfaces[0]);
 
-    return Mockito.mock((Class<T>) interfaces[0], delegatesTo(lambda));
+    return Mockito.mock(toMock, delegatesTo(lambda));
   }
 }

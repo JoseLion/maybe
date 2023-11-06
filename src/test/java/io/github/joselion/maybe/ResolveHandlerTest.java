@@ -526,4 +526,53 @@ import io.github.joselion.testing.UnitTest;
       }
     }
   }
+
+  @Nested class solveResource {
+    @Nested class when_the_value_is_present {
+      @Nested class and_the_solver_does_not_throw {
+        @Test void returns_a_ResourceHolder_with_the_resource() {
+          final var path = "./src/test/resources/readTest.txt";
+          final var holder = Maybe
+            .just(path)
+            .resolve(ThrowingFunction.identity())
+            .solveResource(FileInputStream::new);
+
+          assertThat(holder.resource())
+            .isPresent()
+            .containsInstanceOf(FileInputStream.class)
+            .get()
+            .asInstanceOf(INPUT_STREAM)
+            .hasContent("foo");
+          assertThat(holder.error()).isEmpty();
+        }
+      }
+
+      @Nested class and_the_solver_throws {
+        @Test void returns_a_ResourceHolder_with_the_thrown_exception() {
+          final var holder = Maybe
+            .just("invalid.txt")
+            .resolve(ThrowingFunction.identity())
+            .solveResource(FileInputStream::new);
+
+          assertThat(holder.resource()).isEmpty();
+          assertThat(holder.error())
+            .isPresent()
+            .containsInstanceOf(FileNotFoundException.class);
+        }
+      }
+    }
+
+    @Nested class when_the_error_is_present {
+      @Test void returns_a_ResourceHolder_with_the_propagated_error() {
+        final var holder = Maybe
+          .fromResolver(throwingOp)
+          .solveResource(FileInputStream::new);
+
+        assertThat(holder.resource()).isEmpty();
+        assertThat(holder.error())
+          .isPresent()
+          .containsInstanceOf(FileSystemException.class);
+      }
+    }
+  }
 }

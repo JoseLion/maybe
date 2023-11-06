@@ -1,11 +1,13 @@
 package io.github.joselion.maybe;
 
+import java.io.Closeable;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.function.Function;
 
 import org.eclipse.jdt.annotation.Nullable;
 
+import io.github.joselion.maybe.helpers.Common;
 import io.github.joselion.maybe.util.function.ThrowingConsumer;
 import io.github.joselion.maybe.util.function.ThrowingFunction;
 import io.github.joselion.maybe.util.function.ThrowingRunnable;
@@ -97,8 +99,7 @@ public final class Maybe<T> {
     try {
       return ResolveHandler.ofSuccess(resolver.get());
     } catch (Throwable e) { // NOSONAR
-      @SuppressWarnings("unchecked")
-      final var error = (E) e;
+      final var error = Common.<E>cast(e);
       return ResolveHandler.ofError(error);
     }
   }
@@ -118,8 +119,7 @@ public final class Maybe<T> {
       effect.run();
       return EffectHandler.empty();
     } catch (Throwable e) { // NOSONAR
-      @SuppressWarnings("unchecked")
-      final var error = (E) e;
+      final var error = Common.<E>cast(e);
       return EffectHandler.ofError(error);
     }
   }
@@ -202,6 +202,28 @@ public final class Maybe<T> {
   }
 
   /**
+   * Prepare an {@link AutoCloseable} resource to use in a resolver or effect,
+   * using a {@link ThrowingSupplier}. Any exception thrown by the supplier
+   * will be propageted to the {@link ResourceHolder}. The resource will be
+   * automatically closed after the operation is finished, just like a common
+   * try-with-resources statement.
+   *
+   * @param <R> the type of the resource. Extends from {@link AutoCloseable}
+   * @param <E> the type of error the holder may have
+   * @param supplier the throwing supplier o the {@link AutoCloseable} resource
+   * @return a {@link ResourceHolder} which let's you choose to resolve a value
+   *         or run an effect using the prepared resource
+   */
+  public static <R extends Closeable, E extends Throwable> ResourceHolder<R, E> solveResource(
+    final ThrowingSupplier<R, E> supplier
+  ) {
+    return Maybe
+      .fromResolver(supplier)
+      .map(ResourceHolder::<R, E>from)
+      .orElse(ResourceHolder::failure);
+  }
+
+  /**
    * If present, maps the value to another using the provided mapper function.
    * Otherwise, ignores the mapper and returns {@link #nothing()}.
    * 
@@ -246,14 +268,14 @@ public final class Maybe<T> {
    * @return a {@link ResolveHandler} with either the resolved value, or the
    *         thrown exception to be handled
    */
-  @SuppressWarnings("unchecked")
   public <U, E extends Throwable> ResolveHandler<U, E> resolve(final ThrowingFunction<T, U, E> resolver) {
     try {
       return value
         .map(Maybe.partialResolver(resolver))
         .orElseThrow();
-    } catch (final NoSuchElementException error) {
-      return ResolveHandler.ofError((E) error);
+    } catch (final NoSuchElementException e) {
+      final var error = Common.<E>cast(e);
+      return ResolveHandler.ofError(error);
     }
   }
 
@@ -266,14 +288,14 @@ public final class Maybe<T> {
    * @return an {@link EffectHandler} with either the thrown exception to be
    *         handled or nothing
    */
-  @SuppressWarnings("unchecked")
   public <E extends Throwable> EffectHandler<E> runEffect(final ThrowingConsumer<T, E> effect) {
     try {
       return value
         .map(Maybe.partialEffect(effect))
         .orElseThrow();
-    } catch (final NoSuchElementException error) {
-      return EffectHandler.ofError((E) error);
+    } catch (final NoSuchElementException e) {
+      final var error = Common.<E>cast(e);
+      return EffectHandler.ofError(error);
     }
   }
 
