@@ -7,9 +7,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
-import java.util.function.Consumer;
-import java.util.function.Function;
-
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
@@ -99,7 +96,7 @@ import io.github.joselion.testing.UnitTest;
   @Nested class doOnLeft {
     @Nested class when_the_left_value_is_present {
       @Test void runs_the_effect() {
-        final var effectSpy = Spy.<Consumer<String>>lambda(value -> { });
+        final var effectSpy = Spy.<String>consumer(value -> { });
 
         Either.ofLeft("foo").doOnLeft(effectSpy);
 
@@ -109,7 +106,7 @@ import io.github.joselion.testing.UnitTest;
 
     @Nested class when_the_right_value_is_present {
       @Test void does_not_run_the_effect() {
-        final var effectSpy = Spy.<Consumer<Object>>lambda(value -> { });
+        final var effectSpy = Spy.consumer(value -> { });
 
         Either.ofRight("foo").doOnLeft(effectSpy);
 
@@ -121,7 +118,7 @@ import io.github.joselion.testing.UnitTest;
   @Nested class doOnRight {
     @Nested class when_the_left_value_is_present {
       @Test void does_not_run_the_effect() {
-        final var effectSpy = Spy.<Consumer<Object>>lambda(value -> { });
+        final var effectSpy = Spy.consumer(value -> { });
 
         Either.ofLeft("foo").doOnRight(effectSpy);
 
@@ -131,7 +128,7 @@ import io.github.joselion.testing.UnitTest;
 
     @Nested class when_the_right_value_is_present {
       @Test void runs_the_effect() {
-        final var effectSpy = Spy.<Consumer<String>>lambda(value -> { });
+        final var effectSpy = Spy.<String>consumer(value -> { });
 
         Either.ofRight("foo").doOnRight(effectSpy);
 
@@ -143,7 +140,7 @@ import io.github.joselion.testing.UnitTest;
   @Nested class mapLeft {
     @Nested class when_the_left_value_is_present {
       @Test void applies_the_mapper_to_the_value() {
-        final var mapperSpy = Spy.<Function<String, Integer>>lambda(Integer::parseInt);
+        final var mapperSpy = Spy.<String, Integer>function(Integer::parseInt);
         final var either = Either.ofLeft("1").mapLeft(mapperSpy);
 
         assertThat(either)
@@ -158,7 +155,7 @@ import io.github.joselion.testing.UnitTest;
 
     @Nested class when_the_right_value_is_present {
       @Test void does_not_apply_the_mapper() {
-        final var mapperSpy = Spy.<Function<Object, String>>lambda(Object::toString);
+        final var mapperSpy = Spy.function(Object::toString);
         final var either = Either.ofRight(1).mapLeft(mapperSpy);
 
         assertThat(either)
@@ -175,7 +172,7 @@ import io.github.joselion.testing.UnitTest;
   @Nested class mapRight {
     @Nested class when_the_left_value_is_present {
       @Test void does_not_apply_the_mapper() {
-        final var mapperSpy = Spy.<Function<Object, String>>lambda(Object::toString);
+        final var mapperSpy = Spy.function(Object::toString);
         final var either = Either.ofLeft(1).mapRight(mapperSpy);
 
         assertThat(either)
@@ -190,7 +187,7 @@ import io.github.joselion.testing.UnitTest;
 
     @Nested class when_the_right_value_is_present {
       @Test void applies_the_mapper_to_the_value() {
-        final var mapperSpy = Spy.<Function<String, Integer>>lambda(Integer::parseInt);
+        final var mapperSpy = Spy.<String, Integer>function(Integer::parseInt);
         final var either = Either.ofRight("1").mapRight(mapperSpy);
 
         assertThat(either)
@@ -200,6 +197,146 @@ import io.github.joselion.testing.UnitTest;
           .isEqualTo(1);
 
         verify(mapperSpy).apply("1");
+      }
+    }
+  }
+
+  @Nested class map {
+    @Nested class when_the_left_value_is_present {
+      @Test void applies_only_the_left_mapper_to_the_value() {
+        final var leftMapperSpy = Spy.<String, Integer>function(Integer::parseInt);
+        final var rightMapperSpy = Spy.function(Object::toString);
+        final var either = Either.ofLeft("1").map(leftMapperSpy, rightMapperSpy);
+
+        assertThat(either)
+          .asInstanceOf(type(Either.Left.class))
+          .extracting(Either.Left::value)
+          .isExactlyInstanceOf(Integer.class)
+          .isEqualTo(1);
+
+        verify(leftMapperSpy).apply("1");
+        verify(rightMapperSpy, never()).apply(any());
+      }
+    }
+
+    @Nested class when_the_right_value_is_present {
+      @Test void applies_only_the_right_mapper_to_the_value() {
+        final var leftMapperSpy = Spy.function(Object::toString);
+        final var rightMapperSpy = Spy.<String, Integer>function(Integer::parseInt);
+        final var either = Either.ofRight("1").map(leftMapperSpy, rightMapperSpy);
+
+        assertThat(either)
+          .asInstanceOf(type(Either.Right.class))
+          .extracting(Either.Right::value)
+          .isExactlyInstanceOf(Integer.class)
+          .isEqualTo(1);
+
+        verify(leftMapperSpy, never()).apply(any());
+        verify(rightMapperSpy).apply("1");
+      }
+    }
+  }
+
+  @Nested class flatMapLeft {
+    @Nested class when_the_left_value_is_present {
+      @Test void applies_the_mapper_to_the_value_without_wrapping_the_result_within_another_Either() {
+        final var mapperSpy = Spy.<String, Either<Integer, Object>>function(x -> Either.ofLeft(Integer.parseInt(x)));
+        final var either = Either.ofLeft("1").flatMapLeft(mapperSpy);
+
+        assertThat(either)
+          .asInstanceOf(type(Either.Left.class))
+          .extracting(Either.Left::value)
+          .isExactlyInstanceOf(Integer.class)
+          .isEqualTo(1);
+
+        verify(mapperSpy).apply("1");
+      }
+    }
+
+    @Nested class when_the_right_value_is_present {
+      @Test void does_not_apply_the_mapper() {
+        final var mapperSpy = Spy.function(x -> Either.ofRight(x.toString()));
+        final var either = Either.ofRight("1").flatMapLeft(mapperSpy);
+
+        assertThat(either)
+          .asInstanceOf(type(Either.Right.class))
+          .extracting(Either.Right::value)
+          .isExactlyInstanceOf(String.class)
+          .isEqualTo("1");
+
+        verify(mapperSpy, never()).apply("1");
+      }
+    }
+  }
+
+  @Nested class flatMapRight {
+    @Nested class when_the_left_value_is_present {
+      @Test void does_not_apply_the_mapper() {
+        final var mapperSpy = Spy.function(x -> Either.ofLeft(x.toString()));
+        final var either = Either.ofLeft("1").flatMapRight(mapperSpy);
+
+        assertThat(either)
+          .asInstanceOf(type(Either.Left.class))
+          .extracting(Either.Left::value)
+          .isExactlyInstanceOf(String.class)
+          .isEqualTo("1");
+
+        verify(mapperSpy, never()).apply("1");
+      }
+    }
+
+    @Nested class when_the_right_value_is_present {
+      @Test void applies_the_mapper_to_the_value_without_wrapping_the_result_within_another_Either() {
+        final var mapperSpy = Spy.<String, Either<Object, Integer>>function(x -> Either.ofRight(Integer.parseInt(x)));
+        final var either = Either.ofRight("1").flatMapRight(mapperSpy);
+
+        assertThat(either)
+          .asInstanceOf(type(Either.Right.class))
+          .extracting(Either.Right::value)
+          .isExactlyInstanceOf(Integer.class)
+          .isEqualTo(1);
+
+        verify(mapperSpy).apply("1");
+      }
+    }
+  }
+
+  @Nested class flatMap {
+    @Nested class when_the_left_value_is_present {
+      @Test void applies_only_the_left_mapper_to_the_value_without_wrapping_the_result_within_another_Either() {
+        final var leftMapperSpy = Spy.<String, Either<Integer, Object>>function(
+          x -> Either.ofLeft(Integer.parseInt(x))
+        );
+        final var rightMapperSpy = Spy.<Object, Either<Integer, Object>>function(x -> Either.ofLeft(0));
+        final var either = Either.ofLeft("1").flatMap(leftMapperSpy, rightMapperSpy);
+
+        assertThat(either)
+          .asInstanceOf(type(Either.Left.class))
+          .extracting(Either.Left::value)
+          .isExactlyInstanceOf(Integer.class)
+          .isEqualTo(1);
+
+        verify(leftMapperSpy).apply("1");
+        verify(rightMapperSpy, never()).apply("1");
+      }
+    }
+
+    @Nested class when_the_right_value_is_present {
+      @Test void applies_only_the_right_mapper_to_the_value_without_wrapping_the_result_within_another_Either() {
+        final var leftMapperSpy = Spy.function(x -> Either.ofRight(0));
+        final var rightMapperSpy = Spy.<String, Either<Object, Integer>>function(
+          x -> Either.ofRight(Integer.parseInt(x))
+        );
+        final var either = Either.ofRight("1").flatMap(leftMapperSpy, rightMapperSpy);
+
+        assertThat(either)
+          .asInstanceOf(type(Either.Right.class))
+          .extracting(Either.Right::value)
+          .isExactlyInstanceOf(Integer.class)
+          .isEqualTo(1);
+
+        verify(leftMapperSpy, never()).apply("1");
+        verify(rightMapperSpy).apply("1");
       }
     }
   }
@@ -243,8 +380,8 @@ import io.github.joselion.testing.UnitTest;
   @Nested class unwrap {
     @Nested class when_the_left_value_is_present {
       @Test void returns_the_value_using_the_onLeft_handler() {
-        final var onLeftSpy = Spy.<Function<String, String>>lambda("The value is: "::concat);
-        final var onRightSpy = Spy.<Function<Object, String>>lambda(x -> "The value is: ".concat(x.toString()));
+        final var onLeftSpy = Spy.function("The value is: "::concat);
+        final var onRightSpy = Spy.function(x -> "The value is: ".concat(x.toString()));
         final var value = Either.ofLeft("foo").unwrap(onLeftSpy, onRightSpy);
 
         assertThat(value).isEqualTo("The value is: foo");
@@ -256,8 +393,8 @@ import io.github.joselion.testing.UnitTest;
 
     @Nested class when_the_right_value_is_present {
       @Test void returns_the_value_using_the_onRight_handler() {
-        final var onLeftSpy = Spy.<Function<Object, String>>lambda(x -> "The value is: ".concat(x.toString()));
-        final var onRightSpy = Spy.<Function<String, String>>lambda("The value is: "::concat);
+        final var onLeftSpy = Spy.function(x -> "The value is: ".concat(x.toString()));
+        final var onRightSpy = Spy.function("The value is: "::concat);
         final var value = Either.ofRight("foo").unwrap(onLeftSpy, onRightSpy);
 
         assertThat(value).isEqualTo("The value is: foo");

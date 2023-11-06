@@ -142,6 +142,75 @@ public interface Either<L, R> {
   }
 
   /**
+   * Shortcut method which does a {@link #mapLeft(Function)} and a
+   * {@link #mapRight(Function)} in a single operation. The first argument
+   * maps the left value if present. Otherwise, the second argument maps the
+   * right value.
+   *
+   * @param <T> the type the left value will be mapped to
+   * @param <S> the type the right value will be mapped to
+   * @param leftMapper a function that receives the left value and returns another
+   * @param rigthMapper a function that receives the right value and returns another
+   * @return an {@code Either} instance with the mapped left or right value
+   */
+  default <T, S> Either<T, S> map(final Function<L, T> leftMapper, final Function<R, S> rigthMapper) {
+    return unwrap(
+      left -> Either.ofLeft(leftMapper.apply(left)),
+      right -> Either.ofRight(rigthMapper.apply(right))
+    );
+  }
+
+  /**
+   * Map the {@code Left} value to another if present. Does nothing otherwise.
+   * 
+   * This method is similar to {@link #mapLeft(Function)}, but the
+   * mapping function can return another {@code Either} without wrapping the
+   * left value within an additional {@code Either}.
+   *
+   * @param <T> the type the left value will be mapped to
+   * @param mapper a function that receives the left value and returns an {@code Either}
+   * @return an {@code Either} instance with the mapped left value
+   */
+  default <T> Either<T, R> flatMapLeft(final Function<L, Either<T, R>> mapper) {
+    return unwrap(mapper, Either::ofRight);
+  }
+
+  /**
+   * Map the {@code Right} value to another if present. Does nothing otherwise.
+   * 
+   * This method is similar to {@link #mapRight(Function)}, but the
+   * mapping function can return another {@code Either} without wrapping the
+   * right value within an additional {@code Either}.
+   *
+   * @param <T> the type the right value will be mapped to
+   * @param mapper a function that receives the right value and returns an {@code Either}
+   * @return an {@code Either} instance with the mapped right value
+   */
+  default <T> Either<L, T> flatMapRight(final Function<R, Either<L, T>> mapper) {
+    return unwrap(Either::ofLeft, mapper);
+  }
+
+  /**
+   * Shortcut method which does a {@link #flatMapLeft(Function)} and a
+   * {@link #flatMapRight(Function)} in a single operation. The first argument
+   * maps the left value if present. Otherwise, the second argument maps the
+   * right value. In both cases, the mapped left/right values are never wrapped
+   * within an additional {@code Either}.
+   *
+   * @param <T> the type the left value will be mapped to
+   * @param <S> the type the right value will be mapped to
+   * @param leftMapper a function that receives the left value and returns an {@code Either}
+   * @param rigthMapper a function that receives the right value and returns an {@code Either}
+   * @return an {@code Either} instance with the mapped left or right value
+   */
+  default <T, S> Either<T, S> flatMap(
+    final Function<L, Either<T, S>> leftMapper,
+    final Function<R, Either<T, S>> rigthMapper
+  ) {
+    return unwrap(leftMapper, rigthMapper);
+  }
+
+  /**
    * Terminal operator. Returns the {@code Left} value if present. Otherwise,
    * it returns the provided fallback value.
    *
