@@ -2,6 +2,7 @@ package io.github.joselion.maybe;
 
 import java.util.Optional;
 
+import io.github.joselion.maybe.helpers.Common;
 import io.github.joselion.maybe.util.Either;
 import io.github.joselion.maybe.util.function.ThrowingConsumer;
 import io.github.joselion.maybe.util.function.ThrowingFunction;
@@ -89,18 +90,20 @@ public class ResourceHolder<R extends AutoCloseable, E extends Throwable> {
    * @return a {@link ResolveHandler} with either the value resolved or the thrown
    *         exception to be handled
    */
-  @SuppressWarnings("unchecked")
   public <T, X extends Throwable> ResolveHandler<T, X> resolveClosing(final ThrowingFunction<R, T, X> resolver) {
-    return value.unwrap(
-      error -> ResolveHandler.ofError((X) error),
-      resource -> {
-        try (var res = resource) {
-          return ResolveHandler.ofSuccess(resolver.apply(res));
-        } catch (final Throwable e) { //NOSONAR
-          final var error = (X) e;
-          return ResolveHandler.ofError(error);
+    return value
+      .mapLeft(Common::<X>cast)
+      .unwrap(
+        ResolveHandler::ofError,
+        resource -> {
+          try (var res = resource) {
+            return ResolveHandler.ofSuccess(resolver.apply(res));
+          } catch (final Throwable e) { //NOSONAR
+            final var error = Common.<X>cast(e);
+            return ResolveHandler.ofError(error);
+          }
         }
-      });
+      );
   }
 
   /**
@@ -119,19 +122,20 @@ public class ResourceHolder<R extends AutoCloseable, E extends Throwable> {
    * @return an {@link EffectHandler} with either the thrown exception to be
    *         handled or nothing
    */
-  @SuppressWarnings("unchecked")
   public <X extends Throwable> EffectHandler<X> runEffectClosing(final ThrowingConsumer<R, X> effect) {
-    return value.unwrap(
-      error -> EffectHandler.ofError((X) error),
-      resource -> {
-        try (var res = resource) {
-          effect.accept(res);
-          return EffectHandler.empty();
-        } catch (final Throwable e) { // NOSONAR
-          final var error = (X) e;
-          return EffectHandler.ofError(error);
+    return value
+      .mapLeft(Common::<X>cast)
+      .unwrap(
+        EffectHandler::ofError,
+        resource -> {
+          try (var res = resource) {
+            effect.accept(res);
+            return EffectHandler.empty();
+          } catch (final Throwable e) { // NOSONAR
+            final var error = Common.<X>cast(e);
+            return EffectHandler.ofError(error);
+          }
         }
-      }
-    );
+      );
   }
 }

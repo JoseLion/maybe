@@ -1,6 +1,7 @@
 package io.github.joselion.maybe;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.InstanceOfAssertFactories.INPUT_STREAM;
 import static org.assertj.core.api.InstanceOfAssertFactories.THROWABLE;
 import static org.assertj.core.api.InstanceOfAssertFactories.optional;
 import static org.mockito.ArgumentMatchers.any;
@@ -9,11 +10,11 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
-import org.assertj.core.api.AutoCloseableSoftAssertions;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
@@ -181,19 +182,43 @@ import io.github.joselion.testing.UnitTest;
   }
 
   @Nested class withResource {
-    @Test void returns_the_resource_spec_with_the_resource() {
-      try (
-        var softly = new AutoCloseableSoftAssertions();
-        var fis = Maybe.just("./src/test/resources/readTest.txt")
-          .resolve(FileInputStream::new)
-          .orThrow(Error::new);
-      ) {
-        softly.assertThat(Maybe.withResource(fis).resource())
+    @Test void returns_the_ResourceHolder_with_the_resource() throws FileNotFoundException, IOException {
+      try (var fis = new FileInputStream("./src/test/resources/readTest.txt")) {
+        final var holder = Maybe.withResource(fis);
+
+        assertThat(holder.resource())
           .isPresent()
           .containsInstanceOf(FileInputStream.class)
           .containsSame(fis);
-      } catch (Throwable error) {
-        throw new Error(error);
+        assertThat(holder.error()).isEmpty();
+      }
+    }
+  }
+
+  @Nested class solveResource {
+    @Nested class and_the_solver_does_not_throw {
+      @Test void returns_a_ResourceHolder_with_the_resource() throws FileNotFoundException, IOException {
+        final var path = "./src/test/resources/readTest.txt";
+        final var holder = Maybe.solveResource(() -> new FileInputStream(path));
+
+        assertThat(holder.resource())
+          .isPresent()
+          .containsInstanceOf(FileInputStream.class)
+          .get()
+          .asInstanceOf(INPUT_STREAM)
+          .hasContent("foo");
+        assertThat(holder.error()).isEmpty();
+      }
+    }
+
+    @Nested class and_the_solver_throws {
+      @Test void returns_a_ResourceHolder_with_the_thrown_exception() {
+        final var holder = Maybe.solveResource(() -> new FileInputStream("invalid.txt"));
+
+        assertThat(holder.resource()).isEmpty();
+        assertThat(holder.error())
+          .isPresent()
+          .containsInstanceOf(FileNotFoundException.class);
       }
     }
   }
