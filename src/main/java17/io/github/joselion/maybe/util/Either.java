@@ -50,72 +50,6 @@ public sealed interface Either<L, R> {
   }
 
   /**
-   * Returns true if the {@code Left} value is present, false otherwise.
-   *
-   * @return true if left is present, false otherwise
-   */
-  boolean isLeft();
-
-  /**
-   * Returns true if the {@code Right} value is present, false otherwise.
-   *
-   * @return true if right is present, false otherwise
-   */
-  boolean isRight();
-
-  /**
-   * Run an effect if the {@code Left} value is present. Does nothing otherwise.
-   *
-   * @param effect a consumer function that receives the left value
-   * @return the same {@code Either} instance
-   */
-  Either<L, R> doOnLeft(Consumer<L> effect);
-
-  /**
-   * Run an effect if the {@code Right} value is present. Does nothing otherwise.
-   *
-   * @param effect effect a consumer function that receives the right value
-   * @return the same {@code Either} instance
-   */
-  Either<L, R> doOnRight(Consumer<R> effect);
-
-  /**
-   * Map the {@code Left} value to another if present. Does nothing otherwise.
-   *
-   * @param <T> the type the left value will be mapped to
-   * @param mapper a function that receives the left value and returns another
-   * @return an {@code Either} instance with the mapped left value
-   */
-  <T> Either<T, R> mapLeft(Function<L, T> mapper);
-
-  /**
-   * Map the {@code Right} value to another if present. Does nothing otherwise.
-   *
-   * @param <T> the type the right value will be mapped to
-   * @param mapper a function that receives the right value and returns another
-   * @return an {@code Either} instance with the mapped right value
-   */
-  <T> Either<L, T> mapRight(Function<R, T> mapper);
-
-  /**
-   * Terminal operator. Returns the {@code Left} value if present. Otherwise,
-   * it returns the provided fallback value.
-   *
-   * @param fallback the value to return if left is not present
-   * @return the left value or a fallback
-   */
-  L leftOrElse(L fallback);
-
-  /**
-   * Terminal operator. Returns the {@code Right} value if present. Otherwise,
-   * it returns the provided fallback value.
-   *
-   * @param fallback the value to return if right is not present
-   * @return the right value or a fallback
-   */
-  R rightOrElse(R fallback);
-
-  /**
    * Terminal operator. Unwraps the {@code Either} to obtain the wrapped value.
    * Since there's no possible way for the compiler to know which one is
    * present ({@code Left} or {@code Right}), you need to provide a handler for
@@ -128,6 +62,106 @@ public sealed interface Either<L, R> {
    * @return either the left or the right handled value
    */
   <T> T unwrap(Function<L, T> onLeft, Function<R, T> onRight);
+
+  /**
+   * Returns true if the {@code Left} value is present, false otherwise.
+   *
+   * @return true if left is present, false otherwise
+   */
+  default boolean isLeft() {
+    return unwrap(left -> true, right -> false);
+  }
+
+  /**
+   * Returns true if the {@code Right} value is present, false otherwise.
+   *
+   * @return true if right is present, false otherwise
+   */
+  default boolean isRight() {
+    return unwrap(left -> false, rigth -> true);
+  }
+
+  /**
+   * Run an effect if the {@code Left} value is present. Does nothing otherwise.
+   *
+   * @param effect a consumer function that receives the left value
+   * @return the same {@code Either} instance
+   */
+  default Either<L, R> doOnLeft(final Consumer<L> effect) {
+    return unwrap(
+      left -> {
+        effect.accept(left);
+        return Either.ofLeft(left);
+      },
+      Either::ofRight
+    );
+  }
+
+  /**
+   * Run an effect if the {@code Right} value is present. Does nothing otherwise.
+   *
+   * @param effect effect a consumer function that receives the right value
+   * @return the same {@code Either} instance
+   */
+  default Either<L, R> doOnRight(final Consumer<R> effect) {
+    return unwrap(
+      Either::ofLeft,
+      right -> {
+        effect.accept(right);
+        return Either.ofRight(right);
+      }
+    );
+  }
+
+  /**
+   * Map the {@code Left} value to another if present. Does nothing otherwise.
+   *
+   * @param <T> the type the left value will be mapped to
+   * @param mapper a function that receives the left value and returns another
+   * @return an {@code Either} instance with the mapped left value
+   */
+  default <T> Either<T, R> mapLeft(final Function<L, T> mapper) {
+    return unwrap(
+      left -> Either.ofLeft(mapper.apply(left)),
+      Either::ofRight
+    );
+  }
+
+  /**
+   * Map the {@code Right} value to another if present. Does nothing otherwise.
+   *
+   * @param <T> the type the right value will be mapped to
+   * @param mapper a function that receives the right value and returns another
+   * @return an {@code Either} instance with the mapped right value
+   */
+  default <T> Either<L, T> mapRight(final Function<R, T> mapper) {
+    return unwrap(
+      Either::ofLeft,
+      right -> Either.ofRight(mapper.apply(right))
+    );
+  }
+
+  /**
+   * Terminal operator. Returns the {@code Left} value if present. Otherwise,
+   * it returns the provided fallback value.
+   *
+   * @param fallback the value to return if left is not present
+   * @return the left value or a fallback
+   */
+  default L leftOrElse(final L fallback) {
+    return unwrap(Function.identity(), rigth -> fallback);
+  }
+
+  /**
+   * Terminal operator. Returns the {@code Right} value if present. Otherwise,
+   * it returns the provided fallback value.
+   *
+   * @param fallback the value to return if right is not present
+   * @return the right value or a fallback
+   */
+  default R rightOrElse(final R fallback) {
+    return unwrap(left -> fallback, Function.identity());
+  }
 
   /**
    * Terminal operator. Returns the {@code Left} value if present. Otherwise,
@@ -188,50 +222,6 @@ public sealed interface Either<L, R> {
     }
 
     @Override
-    public boolean isLeft() {
-      return true;
-    }
-
-    @Override
-    public boolean isRight() {
-      return false;
-    }
-
-    @Override
-    public Either<L, R> doOnLeft(final Consumer<L> effect) {
-      effect.accept(this.value);
-
-      return this;
-    }
-
-    @Override
-    public Either<L, R> doOnRight(final Consumer<R> effect) {
-      return this;
-    }
-
-    @Override
-    public <T> Either<T, R> mapLeft(final Function<L, T> mapper) {
-      final var mappedLeft = mapper.apply(this.value);
-
-      return new Left<>(mappedLeft);
-    }
-
-    @Override
-    public <T> Either<L, T> mapRight(final Function<R, T> mapper) {
-      return new Left<>(this.value);
-    }
-
-    @Override
-    public L leftOrElse(final L fallback) {
-      return this.value;
-    }
-
-    @Override
-    public R rightOrElse(final R fallback) {
-      return fallback;
-    }
-
-    @Override
     public <T> T unwrap(final Function<L, T> onLeft, final Function<R, T> onRight) {
       return onLeft.apply(this.value);
     }
@@ -276,50 +266,6 @@ public sealed interface Either<L, R> {
      */
     public Right {
       Objects.requireNonNull(value, "An Either cannot be created with a null value");
-    }
-
-    @Override
-    public boolean isLeft() {
-      return false;
-    }
-
-    @Override
-    public boolean isRight() {
-      return true;
-    }
-
-    @Override
-    public Either<L, R> doOnLeft(final Consumer<L> effect) {
-      return this;
-    }
-
-    @Override
-    public Either<L, R> doOnRight(final Consumer<R> effect) {
-      effect.accept(this.value);
-
-      return this;
-    }
-
-    @Override
-    public <T> Either<T, R> mapLeft(final Function<L, T> mapper) {
-      return new Right<>(this.value);
-    }
-
-    @Override
-    public <T> Either<L, T> mapRight(final Function<R, T> mapper) {
-      final var mappedRight = mapper.apply(this.value);
-
-      return new Right<>(mappedRight);
-    }
-
-    @Override
-    public L leftOrElse(final L fallback) {
-      return fallback;
-    }
-
-    @Override
-    public R rightOrElse(final R fallback) {
-      return this.value;
     }
 
     @Override
