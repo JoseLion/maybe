@@ -8,13 +8,13 @@ import java.util.function.Supplier;
 
 import org.mockito.Mockito;
 
-import io.github.joselion.maybe.helpers.Common;
+import io.github.joselion.maybe.helpers.Commons;
 
 public class Spy {
 
   public static <T> T lambda(final T lambda) {
     final var interfaces = lambda.getClass().getInterfaces();
-    final var toMock = Common.<Class<T>>cast(interfaces[0]);
+    final var toMock = Commons.<Class<T>>cast(interfaces[0]);
 
     return Mockito.mock(toMock, delegatesTo(lambda));
   }

@@ -55,7 +55,7 @@ public final class EffectHandler<E extends Throwable> {
    * @return the possible thrown exception
    */
   Optional<E> error() {
-    return error;
+    return this.error;
   }
 
   /**
@@ -65,7 +65,7 @@ public final class EffectHandler<E extends Throwable> {
    * @return the same handler to continue chainning operations
    */
   public EffectHandler<E> doOnSuccess(final Runnable effect) {
-    if (error.isEmpty()) {
+    if (this.error.isEmpty()) {
       effect.run();
     }
 
@@ -83,7 +83,8 @@ public final class EffectHandler<E extends Throwable> {
    * @return the same handler to continue chainning operations
    */
   public <X extends Throwable> EffectHandler<E> doOnError(final Class<X> ofType, final Consumer<X> effect) {
-    error.filter(ofType::isInstance)
+    this.error
+      .filter(ofType::isInstance)
       .map(ofType::cast)
       .ifPresent(effect);
 
@@ -98,7 +99,7 @@ public final class EffectHandler<E extends Throwable> {
    * @return the same handler to continue chainning operations
    */
   public EffectHandler<E> doOnError(final Consumer<E> effect) {
-    error.ifPresent(effect);
+    this.error.ifPresent(effect);
 
     return this;
   }
@@ -116,7 +117,8 @@ public final class EffectHandler<E extends Throwable> {
    *         caught. The same handler instance otherwise
    */
   public <X extends E> EffectHandler<E> catchError(final Class<X> ofType, final Consumer<X> handler) {
-    return error.filter(ofType::isInstance)
+    return this.error
+      .filter(ofType::isInstance)
       .map(ofType::cast)
       .map(caught -> {
         handler.accept(caught);
@@ -136,11 +138,12 @@ public final class EffectHandler<E extends Throwable> {
    *         instance otherwise
    */
   public EffectHandler<E> catchError(final Consumer<E> handler) {
-    return error.map(caught -> {
-      handler.accept(caught);
-      return EffectHandler.<E>empty();
-    })
-    .orElse(this);
+    return this.error
+      .map(caught -> {
+        handler.accept(caught);
+        return EffectHandler.<E>empty();
+      })
+      .orElse(this);
   }
 
   /**
@@ -157,7 +160,8 @@ public final class EffectHandler<E extends Throwable> {
     final ThrowingRunnable<X> onSuccess,
     final ThrowingConsumer<E, X> onError
   ) {
-    return error.map(Maybe.partialEffect(onError))
+    return this.error
+      .map(Maybe.partialEffect(onError))
       .orElseGet(() -> Maybe.fromEffect(onSuccess));
   }
 
@@ -182,7 +186,7 @@ public final class EffectHandler<E extends Throwable> {
    * @param effect a consumer function that receives the caught error
    */
   public void orElse(final Consumer<E> effect) {
-    error.ifPresent(effect);
+    this.error.ifPresent(effect);
   }
 
   /**
@@ -191,8 +195,8 @@ public final class EffectHandler<E extends Throwable> {
    * @throws E the error thrown by the {@code effect} operation
    */
   public void orThrow() throws E {
-    if (error.isPresent()) {
-      throw error.get();
+    if (this.error.isPresent()) {
+      throw this.error.get();
     }
   }
 
@@ -205,8 +209,8 @@ public final class EffectHandler<E extends Throwable> {
    * @throws X a mapped exception
    */
   public <X extends Throwable> void orThrow(final Function<E, X> mapper) throws X {
-    if (error.isPresent()) {
-      throw mapper.apply(error.get());
+    if (this.error.isPresent()) {
+      throw mapper.apply(this.error.get());
     }
   }
 }
