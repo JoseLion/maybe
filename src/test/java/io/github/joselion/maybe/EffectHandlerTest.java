@@ -11,8 +11,6 @@ import static org.mockito.Mockito.verify;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.FileSystemException;
 import java.util.List;
-import java.util.function.Consumer;
-import java.util.function.Function;
 
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -35,7 +33,7 @@ import io.github.joselion.testing.UnitTest;
   @Nested class doOnSuccess {
     @Nested class when_the_value_is_present {
       @Test void calls_the_effect_callback() {
-        final var runnableSpy = Spy.<Runnable>lambda(() -> { });
+        final var runnableSpy = Spy.runnable(() -> { });
 
         Maybe.fromEffect(noOp).doOnSuccess(runnableSpy);
 
@@ -45,7 +43,7 @@ import io.github.joselion.testing.UnitTest;
 
     @Nested class when_the_value_is_not_present {
       @Test void never_calls_the_effect_callback() {
-        final var runnableSpy = Spy.<Runnable>lambda(() -> { });
+        final var runnableSpy = Spy.runnable(() -> { });
 
         Maybe.fromEffect(throwingOp).doOnSuccess(runnableSpy);
 
@@ -59,7 +57,7 @@ import io.github.joselion.testing.UnitTest;
       @Nested class and_the_error_type_is_provided {
         @Nested class and_the_error_is_an_instance_of_the_provided_type {
           @Test void calls_the_effect_callback() {
-            final var consumerSpy = Spy.<Consumer<FileSystemException>>lambda(error -> { });
+            final var consumerSpy = Spy.<FileSystemException>consumer(error -> { });
 
             Maybe.fromEffect(throwingOp)
               .doOnError(FileSystemException.class, consumerSpy);
@@ -70,7 +68,7 @@ import io.github.joselion.testing.UnitTest;
 
         @Nested class and_the_error_is_not_an_instance_of_the_provided_type {
           @Test void never_calls_the_effect_callback() {
-            final var consumerSpy = Spy.<Consumer<RuntimeException>>lambda(error -> { });
+            final var consumerSpy = Spy.<RuntimeException>consumer(error -> { });
 
             Maybe.fromEffect(throwingOp)
               .doOnError(RuntimeException.class, consumerSpy);
@@ -82,7 +80,7 @@ import io.github.joselion.testing.UnitTest;
 
       @Nested class and_the_error_type_is_not_provided {
         @Test void calls_the_effect_callback() {
-          final var consumerSpy = Spy.<Consumer<FileSystemException>>lambda(error -> { });
+          final var consumerSpy = Spy.<FileSystemException>consumer(error -> { });
 
           Maybe.fromEffect(throwingOp)
             .doOnError(consumerSpy);
@@ -94,7 +92,7 @@ import io.github.joselion.testing.UnitTest;
 
     @Nested class when_the_error_is_not_present {
       @Test void never_calls_the_effect_callback() {
-        final var cunsumerSpy = Spy.<Consumer<RuntimeException>>lambda(error -> { });
+        final var cunsumerSpy = Spy.<RuntimeException>consumer(error -> { });
 
         Maybe.fromEffect(noOp)
           .doOnError(RuntimeException.class, cunsumerSpy)
@@ -110,7 +108,7 @@ import io.github.joselion.testing.UnitTest;
       @Nested class and_the_error_type_is_provided {
         @Nested class and_the_error_is_an_instance_of_the_provided_type {
           @Test void calls_the_handler_function() {
-            final var consumerSpy = Spy.<Consumer<FileSystemException>>lambda(e -> { });
+            final var consumerSpy = Spy.<FileSystemException>consumer(e -> { });
             final var handler = Maybe.fromEffect(throwingOp)
               .catchError(FileSystemException.class, consumerSpy);
 
@@ -122,7 +120,7 @@ import io.github.joselion.testing.UnitTest;
 
         @Nested class and_the_error_is_not_an_instance_of_the_provided_type {
           @Test void never_calls_the_handler_function() {
-            final var consumerSpy = Spy.<Consumer<AccessDeniedException>>lambda(e -> { });
+            final var consumerSpy = Spy.<AccessDeniedException>consumer(e -> { });
             final var handler = Maybe.fromEffect(throwingOp)
               .catchError(AccessDeniedException.class, consumerSpy);
 
@@ -135,7 +133,7 @@ import io.github.joselion.testing.UnitTest;
 
       @Nested class and_the_error_type_is_not_provided {
         @Test void calls_the_handler_function() {
-          final var consumerSpy = Spy.<Consumer<FileSystemException>>lambda(e -> { });
+          final var consumerSpy = Spy.<FileSystemException>consumer(e -> { });
           final var handler = Maybe.fromEffect(throwingOp)
             .catchError(consumerSpy);
 
@@ -148,7 +146,7 @@ import io.github.joselion.testing.UnitTest;
 
     @Nested class when_the_error_is_not_present {
       @Test void never_calls_the_handler_function() {
-        final var consumerSpy = Spy.<Consumer<RuntimeException>>lambda(e -> { });
+        final var consumerSpy = Spy.<RuntimeException>consumer(e -> { });
         final var handlers = List.of(
           Maybe.fromEffect(noOp).catchError(RuntimeException.class, consumerSpy),
           Maybe.fromEffect(noOp).catchError(consumerSpy)
@@ -224,7 +222,7 @@ import io.github.joselion.testing.UnitTest;
   @Nested class orElse {
     @Nested class when_the_error_is_present {
       @Test void calls_the_effect_callback() {
-        final var consumerSpy = Spy.<Consumer<FileSystemException>>lambda(e -> { });
+        final var consumerSpy = Spy.<FileSystemException>consumer(e -> { });
         final var handler = Maybe.fromEffect(throwingOp);
 
         handler.orElse(consumerSpy);
@@ -235,7 +233,7 @@ import io.github.joselion.testing.UnitTest;
 
     @Nested class when_the_error_is_not_present {
       @Test void never_calls_the_effect_callback() {
-        final var consumerSpy = Spy.<Consumer<RuntimeException>>lambda(e -> { });
+        final var consumerSpy = Spy.<RuntimeException>consumer(e -> { });
         final var handler = Maybe.fromEffect(noOp);
 
         handler.orElse(consumerSpy);
@@ -249,7 +247,7 @@ import io.github.joselion.testing.UnitTest;
     @Nested class when_the_error_is_present {
       @Test void throws_the_error() {
         final var anotherError = new RuntimeException("OTHER");
-        final var functionSpy = Spy.<Function<FileSystemException, RuntimeException>>lambda(err -> anotherError);
+        final var functionSpy = Spy.function((FileSystemException err) -> anotherError);
         final var handler = Maybe.fromEffect(throwingOp);
 
         assertThatThrownBy(handler::orThrow).isEqualTo(FAIL_EXCEPTION);
@@ -261,7 +259,7 @@ import io.github.joselion.testing.UnitTest;
 
     @Nested class when_the_error_is_not_present {
       @Test void no_exception_is_thrown() {
-        final var functionSpy = Spy.<Function<RuntimeException, FileSystemException>>lambda(err -> FAIL_EXCEPTION);
+        final var functionSpy = Spy.function((RuntimeException err) -> FAIL_EXCEPTION);
         final var handler = Maybe.fromEffect(noOp);
 
         assertThatCode(handler::orThrow).doesNotThrowAnyException();
