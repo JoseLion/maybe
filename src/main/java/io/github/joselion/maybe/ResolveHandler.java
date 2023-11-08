@@ -7,7 +7,7 @@ import java.util.function.Supplier;
 
 import org.eclipse.jdt.annotation.Nullable;
 
-import io.github.joselion.maybe.helpers.Common;
+import io.github.joselion.maybe.helpers.Commons;
 import io.github.joselion.maybe.util.Either;
 import io.github.joselion.maybe.util.function.ThrowingConsumer;
 import io.github.joselion.maybe.util.function.ThrowingFunction;
@@ -97,7 +97,8 @@ public final class ResolveHandler<T, E extends Throwable> {
    * @return the same handler to continue chainning operations
    */
   public <X extends Throwable> ResolveHandler<T, E> doOnError(final Class<X> ofType, final Consumer<X> effect) {
-    this.value.leftToOptional()
+    this.value
+      .leftToOptional()
       .filter(ofType::isInstance)
       .map(ofType::cast)
       .ifPresent(effect);
@@ -195,7 +196,7 @@ public final class ResolveHandler<T, E extends Throwable> {
    */
   public <S, X extends Throwable> ResolveHandler<S, X> resolve(final ThrowingFunction<T, S, X> resolver) {
     return this.value
-      .mapLeft(Common::<X>cast)
+      .mapLeft(Commons::<X>cast)
       .unwrap(
         ResolveHandler::ofError,
         Maybe.partialResolver(resolver)
@@ -234,7 +235,7 @@ public final class ResolveHandler<T, E extends Throwable> {
    */
   public <X extends Throwable> EffectHandler<X> runEffect(final ThrowingConsumer<T, X> effect) {
     return this.value
-      .mapLeft(Common::<X>cast)
+      .mapLeft(Commons::<X>cast)
       .unwrap(
         EffectHandler::ofError,
         Maybe.partialEffect(effect)
@@ -446,7 +447,7 @@ public final class ResolveHandler<T, E extends Throwable> {
     final ThrowingFunction<T, R, X> solver
   ) {
     return this.value
-      .mapLeft(Common::<X>cast)
+      .mapLeft(Commons::<X>cast)
       .unwrap(
         ResourceHolder::failure,
         prev ->

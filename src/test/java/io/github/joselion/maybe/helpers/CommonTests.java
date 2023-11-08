@@ -8,12 +8,12 @@ import org.junit.jupiter.api.Test;
 
 import io.github.joselion.testing.UnitTest;
 
-@UnitTest class CommonTest {
+@UnitTest class CommonTests {
 
   @Nested class helper {
     @Nested class when_the_class_is_instantiated {
       @Test void throws_an_UnsupportedOperationException() {
-        assertThatCode(Common::new)
+        assertThatCode(Commons::new)
           .isInstanceOf(UnsupportedOperationException.class)
           .hasMessage("Cannot instantiate a helper class");
       }
@@ -25,13 +25,13 @@ import io.github.joselion.testing.UnitTest;
       @Test void returns_the_value_as_the_parameter_type() {
         final Number value = 3;
 
-        assertThat(Common.<Integer>cast(value)).isInstanceOf(Integer.class);
+        assertThat(Commons.<Integer>cast(value)).isInstanceOf(Integer.class);
       }
     }
 
     @Nested class when_the_value_cannot_be_cast {
       @Test void throws_a_ClassCastException() {
-        assertThatCode(() -> Common.<Integer>cast("3").intValue()) // NOSONAR
+        assertThatCode(() -> Commons.<Integer>cast("3").intValue()) // NOSONAR
           .isInstanceOf(ClassCastException.class);
       }
     }

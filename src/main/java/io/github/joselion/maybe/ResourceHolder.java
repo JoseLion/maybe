@@ -2,7 +2,7 @@ package io.github.joselion.maybe;
 
 import java.util.Optional;
 
-import io.github.joselion.maybe.helpers.Common;
+import io.github.joselion.maybe.helpers.Commons;
 import io.github.joselion.maybe.util.Either;
 import io.github.joselion.maybe.util.function.ThrowingConsumer;
 import io.github.joselion.maybe.util.function.ThrowingFunction;
@@ -61,7 +61,7 @@ public class ResourceHolder<R extends AutoCloseable, E extends Throwable> {
    * @return the possible stored resource
    */
   Optional<R> resource() {
-    return value.rightToOptional();
+    return this.value.rightToOptional();
   }
 
   /**
@@ -70,7 +70,7 @@ public class ResourceHolder<R extends AutoCloseable, E extends Throwable> {
    * @return the possible propagated error
    */
   Optional<E> error() {
-    return value.leftToOptional();
+    return this.value.leftToOptional();
   }
 
   /**
@@ -91,15 +91,15 @@ public class ResourceHolder<R extends AutoCloseable, E extends Throwable> {
    *         exception to be handled
    */
   public <T, X extends Throwable> ResolveHandler<T, X> resolveClosing(final ThrowingFunction<R, T, X> resolver) {
-    return value
-      .mapLeft(Common::<X>cast)
+    return this.value
+      .mapLeft(Commons::<X>cast)
       .unwrap(
         ResolveHandler::ofError,
         resource -> {
           try (var res = resource) {
             return ResolveHandler.ofSuccess(resolver.apply(res));
           } catch (final Throwable e) { //NOSONAR
-            final var error = Common.<X>cast(e);
+            final var error = Commons.<X>cast(e);
             return ResolveHandler.ofError(error);
           }
         }
@@ -123,8 +123,8 @@ public class ResourceHolder<R extends AutoCloseable, E extends Throwable> {
    *         handled or nothing
    */
   public <X extends Throwable> EffectHandler<X> runEffectClosing(final ThrowingConsumer<R, X> effect) {
-    return value
-      .mapLeft(Common::<X>cast)
+    return this.value
+      .mapLeft(Commons::<X>cast)
       .unwrap(
         EffectHandler::ofError,
         resource -> {
@@ -132,7 +132,7 @@ public class ResourceHolder<R extends AutoCloseable, E extends Throwable> {
             effect.accept(res);
             return EffectHandler.empty();
           } catch (final Throwable e) { // NOSONAR
-            final var error = Common.<X>cast(e);
+            final var error = Commons.<X>cast(e);
             return EffectHandler.ofError(error);
           }
         }

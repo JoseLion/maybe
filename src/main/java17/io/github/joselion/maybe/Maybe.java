@@ -7,7 +7,7 @@ import java.util.function.Function;
 
 import org.eclipse.jdt.annotation.Nullable;
 
-import io.github.joselion.maybe.helpers.Common;
+import io.github.joselion.maybe.helpers.Commons;
 import io.github.joselion.maybe.util.function.ThrowingConsumer;
 import io.github.joselion.maybe.util.function.ThrowingFunction;
 import io.github.joselion.maybe.util.function.ThrowingRunnable;
@@ -37,7 +37,7 @@ public final class Maybe<T> {
    * @return the possible wrapped value
    */
   Optional<T> value() {
-    return value;
+    return this.value;
   }
 
   /**
@@ -81,7 +81,9 @@ public final class Maybe<T> {
    *         {@link #nothing()} otherwise
    */
   public static <T> Maybe<T> fromOptional(final Optional<T> value) {
-    return new Maybe<>(value.orElse(null));
+    return value
+      .map(Maybe::new)
+      .orElseGet(Maybe::nothing);
   }
 
   /**
@@ -99,7 +101,7 @@ public final class Maybe<T> {
     try {
       return ResolveHandler.ofSuccess(resolver.get());
     } catch (Throwable e) { // NOSONAR
-      final var error = Common.<E>cast(e);
+      final var error = Commons.<E>cast(e);
       return ResolveHandler.ofError(error);
     }
   }
@@ -119,7 +121,7 @@ public final class Maybe<T> {
       effect.run();
       return EffectHandler.empty();
     } catch (Throwable e) { // NOSONAR
-      final var error = Common.<E>cast(e);
+      final var error = Commons.<E>cast(e);
       return EffectHandler.ofError(error);
     }
   }
@@ -233,9 +235,10 @@ public final class Maybe<T> {
    *         {@link #nothing()} otherwise
    */
   public <U> Maybe<U> map(final Function<T, U> mapper) {
-    return value.map(mapper)
-      .map(Maybe::just)
-      .orElseGet(Maybe::nothing);
+    return Maybe
+      .fromOptional(this.value)
+      .resolve(mapper::apply)
+      .toMaybe();
   }
 
   /**
@@ -252,7 +255,9 @@ public final class Maybe<T> {
    *         {@link #nothing()} otherwise
    */
   public <U> Maybe<U> flatMap(final Function<T, Maybe<U>> mapper) {
-    return value.map(mapper)
+    return Maybe
+      .fromOptional(this.value)
+      .resolve(mapper::apply)
       .orElseGet(Maybe::nothing);
   }
 
@@ -270,11 +275,11 @@ public final class Maybe<T> {
    */
   public <U, E extends Throwable> ResolveHandler<U, E> resolve(final ThrowingFunction<T, U, E> resolver) {
     try {
-      return value
+      return this.value
         .map(Maybe.partialResolver(resolver))
         .orElseThrow();
     } catch (final NoSuchElementException e) {
-      final var error = Common.<E>cast(e);
+      final var error = Commons.<E>cast(e);
       return ResolveHandler.ofError(error);
     }
   }
@@ -290,11 +295,11 @@ public final class Maybe<T> {
    */
   public <E extends Throwable> EffectHandler<E> runEffect(final ThrowingConsumer<T, E> effect) {
     try {
-      return value
+      return this.value
         .map(Maybe.partialEffect(effect))
         .orElseThrow();
     } catch (final NoSuchElementException e) {
-      final var error = Common.<E>cast(e);
+      final var error = Commons.<E>cast(e);
       return EffectHandler.ofError(error);
     }
   }
@@ -309,12 +314,10 @@ public final class Maybe<T> {
    *         {@link #nothing()} otherwise
    */
   public <U> Maybe<U> cast(final Class<U> type) {
-    try {
-      final var newValue = type.cast(value.orElseThrow());
-      return Maybe.just(newValue);
-    } catch (final ClassCastException error) {
-      return nothing();
-    }
+    return Maybe
+      .fromOptional(this.value)
+      .resolve(type::cast)
+      .toMaybe();
   }
 
   /**
@@ -323,7 +326,7 @@ public final class Maybe<T> {
    * @return true if the value is present, false otherwise
    */
   public boolean hasValue() {
-    return value.isPresent();
+    return this.value.isPresent();
   }
 
   /**
@@ -332,7 +335,7 @@ public final class Maybe<T> {
    * @return true if the value is NOT present, false otherwise
    */
   public boolean hasNothing() {
-    return value.isEmpty();
+    return this.value.isEmpty();
   }
 
   /**
@@ -342,7 +345,7 @@ public final class Maybe<T> {
    * @return an optional with the value, if preset. An empty optional otherwise
    */
   public Optional<T> toOptional() {
-    return value;
+    return this.value;
   }
 
   /**
@@ -364,7 +367,7 @@ public final class Maybe<T> {
     }
 
     if (obj instanceof final Maybe<?> other) {
-      return other.toOptional().equals(value);
+      return other.toOptional().equals(this.value);
     }
 
     return false;
@@ -378,7 +381,7 @@ public final class Maybe<T> {
    */
   @Override
   public int hashCode() {
-    return value.hashCode();
+    return this.value.hashCode();
   }
 
   /**
@@ -390,7 +393,7 @@ public final class Maybe<T> {
    */
   @Override
   public String toString() {
-    return value
+    return this.value
       .map(Object::toString)
       .map("Maybe[%s]"::formatted)
       .orElse("Maybe.nothing");

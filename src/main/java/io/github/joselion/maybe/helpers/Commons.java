@@ -1,8 +1,8 @@
 package io.github.joselion.maybe.helpers;
 
-public class Common {
+public class Commons {
 
-  Common() {
+  Commons() {
     throw new UnsupportedOperationException("Cannot instantiate a helper class");
   }
 
