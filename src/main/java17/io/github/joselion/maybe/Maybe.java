@@ -97,7 +97,9 @@ public final class Maybe<T> {
    * @return a {@link ResolveHandler} with either the value resolved or the thrown
    *         exception to be handled
    */
-  public static <T, E extends Throwable> ResolveHandler<T, E> fromResolver(final ThrowingSupplier<T, E> resolver) {
+  public static <T, E extends Throwable> ResolveHandler<T, E> fromResolver(
+    final ThrowingSupplier<? extends T, ? extends E> resolver
+  ) {
     try {
       return ResolveHandler.ofSuccess(resolver.get());
     } catch (Throwable e) { // NOSONAR
@@ -116,7 +118,7 @@ public final class Maybe<T> {
    * @return an {@link EffectHandler} with either the thrown exception to be
    *         handled or nothing
    */
-  public static <E extends Throwable> EffectHandler<E> fromEffect(final ThrowingRunnable<E> effect) {
+  public static <E extends Throwable> EffectHandler<E> fromEffect(final ThrowingRunnable<? extends E> effect) {
     try {
       effect.run();
       return EffectHandler.empty();
@@ -153,7 +155,7 @@ public final class Maybe<T> {
    *         that receives an {@code S} value, and produces a {@code ResolveHandler<T, E>}
    */
   public static <S, T, E extends Throwable> Function<S, ResolveHandler<T, E>> partialResolver(
-    final ThrowingFunction<S, T, E> resolver
+    final ThrowingFunction<? super S, ? extends T, ? extends E> resolver
   ) {
     return value -> Maybe.fromResolver(() -> resolver.apply(value));
   }
@@ -183,7 +185,7 @@ public final class Maybe<T> {
    *         that receives an {@code S} value, and produces an {@code EffectHandler<E>}
    */
   public static <S, E extends Throwable> Function<S, EffectHandler<E>> partialEffect(
-    final ThrowingConsumer<S, E> effect
+    final ThrowingConsumer<? super S, ? extends E> effect
   ) {
     return value -> Maybe.fromEffect(() -> effect.accept(value));
   }
@@ -217,7 +219,7 @@ public final class Maybe<T> {
    *         or run an effect using the prepared resource
    */
   public static <R extends Closeable, E extends Throwable> ResourceHolder<R, E> solveResource(
-    final ThrowingSupplier<R, E> supplier
+    final ThrowingSupplier<? extends R, ? extends E> supplier
   ) {
     return Maybe
       .fromResolver(supplier)
@@ -234,10 +236,10 @@ public final class Maybe<T> {
    * @return a {@code Maybe} with the mapped value if present,
    *         {@link #nothing()} otherwise
    */
-  public <U> Maybe<U> map(final Function<T, U> mapper) {
+  public <U> Maybe<U> map(final Function<? super T, ? extends U> mapper) {
     return Maybe
       .fromOptional(this.value)
-      .resolve(mapper::apply)
+      .<U, Throwable>resolve(mapper::apply)
       .toMaybe();
   }
 
@@ -254,10 +256,11 @@ public final class Maybe<T> {
    * @return a {@code Maybe} with the mapped value if present,
    *         {@link #nothing()} otherwise
    */
-  public <U> Maybe<U> flatMap(final Function<T, Maybe<U>> mapper) {
+  public <U> Maybe<U> flatMap(final Function<? super T, Maybe<? extends U>> mapper) {
     return Maybe
       .fromOptional(this.value)
       .resolve(mapper::apply)
+      .map(Commons::<Maybe<U>>cast)
       .orElseGet(Maybe::nothing);
   }
 
@@ -273,10 +276,12 @@ public final class Maybe<T> {
    * @return a {@link ResolveHandler} with either the resolved value, or the
    *         thrown exception to be handled
    */
-  public <U, E extends Throwable> ResolveHandler<U, E> resolve(final ThrowingFunction<T, U, E> resolver) {
+  public <U, E extends Throwable> ResolveHandler<U, E> resolve(
+    final ThrowingFunction<? super T, ? extends U, ? extends E> resolver
+  ) {
     try {
       return this.value
-        .map(Maybe.partialResolver(resolver))
+        .map(Maybe.<T, U, E>partialResolver(resolver))
         .orElseThrow();
     } catch (final NoSuchElementException e) {
       final var error = Commons.<E>cast(e);
@@ -293,10 +298,10 @@ public final class Maybe<T> {
    * @return an {@link EffectHandler} with either the thrown exception to be
    *         handled or nothing
    */
-  public <E extends Throwable> EffectHandler<E> runEffect(final ThrowingConsumer<T, E> effect) {
+  public <E extends Throwable> EffectHandler<E> runEffect(final ThrowingConsumer<? super T, ? extends E> effect) {
     try {
       return this.value
-        .map(Maybe.partialEffect(effect))
+        .map(Maybe.<T, E>partialEffect(effect))
         .orElseThrow();
     } catch (final NoSuchElementException e) {
       final var error = Commons.<E>cast(e);

@@ -80,7 +80,7 @@ public final class ResolveHandler<T, E extends Throwable> {
    * @param effect a function that receives the resolved value
    * @return the same handler to continue chainning operations
    */
-  public ResolveHandler<T, E> doOnSuccess(final Consumer<T> effect) {
+  public ResolveHandler<T, E> doOnSuccess(final Consumer<? super T> effect) {
     this.value.doOnRight(effect);
 
     return this;
@@ -96,7 +96,7 @@ public final class ResolveHandler<T, E extends Throwable> {
    * @param effect a consumer function that receives the caught error
    * @return the same handler to continue chainning operations
    */
-  public <X extends Throwable> ResolveHandler<T, E> doOnError(final Class<X> ofType, final Consumer<X> effect) {
+  public <X extends Throwable> ResolveHandler<T, E> doOnError(final Class<X> ofType, final Consumer<? super X> effect) {
     this.value
       .leftToOptional()
       .filter(ofType::isInstance)
@@ -113,7 +113,7 @@ public final class ResolveHandler<T, E extends Throwable> {
    * @param effect a consumer function that receives the caught error
    * @return the same handler to continue chainning operations
    */
-  public ResolveHandler<T, E> doOnError(final Consumer<E> effect) {
+  public ResolveHandler<T, E> doOnError(final Consumer<? super E> effect) {
     this.value.doOnLeft(effect);
 
     return this;
@@ -131,7 +131,10 @@ public final class ResolveHandler<T, E extends Throwable> {
    * @return a handler containing a new value if an error instance of the
    *         provided type was caught. The same handler instance otherwise
    */
-  public <X extends E> ResolveHandler<T, E> catchError(final Class<X> ofType, final Function<X, T> handler) {
+  public <X extends Throwable> ResolveHandler<T, E> catchError(
+    final Class<X> ofType,
+    final Function<? super X, ? extends T> handler
+  ) {
     return this.value
       .leftToOptional()
       .filter(ofType::isInstance)
@@ -150,7 +153,7 @@ public final class ResolveHandler<T, E extends Throwable> {
    * @return a handler containing a new value if an error was caught. The same
    *         handler instance otherwise
    */
-  public ResolveHandler<T, E> catchError(final Function<E, T> handler) {
+  public ResolveHandler<T, E> catchError(final Function<? super E, ? extends T> handler) {
     return this.value
       .mapLeft(handler)
       .mapLeft(ResolveHandler::<T, E>ofSuccess)
@@ -175,8 +178,8 @@ public final class ResolveHandler<T, E extends Throwable> {
    * @return a new handler with either the resolved value or the error
    */
   public <S, X extends Throwable> ResolveHandler<S, X> resolve(
-    final ThrowingFunction<T, S, X> onSuccess,
-    final ThrowingFunction<E, S, X> onError
+    final ThrowingFunction<? super T, ? extends S, ? extends X> onSuccess,
+    final ThrowingFunction<? super E, ? extends S, ? extends X> onError
   ) {
     return this.value.unwrap(
       Maybe.partialResolver(onError),
@@ -194,7 +197,9 @@ public final class ResolveHandler<T, E extends Throwable> {
    *                 resolves another
    * @return a new handler with either the resolved value or an error
    */
-  public <S, X extends Throwable> ResolveHandler<S, X> resolve(final ThrowingFunction<T, S, X> resolver) {
+  public <S, X extends Throwable> ResolveHandler<S, X> resolve(
+    final ThrowingFunction<? super T, ? extends S, ? extends X> resolver
+  ) {
     return this.value
       .mapLeft(Commons::<X>cast)
       .unwrap(
@@ -214,8 +219,8 @@ public final class ResolveHandler<T, E extends Throwable> {
    *         invoked callback
    */
   public <X extends Throwable> EffectHandler<X> runEffect(
-    final ThrowingConsumer<T, X> onSuccess,
-    final ThrowingConsumer<E, X> onError
+    final ThrowingConsumer<? super T, ? extends X> onSuccess,
+    final ThrowingConsumer<? super E, ? extends X> onError
   ) {
     return this.value.unwrap(
       Maybe.partialEffect(onError),
@@ -233,7 +238,7 @@ public final class ResolveHandler<T, E extends Throwable> {
    * @return a new {@link EffectHandler} representing the result of the success
    *         callback or containg the error
    */
-  public <X extends Throwable> EffectHandler<X> runEffect(final ThrowingConsumer<T, X> effect) {
+  public <X extends Throwable> EffectHandler<X> runEffect(final ThrowingConsumer<? super T, ? extends X> effect) {
     return this.value
       .mapLeft(Commons::<X>cast)
       .unwrap(
@@ -251,7 +256,7 @@ public final class ResolveHandler<T, E extends Throwable> {
    * @param mapper a function that receives the resolved value and produces another
    * @return a new handler with either the mapped value, or the previous error
    */
-  public <U> ResolveHandler<U, E> map(final Function<T, U> mapper) {
+  public <U> ResolveHandler<U, E> map(final Function<? super T, ? extends U> mapper) {
     return this.value
       .mapRight(mapper)
       .unwrap(
@@ -302,7 +307,7 @@ public final class ResolveHandler<T, E extends Throwable> {
    *               another value
    * @return the resolved value if present. Another value otherwise
    */
-  public T orElse(final Function<E, T> mapper) {
+  public T orElse(final Function<? super E, ? extends T> mapper) {
     return this.value.unwrap(mapper, Function.identity());
   }
 
@@ -317,7 +322,7 @@ public final class ResolveHandler<T, E extends Throwable> {
    *                 opration failed to resolve
    * @return the resolved value if present. Another value otherwise
    */
-  public T orElseGet(final Supplier<T> supplier) {
+  public T orElseGet(final Supplier<? extends T> supplier) {
     return this.value
       .rightToOptional()
       .orElseGet(supplier);
@@ -360,7 +365,7 @@ public final class ResolveHandler<T, E extends Throwable> {
    * @return the resolved/handled value if present
    * @throws X a mapped exception
    */
-  public <X extends Throwable> T orThrow(final Function<E, X> mapper) throws X {
+  public <X extends Throwable> T orThrow(final Function<? super E, ? extends X> mapper) throws X {
     return this.value
       .rightToOptional()
       .orElseThrow(() -> mapper.apply(this.value.leftOrNull()));
@@ -444,7 +449,7 @@ public final class ResolveHandler<T, E extends Throwable> {
    *         present or the error otherwise.
    */
   public <R extends AutoCloseable, X extends Throwable> ResourceHolder<R, X> solveResource(
-    final ThrowingFunction<T, R, X> solver
+    final ThrowingFunction<? super T, ? extends R, ? extends X> solver
   ) {
     return this.value
       .mapLeft(Commons::<X>cast)
