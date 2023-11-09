@@ -82,7 +82,7 @@ public final class EffectHandler<E extends Throwable> {
    * @param effect a consumer function that recieves the caught error
    * @return the same handler to continue chainning operations
    */
-  public <X extends Throwable> EffectHandler<E> doOnError(final Class<X> ofType, final Consumer<X> effect) {
+  public <X extends Throwable> EffectHandler<E> doOnError(final Class<X> ofType, final Consumer<? super X> effect) {
     this.error
       .filter(ofType::isInstance)
       .map(ofType::cast)
@@ -98,7 +98,7 @@ public final class EffectHandler<E extends Throwable> {
    * @param effect a consumer function that recieves the caught error
    * @return the same handler to continue chainning operations
    */
-  public EffectHandler<E> doOnError(final Consumer<E> effect) {
+  public EffectHandler<E> doOnError(final Consumer<? super E> effect) {
     this.error.ifPresent(effect);
 
     return this;
@@ -116,7 +116,7 @@ public final class EffectHandler<E extends Throwable> {
    * @return an empty handler if an error instance of the provided type was
    *         caught. The same handler instance otherwise
    */
-  public <X extends E> EffectHandler<E> catchError(final Class<X> ofType, final Consumer<X> handler) {
+  public <X extends Throwable> EffectHandler<E> catchError(final Class<X> ofType, final Consumer<? super X> handler) {
     return this.error
       .filter(ofType::isInstance)
       .map(ofType::cast)
@@ -137,7 +137,7 @@ public final class EffectHandler<E extends Throwable> {
    * @return an empty handler if the error is present. The same handler
    *         instance otherwise
    */
-  public EffectHandler<E> catchError(final Consumer<E> handler) {
+  public EffectHandler<E> catchError(final Consumer<? super E> handler) {
     return this.error
       .map(caught -> {
         handler.accept(caught);
@@ -157,11 +157,11 @@ public final class EffectHandler<E extends Throwable> {
    *         invoked callback
    */
   public <X extends Throwable> EffectHandler<X> runEffect(
-    final ThrowingRunnable<X> onSuccess,
-    final ThrowingConsumer<E, X> onError
+    final ThrowingRunnable<? extends X> onSuccess,
+    final ThrowingConsumer<? super E, ? extends X> onError
   ) {
     return this.error
-      .map(Maybe.partialEffect(onError))
+      .map(Maybe.<E, X>partialEffect(onError))
       .orElseGet(() -> Maybe.fromEffect(onSuccess));
   }
 
@@ -175,7 +175,7 @@ public final class EffectHandler<E extends Throwable> {
    * @return a new {@link EffectHandler} that is either empty or with the
    *         thrown error
    */
-  public <X extends Throwable> EffectHandler<X> runEffect(final ThrowingRunnable<X> effect) {
+  public <X extends Throwable> EffectHandler<X> runEffect(final ThrowingRunnable<? extends X> effect) {
     return this.runEffect(effect, err -> { });
   }
 
@@ -185,7 +185,7 @@ public final class EffectHandler<E extends Throwable> {
    *
    * @param effect a consumer function that receives the caught error
    */
-  public void orElse(final Consumer<E> effect) {
+  public void orElse(final Consumer<? super E> effect) {
     this.error.ifPresent(effect);
   }
 
@@ -208,7 +208,7 @@ public final class EffectHandler<E extends Throwable> {
    * @param mapper a function that maps the new exception to throw
    * @throws X a mapped exception
    */
-  public <X extends Throwable> void orThrow(final Function<E, X> mapper) throws X {
+  public <X extends Throwable> void orThrow(final Function<? super E, ? extends X> mapper) throws X {
     if (this.error.isPresent()) {
       throw mapper.apply(this.error.get());
     }

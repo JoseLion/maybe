@@ -7,6 +7,8 @@ import java.util.function.Function;
 
 import org.eclipse.jdt.annotation.Nullable;
 
+import io.github.joselion.maybe.helpers.Commons;
+
 /**
  * Either is a monadic wrapper that contains one of two possible values which
  * are represented as {@code Left} or {@code Right}. the values can be of
@@ -61,7 +63,7 @@ public interface Either<L, R> {
    * @param onRight a function to handle the right value if present
    * @return either the left or the right handled value
    */
-  <T> T unwrap(Function<L, T> onLeft, Function<R, T> onRight);
+  <T> T unwrap(Function<? super L, ? extends T> onLeft, Function<? super R, ? extends T> onRight);
 
   /**
    * Returns true if the {@code Left} value is present, false otherwise.
@@ -69,7 +71,7 @@ public interface Either<L, R> {
    * @return true if left is present, false otherwise
    */
   default boolean isLeft() {
-    return unwrap(left -> true, right -> false);
+    return this.unwrap(left -> true, right -> false);
   }
 
   /**
@@ -78,7 +80,7 @@ public interface Either<L, R> {
    * @return true if right is present, false otherwise
    */
   default boolean isRight() {
-    return unwrap(left -> false, rigth -> true);
+    return this.unwrap(left -> false, rigth -> true);
   }
 
   /**
@@ -87,8 +89,8 @@ public interface Either<L, R> {
    * @param effect a consumer function that receives the left value
    * @return the same {@code Either} instance
    */
-  default Either<L, R> doOnLeft(final Consumer<L> effect) {
-    return unwrap(
+  default Either<L, R> doOnLeft(final Consumer<? super L> effect) {
+    return this.unwrap(
       left -> {
         effect.accept(left);
         return Either.ofLeft(left);
@@ -103,8 +105,8 @@ public interface Either<L, R> {
    * @param effect effect a consumer function that receives the right value
    * @return the same {@code Either} instance
    */
-  default Either<L, R> doOnRight(final Consumer<R> effect) {
-    return unwrap(
+  default Either<L, R> doOnRight(final Consumer<? super R> effect) {
+    return this.unwrap(
       Either::ofLeft,
       right -> {
         effect.accept(right);
@@ -120,8 +122,8 @@ public interface Either<L, R> {
    * @param mapper a function that receives the left value and returns another
    * @return an {@code Either} instance with the mapped left value
    */
-  default <T> Either<T, R> mapLeft(final Function<L, T> mapper) {
-    return unwrap(
+  default <T> Either<T, R> mapLeft(final Function<? super L, ? extends T> mapper) {
+    return this.unwrap(
       left -> Either.ofLeft(mapper.apply(left)),
       Either::ofRight
     );
@@ -134,8 +136,8 @@ public interface Either<L, R> {
    * @param mapper a function that receives the right value and returns another
    * @return an {@code Either} instance with the mapped right value
    */
-  default <T> Either<L, T> mapRight(final Function<R, T> mapper) {
-    return unwrap(
+  default <T> Either<L, T> mapRight(final Function<? super R, ? extends T> mapper) {
+    return this.unwrap(
       Either::ofLeft,
       right -> Either.ofRight(mapper.apply(right))
     );
@@ -153,8 +155,11 @@ public interface Either<L, R> {
    * @param rigthMapper a function that receives the right value and returns another
    * @return an {@code Either} instance with the mapped left or right value
    */
-  default <T, S> Either<T, S> map(final Function<L, T> leftMapper, final Function<R, S> rigthMapper) {
-    return unwrap(
+  default <T, S> Either<T, S> map(
+    final Function<? super L, ? extends T> leftMapper,
+    final Function<? super R, ? extends S> rigthMapper
+  ) {
+    return this.unwrap(
       left -> Either.ofLeft(leftMapper.apply(left)),
       right -> Either.ofRight(rigthMapper.apply(right))
     );
@@ -171,8 +176,10 @@ public interface Either<L, R> {
    * @param mapper a function that receives the left value and returns an {@code Either}
    * @return an {@code Either} instance with the mapped left value
    */
-  default <T> Either<T, R> flatMapLeft(final Function<L, Either<T, R>> mapper) {
-    return unwrap(mapper, Either::ofRight);
+  default <T> Either<T, R> flatMapLeft(final Function<? super L, ? extends Either<? extends T, ? extends R>> mapper) {
+    return this
+      .mapLeft(mapper)
+      .unwrap(Commons::cast, Either::ofRight);
   }
 
   /**
@@ -186,8 +193,10 @@ public interface Either<L, R> {
    * @param mapper a function that receives the right value and returns an {@code Either}
    * @return an {@code Either} instance with the mapped right value
    */
-  default <T> Either<L, T> flatMapRight(final Function<R, Either<L, T>> mapper) {
-    return unwrap(Either::ofLeft, mapper);
+  default <T> Either<L, T> flatMapRight(final Function<? super R, ? extends Either<? extends L, ? extends T>> mapper) {
+    return this
+      .mapRight(mapper)
+      .unwrap(Either::ofLeft, Commons::cast);
   }
 
   /**
@@ -204,10 +213,13 @@ public interface Either<L, R> {
    * @return an {@code Either} instance with the mapped left or right value
    */
   default <T, S> Either<T, S> flatMap(
-    final Function<L, Either<T, S>> leftMapper,
-    final Function<R, Either<T, S>> rigthMapper
+    final Function<? super L, ? extends Either<? extends T, ? extends S>> leftMapper,
+    final Function<? super R, ? extends Either<? extends T, ? extends S>> rigthMapper
   ) {
-    return unwrap(leftMapper, rigthMapper);
+    return this
+      .mapLeft(leftMapper)
+      .mapRight(rigthMapper)
+      .unwrap(Commons::cast, Commons::cast);
   }
 
   /**
@@ -218,7 +230,7 @@ public interface Either<L, R> {
    * @return the left value or a fallback
    */
   default L leftOrElse(final L fallback) {
-    return unwrap(Function.identity(), rigth -> fallback);
+    return this.unwrap(Function.identity(), rigth -> fallback);
   }
 
   /**
@@ -229,7 +241,7 @@ public interface Either<L, R> {
    * @return the right value or a fallback
    */
   default R rightOrElse(final R fallback) {
-    return unwrap(left -> fallback, Function.identity());
+    return this.unwrap(left -> fallback, Function.identity());
   }
 
   /**
@@ -239,7 +251,7 @@ public interface Either<L, R> {
    * @return the left value or null
    */
   default @Nullable L leftOrNull() {
-    return unwrap(Function.identity(), rigth -> null);
+    return this.unwrap(Function.identity(), rigth -> null);
   }
 
   /**
@@ -249,7 +261,7 @@ public interface Either<L, R> {
    * @return the right value or null
    */
   default @Nullable R rightOrNull() {
-    return unwrap(left -> null, Function.identity());
+    return this.unwrap(left -> null, Function.identity());
   }
 
   /**
@@ -297,7 +309,7 @@ public interface Either<L, R> {
     }
 
     @Override
-    public <T> T unwrap(final Function<L, T> onLeft, final Function<R, T> onRight) {
+    public <T> T unwrap(final Function<? super L, ? extends T> onLeft, final Function<? super R, ? extends T> onRight) {
       return onLeft.apply(this.value);
     }
 
@@ -351,7 +363,7 @@ public interface Either<L, R> {
     }
 
     @Override
-    public <T> T unwrap(final Function<L, T> onLeft, final Function<R, T> onRight) {
+    public <T> T unwrap(final Function<? super L, ? extends T> onLeft, final Function<? super R, ? extends T> onRight) {
       return onRight.apply(this.value);
     }
 

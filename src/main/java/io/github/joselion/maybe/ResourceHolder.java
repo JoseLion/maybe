@@ -90,7 +90,9 @@ public class ResourceHolder<R extends AutoCloseable, E extends Throwable> {
    * @return a {@link ResolveHandler} with either the value resolved or the thrown
    *         exception to be handled
    */
-  public <T, X extends Throwable> ResolveHandler<T, X> resolveClosing(final ThrowingFunction<R, T, X> resolver) {
+  public <T, X extends Throwable> ResolveHandler<T, X> resolveClosing(
+    final ThrowingFunction<? super R, ? extends T, ? extends X> resolver
+  ) {
     return this.value
       .mapLeft(Commons::<X>cast)
       .unwrap(
@@ -122,7 +124,9 @@ public class ResourceHolder<R extends AutoCloseable, E extends Throwable> {
    * @return an {@link EffectHandler} with either the thrown exception to be
    *         handled or nothing
    */
-  public <X extends Throwable> EffectHandler<X> runEffectClosing(final ThrowingConsumer<R, X> effect) {
+  public <X extends Throwable> EffectHandler<X> runEffectClosing(
+    final ThrowingConsumer<? super R, ? extends X> effect
+  ) {
     return this.value
       .mapLeft(Commons::<X>cast)
       .unwrap(
