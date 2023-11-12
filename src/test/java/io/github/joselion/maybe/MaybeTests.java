@@ -5,7 +5,10 @@ import static org.assertj.core.api.InstanceOfAssertFactories.INPUT_STREAM;
 import static org.assertj.core.api.InstanceOfAssertFactories.THROWABLE;
 import static org.assertj.core.api.InstanceOfAssertFactories.optional;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.CALLS_REAL_METHODS;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -48,141 +51,219 @@ import io.github.joselion.testing.UnitTest;
     throw FAIL_EXCEPTION;
   };
 
-  @Nested class just {
-    @Nested class when_a_value_is_passed {
-      @Test void returns_a_Maybe_wrapping_the_value() {
-        final var maybe = Maybe.just(OK);
+  @Nested class of {
+    @Nested class when_the_value_is_not_an_Optional {
+      @Nested class when_a_value_is_passed {
+        @Test void returns_a_Maybe_wrapping_the_value() {
+          final var maybe = Maybe.of(OK);
 
-        assertThat(maybe.value()).contains(OK);
+          assertThat(maybe.value()).contains(OK);
+        }
+      }
+
+      @Nested class when_null_is_passed {
+        @Test void returns_an_empty_Maybe() {
+          final var maybe = Maybe.of(null);
+
+          assertThat(maybe.value()).isEmpty();
+        }
       }
     }
 
-    @Nested class when_null_is_passed {
-      @Test void returns_a_Maybe_wrapping_nothing() {
-        final var maybe = Maybe.just(null);
+    @Nested class when_the_value_is_an_Optional {
+      @Nested class when_the_optional_has_a_value {
+        @Test void returns_a_Maybe_wrapping_the_value() {
+          final var maybe = Maybe.of(Optional.of(OK));
 
-        assertThat(maybe.value()).isEmpty();
+          assertThat(maybe.value()).contains(OK);
+        }
+      }
+
+      @Nested class when_the_optional_is_empty {
+        @Test void returns_an_empty_Maybe() {
+          final var maybe = Maybe.of(Optional.empty());
+
+          assertThat(maybe.value()).isEmpty();
+        }
       }
     }
   }
 
-  @Nested class nothing {
-    @Test void returns_a_Maybe_wrapping_nothing() {
-      final var maybe = Maybe.nothing();
+  @Nested class just {
+    @Nested class calls_of {
+      @Test void returns_a_Maybe_wrapping_the_value() {
+        try (var maybe = mockStatic(Maybe.class, CALLS_REAL_METHODS)) {
+          Maybe.just(OK);
+
+          maybe.verify(() -> Maybe.of(OK));
+        }
+      }
+    }
+  }
+
+  @Nested class empty {
+    @Test void returns_an_empty_Maybe() {
+      final var maybe = Maybe.empty();
 
       assertThat(maybe.value()).isEmpty();
     }
   }
 
-  @Nested class fromOptional {
-    @Nested class when_the_optional_has_a_value {
-      @Test void returns_a_Maybe_wrapping_the_value() {
-        final var maybe = Maybe.fromOptional(Optional.of(OK));
+  @Nested class nothing {
+    @Test void calls_empty() {
+      try (var maybe = mockStatic(Maybe.class, CALLS_REAL_METHODS)) {
+        Maybe.nothing();
 
-        assertThat(maybe.value()).contains(OK);
+        maybe.verify(() -> Maybe.empty());
+      }
+    }
+  }
+
+  @Nested class fromOptional {
+    @Test void calls_of() {
+      try (var maybe = mockStatic(Maybe.class, CALLS_REAL_METHODS)) {
+        Maybe.fromOptional(Optional.empty());
+
+        maybe.verify(() -> Maybe.of(Optional.empty()));
+      }
+    }
+  }
+
+  @Nested class from {
+    @Nested class when_a_value_is_provided {
+      @Nested class and_the_operation_succeeds {
+        @Test void returns_a_handler_with_the_value() throws IOException {
+          final var supplierSpy = Spy.<ThrowingSupplier<String, IOException>>lambda(() -> OK);
+          final var handler = Maybe.from(supplierSpy);
+
+          assertThat(handler.success()).contains(OK);
+          assertThat(handler.error()).isEmpty();
+
+          verify(supplierSpy, times(1)).get();
+        }
+      }
+
+      @Nested class and_the_operation_fails {
+        @Test void returns_a_handler_with_the_error() throws IOException {
+          final var supplierSpy = Spy.lambda(failSupplier);
+          final var handler = Maybe.from(supplierSpy);
+
+          assertThat(handler.success()).isEmpty();
+          assertThat(handler.error()).contains(FAIL_EXCEPTION);
+
+          verify(supplierSpy, times(1)).get();
+        }
       }
     }
 
-    @Nested class when_the_optional_is_empty {
-      @Test void returns_a_Maybe_wrapping_nothing() {
-        final var maybe = Maybe.fromOptional(Optional.empty());
+    @Nested class when_an_effect_is_passed {
+      @Nested class and_the_operation_succeeds {
+        @Test void returns_an_empty_handler() {
+          final var runnableSpy = Spy.<ThrowingRunnable<RuntimeException>>lambda(() -> { });
+          final var handler = Maybe.from(runnableSpy);
 
-        assertThat(maybe.value()).isEmpty();
+          assertThat(handler.error()).isEmpty();
+
+          verify(runnableSpy, times(1)).run();
+        }
+      }
+
+      @Nested class and_the_operation_fails {
+        @Test void returns_a_handler_with_the_error() throws IOException {
+          final var runnableSpy = Spy.lambda(failRunnable);
+          final var handler = Maybe.from(runnableSpy);
+
+          assertThat(handler.error()).contains(FAIL_EXCEPTION);
+
+          verify(runnableSpy, times(1)).run();
+        }
       }
     }
   }
 
   @Nested class fromResolver {
-    @Nested class when_the_operation_succeeds {
-      @Test void returns_a_handler_with_the_value() throws IOException {
-        final var supplierSpy = Spy.<ThrowingSupplier<String, IOException>>lambda(() -> OK);
-        final var handler = Maybe.fromResolver(supplierSpy);
+    @Test void calls_from() {
+      try (var maybe = mockStatic(Maybe.class, CALLS_REAL_METHODS)) {
+        Maybe.fromResolver(failSupplier);
 
-        assertThat(handler.success()).contains(OK);
-        assertThat(handler.error()).isEmpty();
-
-        verify(supplierSpy, times(1)).get();
-      }
-    }
-
-    @Nested class when_the_operation_fails {
-      @Test void returns_a_handler_with_the_error() throws IOException {
-        final var supplierSpy = Spy.lambda(failSupplier);
-        final var handler = Maybe.fromResolver(supplierSpy);
-
-        assertThat(handler.success()).isEmpty();
-        assertThat(handler.error()).contains(FAIL_EXCEPTION);
-
-        verify(supplierSpy, times(1)).get();
+        maybe.verify(() -> Maybe.from(failSupplier));
       }
     }
   }
 
   @Nested class fromEffect {
-    @Nested class when_the_operation_succeeds {
-      @Test void returns_a_handler_with_nothing() {
-        final var runnableSpy = Spy.<ThrowingRunnable<RuntimeException>>lambda(() -> { });
-        final var handler = Maybe.fromEffect(runnableSpy);
+    @Test void class_from() {
+      try (var maybe = mockStatic(Maybe.class, CALLS_REAL_METHODS)) {
+        Maybe.fromEffect(failRunnable);
 
-        assertThat(handler.error()).isEmpty();
+        maybe.verify(() -> Maybe.from(failRunnable));
+      }
+    }
+  }
 
-        verify(runnableSpy, times(1)).run();
+  @Nested class partial {
+    @Nested class when_a_function_is_provided {
+      @Test void returns_a_function_that_takes_a_value_and_returns_a_solve_handler() throws IOException {
+        final var successSpy = Spy.<ThrowingFunction<String, Integer, RuntimeException>>lambda(String::length);
+        final var failureSpy = Spy.lambda(failFunction);
+
+        assertThat(Maybe.partial(successSpy).apply(OK))
+          .isInstanceOf(SolveHandler.class)
+          .extracting(SolveHandler::success, optional(Integer.class))
+          .contains(OK.length());
+        assertThat(Maybe.partial(failureSpy).apply(OK))
+          .isInstanceOf(SolveHandler.class)
+          .extracting(SolveHandler::error, optional(IOException.class))
+          .contains(FAIL_EXCEPTION);
+
+        verify(successSpy, times(1)).apply(OK);
+        verify(failureSpy, times(1)).apply(OK);
       }
     }
 
-    @Nested class when_the_operation_fails {
-      @Test void returns_a_handler_with_the_error() throws IOException {
-        final var runnableSpy = Spy.lambda(failRunnable);
-        final var handler = Maybe.fromEffect(runnableSpy);
+    @Nested class when_a_consumer_is_provided {
+      @Test void returns_a_function_that_takes_a_value_and_returns_an_effect_handler() throws IOException {
+        final var successSpy = Spy.<ThrowingConsumer<String, RuntimeException>>lambda(v -> { });
+        final var failureSpy = Spy.lambda(failConsumer);
 
-        assertThat(handler.error()).contains(FAIL_EXCEPTION);
+        assertThat(Maybe.partial(successSpy).apply(OK))
+          .isInstanceOf(EffectHandler.class)
+          .extracting(EffectHandler::error, optional(RuntimeException.class))
+          .isEmpty();
 
-        verify(runnableSpy, times(1)).run();
+        assertThat(Maybe.partial(failureSpy).apply(OK))
+          .isInstanceOf(EffectHandler.class)
+          .extracting(EffectHandler::error, optional(IOException.class))
+          .contains(FAIL_EXCEPTION);
+
+        verify(successSpy, times(1)).accept(OK);
+        verify(failureSpy, times(1)).accept(OK);
       }
     }
   }
 
   @Nested class partialResolver {
-    @Test void returns_a_function_that_takes_a_value_and_returns_a_resolve_handler() throws IOException {
-      final var successSpy = Spy.<ThrowingFunction<String, Integer, RuntimeException>>lambda(String::length);
-      final var failureSpy = Spy.lambda(failFunction);
+    @Test void calls_partial() {
+      try (var maybe = mockStatic(Maybe.class, CALLS_REAL_METHODS)) {
+        Maybe.partialResolver(failFunction);
 
-      assertThat(Maybe.partialResolver(successSpy).apply(OK))
-        .isInstanceOf(ResolveHandler.class)
-        .extracting(ResolveHandler::success, optional(Integer.class))
-        .contains(OK.length());
-      assertThat(Maybe.partialResolver(failureSpy).apply(OK))
-        .isInstanceOf(ResolveHandler.class)
-        .extracting(ResolveHandler::error, optional(IOException.class))
-        .contains(FAIL_EXCEPTION);
-
-      verify(successSpy, times(1)).apply(OK);
-      verify(failureSpy, times(1)).apply(OK);
+        maybe.verify(() -> Maybe.partial(failFunction));
+      }
     }
   }
 
   @Nested class partialEffect {
-    @Test void returns_a_function_that_takes_a_value_and_returns_an_effect_handler() throws IOException {
-      final var successSpy = Spy.<ThrowingConsumer<String, RuntimeException>>lambda(v -> { });
-      final var failureSpy = Spy.lambda(failConsumer);
+    @Test void calls_partial() {
+      try (var maybe = mockStatic(Maybe.class, CALLS_REAL_METHODS)) {
+        Maybe.partialEffect(failConsumer);
 
-      assertThat(Maybe.partialEffect(successSpy).apply(OK))
-        .isInstanceOf(EffectHandler.class)
-        .extracting(EffectHandler::error, optional(RuntimeException.class))
-        .isEmpty();
-
-      assertThat(Maybe.partialEffect(failureSpy).apply(OK))
-        .isInstanceOf(EffectHandler.class)
-        .extracting(EffectHandler::error, optional(IOException.class))
-        .contains(FAIL_EXCEPTION);
-
-      verify(successSpy, times(1)).accept(OK);
-      verify(failureSpy, times(1)).accept(OK);
+        maybe.verify(() -> Maybe.partial(failConsumer));
+      }
     }
   }
 
   @Nested class withResource {
-    @Test void returns_the_ResourceHolder_with_the_resource() throws FileNotFoundException, IOException {
+    @Test void returns_the_CloseableHandler_with_the_resource() throws FileNotFoundException, IOException {
       try (var fis = new FileInputStream("./src/test/resources/readTest.txt")) {
         final var holder = Maybe.withResource(fis);
 
@@ -197,7 +278,7 @@ import io.github.joselion.testing.UnitTest;
 
   @Nested class solveResource {
     @Nested class and_the_solver_does_not_throw {
-      @Test void returns_a_ResourceHolder_with_the_resource() throws FileNotFoundException, IOException {
+      @Test void returns_a_CloseableHandler_with_the_resource() throws FileNotFoundException, IOException {
         final var path = "./src/test/resources/readTest.txt";
         final var holder = Maybe.solveResource(() -> new FileInputStream(path));
 
@@ -212,7 +293,7 @@ import io.github.joselion.testing.UnitTest;
     }
 
     @Nested class and_the_solver_throws {
-      @Test void returns_a_ResourceHolder_with_the_thrown_exception() {
+      @Test void returns_a_CloseableHandler_with_the_thrown_exception() {
         final var holder = Maybe.solveResource(() -> new FileInputStream("invalid.txt"));
 
         assertThat(holder.resource()).isEmpty();
@@ -226,15 +307,15 @@ import io.github.joselion.testing.UnitTest;
   @Nested class map {
     @Nested class when_the_value_is_present {
       @Test void maps_the_value_with_the_passed_function() {
-        final var maybe = Maybe.just(OK).map(String::length);
+        final var maybe = Maybe.of(OK).map(String::length);
 
         assertThat(maybe.value()).contains(2);
       }
     }
 
     @Nested class when_the_value_is_not_present {
-      @Test void returns_nothing() {
-        final var maybe = Maybe.<String>nothing().map(String::length);
+      @Test void returns_an_empty_Maybe() {
+        final var maybe = Maybe.<String>empty().map(String::length);
 
         assertThat(maybe.value()).isEmpty();
       }
@@ -244,28 +325,28 @@ import io.github.joselion.testing.UnitTest;
   @Nested class flatMap {
     @Nested class when_the_value_is_present {
       @Test void maps_the_value_with_the_passed_maybe_function() {
-        final var maybe = Maybe.just(OK)
-          .flatMap(str -> Maybe.just(str.length()));
+        final var maybe = Maybe.of(OK)
+          .flatMap(str -> Maybe.of(str.length()));
 
         assertThat(maybe.value()).contains(2);
       }
     }
 
     @Nested class when_the_value_is_not_present {
-      @Test void returns_nothing() {
-        final var maybe = Maybe.<String>nothing()
-          .flatMap(str -> Maybe.just(str.length()));
+      @Test void returns_an_empty_Maybe() {
+        final var maybe = Maybe.<String>empty()
+          .flatMap(str -> Maybe.of(str.length()));
 
         assertThat(maybe.value()).isEmpty();
       }
     }
   }
 
-  @Nested class resolve {
+  @Nested class solve {
     @Nested class when_the_value_is_present {
       @Test void the_callback_is_called_with_the_value() {
         final var functionSpy = Spy.<ThrowingFunction<Integer, String, RuntimeException>>lambda(v -> OK);
-        final var handler = Maybe.just(1).resolve(functionSpy);
+        final var handler = Maybe.of(1).solve(functionSpy);
 
         assertThat(handler.success()).contains(OK);
         assertThat(handler.error()).isEmpty();
@@ -277,7 +358,7 @@ import io.github.joselion.testing.UnitTest;
     @Nested class when_the_value_is_not_present {
       @Test void the_callback_is_never_called_and_returns_a_handler_with_an_error() throws IOException {
         final var functionSpy = Spy.lambda(failFunction);
-        final var handler = Maybe.<String>nothing().resolve(functionSpy);
+        final var handler = Maybe.<String>empty().solve(functionSpy);
 
         assertThat(handler.success()).isEmpty();
         assertThat(handler.error())
@@ -290,10 +371,10 @@ import io.github.joselion.testing.UnitTest;
     }
 
     @Nested class when_the_new_operation_succeeds {
-      @Test void returns_a_handler_with_the_resolved_value() {
+      @Test void returns_a_handler_with_the_solved_value() {
         final var functionSpy = Spy.lambda(ThrowingFunction.<String, RuntimeException>identity());
-        final var handler = Maybe.just(OK)
-          .resolve(functionSpy);
+        final var handler = Maybe.of(OK)
+          .solve(functionSpy);
 
         assertThat(handler.success()).contains(OK);
         assertThat(handler.error()).isEmpty();
@@ -305,8 +386,8 @@ import io.github.joselion.testing.UnitTest;
     @Nested class when_the_new_operation_fails {
       @Test void returns_a_handler_with_the_error() throws IOException {
         final var functionSpy = Spy.lambda(failFunction);
-        final var handler = Maybe.just(OK)
-          .resolve(functionSpy);
+        final var handler = Maybe.of(OK)
+          .solve(functionSpy);
 
         assertThat(handler.success()).isEmpty();
         assertThat(handler.error()).contains(FAIL_EXCEPTION);
@@ -316,12 +397,21 @@ import io.github.joselion.testing.UnitTest;
     }
   }
 
-  @Nested class runEffect {
+  @Nested class resolve {
+    @Test void calls_solve() {
+      final var maybe = spy(Maybe.of(OK));
+      maybe.resolve(failFunction);
+
+      verify(maybe).solve(failFunction);
+    }
+  }
+
+  @Nested class effect {
     @Nested class when_the_value_is_present {
       @Test void the_callback_is_called_with_the_value() {
         final var consumerSpy = Spy.<ThrowingConsumer<String, RuntimeException>>lambda(v -> { });
-        final var handler = Maybe.just(OK)
-          .runEffect(consumerSpy);
+        final var handler = Maybe.of(OK)
+          .effect(consumerSpy);
 
         assertThat(handler.error()).isEmpty();
 
@@ -332,8 +422,8 @@ import io.github.joselion.testing.UnitTest;
     @Nested class when_the_value_is_not_present {
       @Test void the_callback_is_never_called_and_returns_a_handler_with_an_error() {
         final var consumerSpy = Spy.<ThrowingConsumer<Object, RuntimeException>>lambda(v -> { });
-        final var handler = Maybe.nothing()
-          .runEffect(consumerSpy);
+        final var handler = Maybe.empty()
+          .effect(consumerSpy);
 
         assertThat(handler.error())
           .get(THROWABLE)
@@ -345,10 +435,10 @@ import io.github.joselion.testing.UnitTest;
     }
 
     @Nested class when_the_new_operation_succeeds {
-      @Test void returns_the_a_handler_with_nothing() {
+      @Test void returns_an_empty_handler() {
         final var consumerSpy = Spy.<ThrowingConsumer<String, RuntimeException>>lambda(v -> { });
-        final var handler = Maybe.just(OK)
-          .runEffect(consumerSpy);
+        final var handler = Maybe.of(OK)
+          .effect(consumerSpy);
 
         assertThat(handler.error()).isEmpty();
 
@@ -359,8 +449,8 @@ import io.github.joselion.testing.UnitTest;
     @Nested class when_the_new_operation_fails {
       @Test void returns_a_handler_with_the_error() throws IOException {
         final var consumerSpy = Spy.lambda(failConsumer);
-        final var handler = Maybe.just(OK)
-          .runEffect(consumerSpy);
+        final var handler = Maybe.of(OK)
+          .effect(consumerSpy);
 
         assertThat(handler.error()).contains(FAIL_EXCEPTION);
 
@@ -369,18 +459,27 @@ import io.github.joselion.testing.UnitTest;
     }
   }
 
+  @Nested class runEffect {
+    @Test void call_effect() {
+      final var maybe = spy(Maybe.of(OK));
+      maybe.runEffect(failConsumer);
+
+      verify(maybe).effect(failConsumer);
+    }
+  }
+
   @Nested class cast {
     @Nested class when_the_value_is_castable_to_the_passed_type {
       @Test void returns_a_maybe_with_the_value_cast() {
-        final var maybe = Maybe.<Number>just(3);
+        final var maybe = Maybe.<Number>of(3);
 
         assertThat(maybe.cast(Integer.class).value()).contains(3);
       }
     }
 
     @Nested class when_the_value_is_not_castable_to_the_passed_type {
-      @Test void returns_nothing() {
-        final var maybe = Maybe.just("3");
+      @Test void returns_an_empty_Maybe() {
+        final var maybe = Maybe.of("3");
 
         assertThat(maybe.cast(Integer.class).value()).isEmpty();
       }
@@ -390,42 +489,51 @@ import io.github.joselion.testing.UnitTest;
   @Nested class hasValue {
     @Nested class when_the_value_is_present {
       @Test void returns_true() {
-        assertThat(Maybe.just(OK).hasValue()).isTrue();
+        assertThat(Maybe.of(OK).hasValue()).isTrue();
       }
     }
 
     @Nested class when_the_value_is_not_present {
       @Test void returns_false() {
-        assertThat(Maybe.nothing().hasValue()).isFalse();
+        assertThat(Maybe.empty().hasValue()).isFalse();
       }
     }
   }
 
-  @Nested class hasNothing {
+  @Nested class isEmpty {
     @Nested class when_the_value_is_not_present {
       @Test void returns_true() {
-        assertThat(Maybe.nothing().hasNothing()).isTrue();
+        assertThat(Maybe.empty().isEmpty()).isTrue();
       }
     }
 
     @Nested class when_the_value_is_present {
       @Test void returns_false() {
-        assertThat(Maybe.just(OK).hasNothing()).isFalse();
+        assertThat(Maybe.of(OK).isEmpty()).isFalse();
       }
+    }
+  }
+
+  @Nested class hasNothing {
+    @Test void calls_isEmpty() {
+      final var maybe = spy(Maybe.of(OK));
+      maybe.hasNothing();
+
+      verify(maybe).isEmpty();
     }
   }
 
   @Nested class toOptional {
     @Nested class when_the_value_is_present {
       @Test void returns_an_Optional_wrapping_the_value() {
-        assertThat(Maybe.just(OK).toOptional())
+        assertThat(Maybe.of(OK).toOptional())
           .contains(OK);
       }
     }
 
     @Nested class when_the_value_is_not_present {
       @Test void returns_an_empty_Optional() {
-        assertThat(Maybe.nothing().toOptional())
+        assertThat(Maybe.empty().toOptional())
           .isEmpty();
       }
     }
@@ -434,7 +542,7 @@ import io.github.joselion.testing.UnitTest;
   @Nested class equals {
     @Nested class when_the_tested_object_is_the_same_as_the_value {
       @Test void returns_true() {
-        final var maybe = Maybe.just(3);
+        final var maybe = Maybe.of(3);
         final var other = maybe;
         final var isEqual = maybe.equals(other);
 
@@ -444,7 +552,7 @@ import io.github.joselion.testing.UnitTest;
 
     @Nested class when_the_tested_object_is_not_the_same_as_the_value {
       @Test void returns_false() {
-        final var maybe = Maybe.just(3);
+        final var maybe = Maybe.of(3);
         final var other = (Object) Integer.valueOf(3);
         final var isEqual = maybe.equals(other);
 
@@ -454,8 +562,8 @@ import io.github.joselion.testing.UnitTest;
 
     @Nested class when_both_wrapped_values_are_equal {
       @Test void returns_true() {
-        final var maybe = Maybe.just(OK);
-        final var other = Maybe.just(OK);
+        final var maybe = Maybe.of(OK);
+        final var other = Maybe.of(OK);
         final var isEqual = maybe.equals(other);
 
         assertThat(isEqual).isTrue();
@@ -464,8 +572,8 @@ import io.github.joselion.testing.UnitTest;
 
     @Nested class when_both_wrapped_values_are_not_equal {
       @Test void returns_false() {
-        final var maybe = Maybe.just(OK);
-        final var other = Maybe.just("OTHER");
+        final var maybe = Maybe.of(OK);
+        final var other = Maybe.of("OTHER");
         final var isEqualToOther = maybe.equals(other);
 
         assertThat(isEqualToOther).isFalse();
@@ -476,7 +584,7 @@ import io.github.joselion.testing.UnitTest;
   @Nested class hashCode {
     @Nested class when_the_value_is_present {
       @Test void returns_the_hash_code_of_the_value() {
-        final var maybe = Maybe.just(OK);
+        final var maybe = Maybe.of(OK);
 
         assertThat(maybe).hasSameHashCodeAs(OK);
       }
@@ -484,7 +592,7 @@ import io.github.joselion.testing.UnitTest;
 
     @Nested class when_the_value_is_not_present {
       @Test void returns_zero() {
-        final var maybe = Maybe.nothing();
+        final var maybe = Maybe.empty();
 
         assertThat(maybe.hashCode()).isZero();
       }
@@ -494,17 +602,17 @@ import io.github.joselion.testing.UnitTest;
   @Nested class toString {
     @Nested class when_the_value_is_present {
       @Test void returns_the_string_representation_of_the_value() {
-        final var maybe = Maybe.just(OK);
+        final var maybe = Maybe.of(OK);
 
         assertThat(maybe).hasToString("Maybe[OK]");
       }
     }
 
     @Nested class when_the_value_is_not_present {
-      @Test void returns_the_string_representation_of_nothing() {
-        final var maybe = Maybe.nothing();
+      @Test void returns_the_string_representation_of_empty() {
+        final var maybe = Maybe.empty();
 
-        assertThat(maybe).hasToString("Maybe.nothing");
+        assertThat(maybe).hasToString("Maybe.empty");
       }
     }
   }

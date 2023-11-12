@@ -156,13 +156,32 @@ public final class EffectHandler<E extends Throwable> {
    * @return a new {@link EffectHandler} representing the result of one of the
    *         invoked callback
    */
-  public <X extends Throwable> EffectHandler<X> runEffect(
+  public <X extends Throwable> EffectHandler<X> effect(
     final ThrowingRunnable<? extends X> onSuccess,
     final ThrowingConsumer<? super E, ? extends X> onError
   ) {
     return this.error
-      .map(Maybe.<E, X>partialEffect(onError))
-      .orElseGet(() -> Maybe.fromEffect(onSuccess));
+      .map(Maybe.<E, X>partial(onError))
+      .orElseGet(() -> Maybe.from(onSuccess));
+  }
+
+  /**
+   * Chain another effect covering both cases of success or error of the
+   * previous effect in two different callbacks.
+   *
+   * @param <X> the type of the error the new effect may throw
+   * @param onSuccess a runnable checked function to run in case of succeess
+   * @param onError a runnable checked function to run in case of error
+   * @return a new {@link EffectHandler} representing the result of one of the
+   *         invoked callback
+   * @deprecated in favor of {@link #effect(ThrowingRunnable, ThrowingConsumer)}
+   */
+  @Deprecated(forRemoval = true, since = "3.4.0")
+  public <X extends Throwable> EffectHandler<X> runEffect(// NOSONAR
+    final ThrowingRunnable<? extends X> onSuccess,
+    final ThrowingConsumer<? super E, ? extends X> onError
+  ) {
+    return this.effect(onSuccess, onError);
   }
 
   /**
@@ -175,8 +194,26 @@ public final class EffectHandler<E extends Throwable> {
    * @return a new {@link EffectHandler} that is either empty or with the
    *         thrown error
    */
-  public <X extends Throwable> EffectHandler<X> runEffect(final ThrowingRunnable<? extends X> effect) {
-    return this.runEffect(effect, err -> { });
+  public <X extends Throwable> EffectHandler<X> effect(final ThrowingRunnable<? extends X> effect) {
+    return this.effect(effect, err -> { });
+  }
+
+  /**
+   * Chain another effect if the previous completed with no error. Otherwise,
+   * ignores the current error and return a new {@link EffectHandler} that is
+   * either empty or has a different error cause by the next effect.
+   *
+   * @param <X> the type of the error the new effect may throw
+   * @param effect a runnable checked function to run in case of succeess
+   * @return a new {@link EffectHandler} that is either empty or with the
+   *         thrown error
+   * @deprecated in favor of {@link #effect(ThrowingRunnable)}
+   */
+  @Deprecated(forRemoval = true, since = "3.4.0")
+  public <X extends Throwable> EffectHandler<X> runEffect(// NOSONAR
+    final ThrowingRunnable<? extends X> effect
+  ) {
+    return this.effect(effect);
   }
 
   /**
