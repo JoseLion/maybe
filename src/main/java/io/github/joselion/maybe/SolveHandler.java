@@ -13,46 +13,46 @@ import io.github.joselion.maybe.util.function.ThrowingConsumer;
 import io.github.joselion.maybe.util.function.ThrowingFunction;
 
 /**
- * ResolveHandler is an API to handle the possible error of a {@link Maybe}'s
- * resolve operation. It can return back to maybe to continue linking operations,
+ * SolveHandler is an API to handle the possible error of a {@link Maybe}'s
+ * solve operation. It can return back to maybe to continue linking operations,
  * or use terminal methods to return a safe value.
  * 
  * @param <T> the type of the value passed through the {@code Maybe}
- * @param <E> the type of exception that the resolve operation may throw
+ * @param <E> the type of exception that the solve operation may throw
  * 
  * @author Jose Luis Leon
  * @since v0.3.2
  */
-public final class ResolveHandler<T, E extends Throwable> {
+public final class SolveHandler<T, E extends Throwable> {
 
   private final Either<E, T> value;
 
-  private ResolveHandler(final Either<E, T> value) {
+  private SolveHandler(final Either<E, T> value) {
     this.value = value;
   }
 
   /**
-   * Internal use method to instantiate a ResolveHandler of a success value
+   * Internal use method to instantiate a SolveHandler of a success value
    * 
    * @param <T> the type of the success value
    * @param <E> the type of the possible exception
-   * @param success the success value to instantiate the ResolveHandler
-   * @return a ResolveHandler instance with a success value
+   * @param success the success value to instantiate the SolveHandler
+   * @return a SolveHandler instance with a success value
    */
-  static <T, E extends Throwable> ResolveHandler<T, E> ofSuccess(final T success) {
-    return new ResolveHandler<>(Either.ofRight(success));
+  static <T, E extends Throwable> SolveHandler<T, E> ofSuccess(final T success) {
+    return new SolveHandler<>(Either.ofRight(success));
   }
 
   /**
-   * Internal use method to instantiate a ResolveHandler of an error value
+   * Internal use method to instantiate a SolveHandler of an error value
    * 
    * @param <T> the type of the success value
    * @param <E> the type of the possible exception
-   * @param error the error to instantiate the ResolveHandler
-   * @return a ResolveHandler instance with an error value
+   * @param error the error to instantiate the SolveHandler
+   * @return a SolveHandler instance with an error value
    */
-  static <T, E extends Throwable> ResolveHandler<T, E> ofError(final E error) {
-    return new ResolveHandler<>(Either.ofLeft(error));
+  static <T, E extends Throwable> SolveHandler<T, E> ofError(final E error) {
+    return new SolveHandler<>(Either.ofLeft(error));
   }
 
   /**
@@ -74,13 +74,13 @@ public final class ResolveHandler<T, E extends Throwable> {
   }
 
   /**
-   * Run an effect if the operation resolved successfully. The resolved value
+   * Run an effect if the operation solved successfully. The solved value
    * is passed in the argument of the {@code effect} consumer.
    *
-   * @param effect a function that receives the resolved value
+   * @param effect a function that receives the solved value
    * @return the same handler to continue chainning operations
    */
-  public ResolveHandler<T, E> doOnSuccess(final Consumer<? super T> effect) {
+  public SolveHandler<T, E> doOnSuccess(final Consumer<? super T> effect) {
     this.value.doOnRight(effect);
 
     return this;
@@ -96,7 +96,7 @@ public final class ResolveHandler<T, E extends Throwable> {
    * @param effect a consumer function that receives the caught error
    * @return the same handler to continue chainning operations
    */
-  public <X extends Throwable> ResolveHandler<T, E> doOnError(final Class<X> ofType, final Consumer<? super X> effect) {
+  public <X extends Throwable> SolveHandler<T, E> doOnError(final Class<X> ofType, final Consumer<? super X> effect) {
     this.value
       .leftToOptional()
       .filter(ofType::isInstance)
@@ -113,7 +113,7 @@ public final class ResolveHandler<T, E extends Throwable> {
    * @param effect a consumer function that receives the caught error
    * @return the same handler to continue chainning operations
    */
-  public ResolveHandler<T, E> doOnError(final Consumer<? super E> effect) {
+  public SolveHandler<T, E> doOnError(final Consumer<? super E> effect) {
     this.value.doOnLeft(effect);
 
     return this;
@@ -131,7 +131,7 @@ public final class ResolveHandler<T, E extends Throwable> {
    * @return a handler containing a new value if an error instance of the
    *         provided type was caught. The same handler instance otherwise
    */
-  public <X extends Throwable> ResolveHandler<T, E> catchError(
+  public <X extends Throwable> SolveHandler<T, E> catchError(
     final Class<X> ofType,
     final Function<? super X, ? extends T> handler
   ) {
@@ -140,7 +140,7 @@ public final class ResolveHandler<T, E extends Throwable> {
       .filter(ofType::isInstance)
       .map(ofType::cast)
       .map(handler)
-      .map(ResolveHandler::<T, E>ofSuccess)
+      .map(SolveHandler::<T, E>ofSuccess)
       .orElse(this);
   }
 
@@ -153,59 +153,103 @@ public final class ResolveHandler<T, E extends Throwable> {
    * @return a handler containing a new value if an error was caught. The same
    *         handler instance otherwise
    */
-  public ResolveHandler<T, E> catchError(final Function<? super E, ? extends T> handler) {
+  public SolveHandler<T, E> catchError(final Function<? super E, ? extends T> handler) {
     return this.value
       .mapLeft(handler)
-      .mapLeft(ResolveHandler::<T, E>ofSuccess)
+      .mapLeft(SolveHandler::<T, E>ofSuccess)
       .leftOrElse(this);
   }
 
   /**
-   * Chain another resolver covering both cases of success or error of the
-   * previous resolver in two different callbacks.
+   * Chain another solver covering both cases of success or error of the
+   * previous solver in two different callbacks.
    * <p>
-   * The first callback receives the resolved value, the second callback the
-   * caught error. Both should resolve another value of the same type {@code S},
+   * The first callback receives the solved value, the second callback the
+   * caught error. Both should solve another value of the same type {@code S},
    * but only one of the callbacks is invoked. It depends on whether the
-   * previous value was resolved or not.
+   * previous value was solved or not.
    *
    * @param <S> the type of value returned by the next operation
-   * @param <X> the type of exception the new resolver may throw
+   * @param <X> the type of exception the new solver may throw
    * @param onSuccess a checked function that receives the current value
-   *                        and resolves another
+   *                        and solves another
    * @param onError a checked function that receives the error and
-   *                      resolves another value
-   * @return a new handler with either the resolved value or the error
+   *                      solves another value
+   * @return a new handler with either the solved value or the error
    */
-  public <S, X extends Throwable> ResolveHandler<S, X> resolve(
+  public <S, X extends Throwable> SolveHandler<S, X> solve(
     final ThrowingFunction<? super T, ? extends S, ? extends X> onSuccess,
     final ThrowingFunction<? super E, ? extends S, ? extends X> onError
   ) {
     return this.value.unwrap(
-      Maybe.partialResolver(onError),
-      Maybe.partialResolver(onSuccess)
+      Maybe.partial(onError),
+      Maybe.partial(onSuccess)
     );
   }
 
   /**
-   * Chain another resolver function if the value was resolved. Otherwise,
+   * Chain another solver covering both cases of success or error of the
+   * previous solver in two different callbacks.
+   * <p>
+   * The first callback receives the solved value, the second callback the
+   * caught error. Both should solve another value of the same type {@code S},
+   * but only one of the callbacks is invoked. It depends on whether the
+   * previous value was solved or not.
+   *
+   * @param <S> the type of value returned by the next operation
+   * @param <X> the type of exception the new solver may throw
+   * @param onSuccess a checked function that receives the current value
+   *                        and solves another
+   * @param onError a checked function that receives the error and
+   *                      solves another value
+   * @return a new handler with either the solved value or the error
+   * @deprecated in favor of {@link #solve(ThrowingFunction, ThrowingFunction)}
+   */
+  @Deprecated(forRemoval = true, since = "3.4.0")
+  public <S, X extends Throwable> SolveHandler<S, X> resolve(// NOSONAR
+    final ThrowingFunction<? super T, ? extends S, ? extends X> onSuccess,
+    final ThrowingFunction<? super E, ? extends S, ? extends X> onError
+  ) {
+    return this.solve(onSuccess, onError);
+  }
+
+  /**
+   * Chain another solver function if the value was solved. Otherwise,
    * returns a handler containing the error so it can be propagated upstream.
    *
    * @param <S> the type of value returned by the next operation
-   * @param <X> the type of exception the new resolver may throw
-   * @param resolver a checked function that receives the current value and
-   *                 resolves another
-   * @return a new handler with either the resolved value or an error
+   * @param <X> the type of exception the new solver may throw
+   * @param solver a checked function that receives the current value and
+   *                 solves another
+   * @return a new handler with either the solved value or an error
    */
-  public <S, X extends Throwable> ResolveHandler<S, X> resolve(
-    final ThrowingFunction<? super T, ? extends S, ? extends X> resolver
+  public <S, X extends Throwable> SolveHandler<S, X> solve(
+    final ThrowingFunction<? super T, ? extends S, ? extends X> solver
   ) {
     return this.value
       .mapLeft(Commons::<X>cast)
       .unwrap(
-        ResolveHandler::ofError,
-        Maybe.partialResolver(resolver)
+        SolveHandler::ofError,
+        Maybe.partial(solver)
       );
+  }
+
+  /**
+   * Chain another solver function if the value was solved. Otherwise,
+   * returns a handler containing the error so it can be propagated upstream.
+   *
+   * @param <S> the type of value returned by the next operation
+   * @param <X> the type of exception the new solver may throw
+   * @param solver a checked function that receives the current value and
+   *                 solves another
+   * @return a new handler with either the solved value or an error
+   * @deprecated in favor of {@link #solve(ThrowingFunction)}
+   */
+  @Deprecated(forRemoval = true, since = "3.4.0")
+  public <S, X extends Throwable> SolveHandler<S, X> resolve(// NOSONAR
+    final ThrowingFunction<? super T, ? extends S, ? extends X> solver
+  ) {
+    return this.solve(solver);
   }
 
   /**
@@ -218,18 +262,37 @@ public final class ResolveHandler<T, E extends Throwable> {
    * @return an {@link EffectHandler} representing the result of one of the
    *         invoked callback
    */
-  public <X extends Throwable> EffectHandler<X> runEffect(
+  public <X extends Throwable> EffectHandler<X> effect(
     final ThrowingConsumer<? super T, ? extends X> onSuccess,
     final ThrowingConsumer<? super E, ? extends X> onError
   ) {
     return this.value.unwrap(
-      Maybe.partialEffect(onError),
-      Maybe.partialEffect(onSuccess)
+      Maybe.partial(onError),
+      Maybe.partial(onSuccess)
     );
   }
 
   /**
-   * Chain the previous operation to an effect if the value was resolved.
+   * Chain the previous operation to an effect covering both the success or
+   * error cases in two different callbacks.
+   *
+   * @param <X> the type of the error the effect may throw
+   * @param onSuccess a consumer checked function to run in case of succeess
+   * @param onError a consumer checked function to run in case of error
+   * @return an {@link EffectHandler} representing the result of one of the
+   *         invoked callback
+   * @deprecated in favor of {@link #effect(ThrowingConsumer, ThrowingConsumer)}
+   */
+  @Deprecated(forRemoval = true, since = "3.4.0")
+  public <X extends Throwable> EffectHandler<X> runEffect(// NOSONAR
+    final ThrowingConsumer<? super T, ? extends X> onSuccess,
+    final ThrowingConsumer<? super E, ? extends X> onError
+  ) {
+    return this.effect(onSuccess, onError);
+  }
+
+  /**
+   * Chain the previous operation to an effect if the value was solved.
    * Otherwise, returns a handler containing the error so it can be propagated
    * upstream.
    *
@@ -238,13 +301,31 @@ public final class ResolveHandler<T, E extends Throwable> {
    * @return a new {@link EffectHandler} representing the result of the success
    *         callback or containg the error
    */
-  public <X extends Throwable> EffectHandler<X> runEffect(final ThrowingConsumer<? super T, ? extends X> effect) {
+  public <X extends Throwable> EffectHandler<X> effect(final ThrowingConsumer<? super T, ? extends X> effect) {
     return this.value
       .mapLeft(Commons::<X>cast)
       .unwrap(
         EffectHandler::ofError,
-        Maybe.partialEffect(effect)
+        Maybe.partial(effect)
       );
+  }
+
+  /**
+   * Chain the previous operation to an effect if the value was solved.
+   * Otherwise, returns a handler containing the error so it can be propagated
+   * upstream.
+   *
+   * @param <X> the type of the error the effect may throw
+   * @param effect a consume checked function to run in case of succeess
+   * @return a new {@link EffectHandler} representing the result of the success
+   *         callback or containg the error
+   * @deprecated in favor of {@link #effect(ThrowingConsumer)}
+   */
+  @Deprecated(forRemoval = true, since = "3.4.0")
+  public <X extends Throwable> EffectHandler<X> runEffect(// NOSONAR
+    final ThrowingConsumer<? super T, ? extends X> effect
+  ) {
+    return this.effect(effect);
   }
 
   /**
@@ -253,15 +334,15 @@ public final class ResolveHandler<T, E extends Throwable> {
    * the next handler will still contain the error.
    * 
    * @param <U> the type the value will be mapped to
-   * @param mapper a function that receives the resolved value and produces another
+   * @param mapper a function that receives the solved value and produces another
    * @return a new handler with either the mapped value, or the previous error
    */
-  public <U> ResolveHandler<U, E> map(final Function<? super T, ? extends U> mapper) {
+  public <U> SolveHandler<U, E> map(final Function<? super T, ? extends U> mapper) {
     return this.value
       .mapRight(mapper)
       .unwrap(
-        ResolveHandler::ofError,
-        ResolveHandler::ofSuccess
+        SolveHandler::ofError,
+        SolveHandler::ofSuccess
       );
   }
 
@@ -275,7 +356,7 @@ public final class ResolveHandler<T, E extends Throwable> {
    * @return a new handler with either the cast value or a ClassCastException
    *         error
    */
-  public <U> ResolveHandler<U, ClassCastException> cast(final Class<U> type) {
+  public <U> SolveHandler<U, ClassCastException> cast(final Class<U> type) {
     return this.value.unwrap(
       error -> ofError(new ClassCastException(error.getMessage())),
       success -> {
@@ -289,38 +370,38 @@ public final class ResolveHandler<T, E extends Throwable> {
   }
 
   /**
-   * Returns the resolved value if present. Another value otherwise.
+   * Returns the solved value if present. Another value otherwise.
    * 
-   * @param fallback the value to return if the operation failed to resolve
-   * @return the resolved value if present. Another value otherwise
+   * @param fallback the value to return if the operation failed to solve
+   * @return the solved value if present. Another value otherwise
    */
   public T orElse(final T fallback) {
     return this.value.rightOrElse(fallback);
   }
 
   /**
-   * Returns the resolved value if present. Otherwise, the result produced by
+   * Returns the solved value if present. Otherwise, the result produced by
    * the mapping function, which has the error on its argument, and returns
    * another value.
    *
    * @param mapper a function that receives the caught error and produces
    *               another value
-   * @return the resolved value if present. Another value otherwise
+   * @return the solved value if present. Another value otherwise
    */
   public T orElse(final Function<? super E, ? extends T> mapper) {
     return this.value.unwrap(mapper, Function.identity());
   }
 
   /**
-   * Returns the resolved value if present. Otherwise, the result produced by
+   * Returns the solved value if present. Otherwise, the result produced by
    * the supplying function as another value.
    *
    * @apiNote Use this method instead of {@link #orElse(Object)} to do lazy
    *          evaluation of the produced value. That means that the "else"
    *          value won't be evaluated if the error is not present.
    * @param supplier the supplying function that produces another value if the
-   *                 opration failed to resolve
-   * @return the resolved value if present. Another value otherwise
+   *                 operation failed to solve
+   * @return the solved value if present. Another value otherwise
    */
   public T orElseGet(final Supplier<? extends T> supplier) {
     return this.value
@@ -329,7 +410,7 @@ public final class ResolveHandler<T, E extends Throwable> {
   }
 
   /**
-   * Returns the resolved value if present. Just {@code null} otherwise.
+   * Returns the solved value if present. Just {@code null} otherwise.
    * <p>
    * It's strongly encouraged to use {@link #toOptional()} instead to better
    * handle nullability, but if you really need to return {@code null} in case
@@ -338,17 +419,17 @@ public final class ResolveHandler<T, E extends Throwable> {
    * Using {@code .orElse(null)} will result in ambiguity between
    * {@link #orElse(Function)} and {@link #orElse(Object)}.
    *
-   * @return the resolved value if present. Just {@code null} otherwise.
+   * @return the solved value if present. Just {@code null} otherwise.
    */
   public @Nullable T orNull() {
     return this.value.rightOrNull();
   }
 
   /**
-   * Returns the resolved value if present. Throws the error otherwise.
+   * Returns the solved value if present. Throws the error otherwise.
    * 
-   * @return the resolved/handled value if present
-   * @throws E the error thrown by the {@code resolve} operation
+   * @return the solved/handled value if present
+   * @throws E the error thrown by the {@code solve} operation
    */
   public T orThrow() throws E {
     return this.value
@@ -357,12 +438,12 @@ public final class ResolveHandler<T, E extends Throwable> {
   }
 
   /**
-   * Returns the value resolved/handled if present. Throws another error otherwise.
+   * Returns the value solved/handled if present. Throws another error otherwise.
    * 
    * @param <X> the new error type
    * @param mapper a function that receives the caught error and produces
    *               another exception
-   * @return the resolved/handled value if present
+   * @return the solved/handled value if present
    * @throws X a mapped exception
    */
   public <X extends Throwable> T orThrow(final Function<? super E, ? extends X> mapper) throws X {
@@ -373,23 +454,23 @@ public final class ResolveHandler<T, E extends Throwable> {
 
   /**
    * Transforms the handler to a {@link Maybe} that contains either the
-   * resolved value or the error.
+   * solved value or the error.
    * 
-   * @return the resolved value wrapped in a {@link Maybe} or holding the error
+   * @return the solved value wrapped in a {@link Maybe} or holding the error
    */
   public Maybe<T> toMaybe() {
     return this.value
       .rightToOptional()
-      .map(Maybe::just)
-      .orElseGet(Maybe::nothing);
+      .map(Maybe::of)
+      .orElseGet(Maybe::empty);
   }
 
   /**
-   * Transforms the handler to an {@link Optional}. If the value was resolved,
+   * Transforms the handler to an {@link Optional}. If the value was solved,
    * the {@link Optional} will contain it. Returs an {@code empty} optional
    * otherwise.
    * 
-   * @return the resolved value wrapped in an {@link Optional} if present. An
+   * @return the solved value wrapped in an {@link Optional} if present. An
    *         {@code empty} optional otherwise.
    */
   public Optional<T> toOptional() {
@@ -398,13 +479,13 @@ public final class ResolveHandler<T, E extends Throwable> {
 
   /**
    * Transforms the handler to an {@link Either}, in which the left side might
-   * contain the error and the right side might contain the resolved value.
+   * contain the error and the right side might contain the solved value.
    * <p>
    * The benefit of transforming to {@code Either} is that its implementation
    * ensures that only one of the two possible values is present at the same
    * time, never both nor none.
    * 
-   * @return an {@code Either} with the resolved value on the right side or the
+   * @return an {@code Either} with the solved value on the right side or the
    *         error on the left
    */
   public Either<E, T> toEither() {
@@ -413,55 +494,55 @@ public final class ResolveHandler<T, E extends Throwable> {
 
   /**
    * Map the value to an {@link AutoCloseable} resource to be use in either a
-   * {@code resolveClosing} or a {@code runEffectClosing} operation, which will
-   * close the resource when it completes. If the value was not resolved, the
-   * error is propagated to the {@link ResourceHolder}.
+   * {@code solve} or {@code effect} operation. These operations will close the
+   * resource upon completation. If the value was not solved, the error is
+   * propagated to the {@link CloseableHandler}.
    * 
    * @param <R> the type of the {@link AutoCloseable} resource
-   * @param mapper a function that receives the resolved value and produces an
+   * @param mapper a function that receives the solved value and produces an
    *               autoclosable resource
-   * @return a {@link ResourceHolder} with the mapped resource if the value is
+   * @return a {@link CloseableHandler} with the mapped resource if the value is
    *         present or the error otherwise.
    * 
-   * @see ResourceHolder#resolveClosing(ThrowingFunction)
-   * @see ResourceHolder#runEffectClosing(ThrowingConsumer)
+   * @see CloseableHandler#solve(ThrowingFunction)
+   * @see CloseableHandler#effect(ThrowingConsumer)
    */
-  public <R extends AutoCloseable> ResourceHolder<R, E> mapToResource(final Function<T, R> mapper) {
+  public <R extends AutoCloseable> CloseableHandler<R, E> mapToResource(final Function<T, R> mapper) {
     return this.value
       .mapRight(mapper)
       .unwrap(
-        ResourceHolder::failure,
-        ResourceHolder::from
+        CloseableHandler::failure,
+        CloseableHandler::from
       );
   }
 
   /**
-   * Resolve a function that may create an {@link AutoCloseable} resource using
-   * the value in the handle, (if any). If the function is resolved it returns
-   * a {@link ResourceHolder} that will close the resource after used. If the
-   * function does not resolves or the value is not present, the error is
-   * propagated to the {@link ResourceHolder}.
+   * Solve a function that may create an {@link AutoCloseable} resource using
+   * the value in the handle, (if any). If the function is solved it returns
+   * a {@link CloseableHandler} that will close the resource after used. If the
+   * function does not solves or the value is not present, the error is
+   * propagated to the {@link CloseableHandler}.
    *
    * @param <R> the type of the {@link AutoCloseable} resource
    * @param <X> the error type the solver function may throw
    * @param solver a function that returns either a resource or throws an exception
-   * @return a {@link ResourceHolder} with the solved resource if the value is
+   * @return a {@link CloseableHandler} with the solved resource if the value is
    *         present or the error otherwise.
    */
-  public <R extends AutoCloseable, X extends Throwable> ResourceHolder<R, X> solveResource(
+  public <R extends AutoCloseable, X extends Throwable> CloseableHandler<R, X> solveResource(
     final ThrowingFunction<? super T, ? extends R, ? extends X> solver
   ) {
     return this.value
       .mapLeft(Commons::<X>cast)
       .unwrap(
-        ResourceHolder::failure,
+        CloseableHandler::failure,
         prev ->
           Maybe
-            .just(prev)
-            .resolve(solver)
-            .map(ResourceHolder::<R, X>from)
-            .catchError(ResourceHolder::failure)
-            .orElse(ResourceHolder::failure)
+            .of(prev)
+            .solve(solver)
+            .map(CloseableHandler::<R, X>from)
+            .catchError(CloseableHandler::failure)
+            .orElse(CloseableHandler::failure)
       );
   }
 }
