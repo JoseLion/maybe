@@ -3,6 +3,7 @@ package io.github.joselion.maybe;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.InstanceOfAssertFactories.THROWABLE;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -30,6 +31,35 @@ import io.github.joselion.testing.UnitTest;
   };
 
   private final ThrowingRunnable<RuntimeException> noOp = () -> { };
+
+  @Nested class empty {
+    @Test void returns_an_empty_handler() {
+      final var handler = EffectHandler.empty();
+
+      assertThat(handler.error()).isEmpty();
+    }
+  }
+
+  @Nested class failure {
+    @Nested class when_the_error_is_not_null {
+      @Test void returns_a_handler_with_the_error() {
+        final var handler = EffectHandler.failure(FAIL_EXCEPTION);
+
+        assertThat(handler.error()).containsSame(FAIL_EXCEPTION);
+      }
+    }
+
+    @Nested class when_the_error_is_null {
+      @Test void returns_a_handler_with_a_NullPointerException_error() {
+        final var handler = EffectHandler.failure(null);
+
+        assertThat(handler.error())
+          .get(THROWABLE)
+          .isExactlyInstanceOf(NullPointerException.class)
+          .hasMessage("The \"Maybe<T>\" error was null");
+      }
+    }
+  }
 
   @Nested class doOnSuccess {
     @Nested class when_the_value_is_present {

@@ -37,6 +37,53 @@ import io.github.joselion.testing.UnitTest;
     throw FAIL_EXCEPTION;
   };
 
+  @Nested class from {
+    @Nested class when_the_resource_is_not_null {
+      @Test void returns_a_handler_with_the_value() {
+        final var fis = getFIS();
+        final var handler = CloseableHandler.from(fis);
+
+        assertThat(handler.resource()).containsSame(fis);
+        assertThat(handler.error()).isEmpty();
+      }
+    }
+
+    @Nested class when_the_resource_is_null {
+      @Test void returns_a_handler_with_a_NullPointerException_error() {
+        final var handler = CloseableHandler.from(null);
+
+        assertThat(handler.resource()).isEmpty();
+        assertThat(handler.error())
+          .get(THROWABLE)
+          .isExactlyInstanceOf(NullPointerException.class)
+          .hasMessage("The \"Maybe<T>\" resource solved to null");
+      }
+    }
+  }
+
+  @Nested class failure {
+    @Nested class when_the_error_is_not_null {
+      @Test void returns_a_handler_with_the_error() {
+        final var handler = CloseableHandler.failure(FAIL_EXCEPTION);
+
+        assertThat(handler.resource()).isEmpty();
+        assertThat(handler.error()).containsSame(FAIL_EXCEPTION);
+      }
+    }
+
+    @Nested class when_the_error_is_null {
+      @Test void returns_a_handler_with_a_NullPointerException_error() {
+        final var handler = CloseableHandler.failure(null);
+
+        assertThat(handler.resource()).isEmpty();
+        assertThat(handler.error())
+          .get(THROWABLE)
+          .isExactlyInstanceOf(NullPointerException.class)
+          .hasMessage("The \"Maybe<T>\" error was null");
+      }
+    }
+  }
+
   @Nested class solve {
     @Nested class when_the_resource_is_present {
       @Nested class when_the_operation_succeeds {
