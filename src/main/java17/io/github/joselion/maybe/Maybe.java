@@ -157,10 +157,10 @@ public final class Maybe<T> {
     final ThrowingSupplier<? extends T, ? extends E> solver
   ) {
     try {
-      return SolveHandler.ofSuccess(solver.get());
+      return SolveHandler.from(solver.get());
     } catch (Throwable e) { // NOSONAR
       final var error = Commons.<E>cast(e);
-      return SolveHandler.ofError(error);
+      return SolveHandler.failure(error);
     }
   }
 
@@ -199,7 +199,7 @@ public final class Maybe<T> {
       return EffectHandler.empty();
     } catch (Throwable e) { // NOSONAR
       final var error = Commons.<E>cast(e);
-      return EffectHandler.ofError(error);
+      return EffectHandler.failure(error);
     }
   }
 
@@ -444,7 +444,7 @@ public final class Maybe<T> {
         .orElseThrow();
     } catch (final NoSuchElementException e) {
       final var error = Commons.<E>cast(e);
-      return SolveHandler.ofError(error);
+      return SolveHandler.failure(error);
     }
   }
 
@@ -484,7 +484,7 @@ public final class Maybe<T> {
         .orElseThrow();
     } catch (final NoSuchElementException e) {
       final var error = Commons.<E>cast(e);
-      return EffectHandler.ofError(error);
+      return EffectHandler.failure(error);
     }
   }
 

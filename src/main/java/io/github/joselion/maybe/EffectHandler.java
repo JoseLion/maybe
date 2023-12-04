@@ -1,11 +1,14 @@
 package io.github.joselion.maybe;
 
+import static java.util.Objects.isNull;
+
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
 import org.eclipse.jdt.annotation.Nullable;
 
+import io.github.joselion.maybe.helpers.Commons;
 import io.github.joselion.maybe.util.function.ThrowingConsumer;
 import io.github.joselion.maybe.util.function.ThrowingRunnable;
 
@@ -45,8 +48,12 @@ public final class EffectHandler<E extends Throwable> {
    * @param error the error to instanciate the EffectHandler
    * @return a EffectHandler instance with an error value
    */
-  static <E extends Throwable> EffectHandler<E> ofError(final E error) {
-    return new EffectHandler<>(error);
+  static <E extends Throwable> EffectHandler<E> failure(final E error) {
+    return new EffectHandler<>(
+      isNull(error) // NOSONAR
+        ? Commons.cast(new NullPointerException("The \"Maybe<T>\" error was null"))
+        : error
+    );
   }
 
   /**

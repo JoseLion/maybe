@@ -40,6 +40,52 @@ import io.github.joselion.testing.UnitTest;
 
   private final ThrowingSupplier<String, RuntimeException> okOp = () -> OK;
 
+  @Nested class from {
+    @Nested class when_the_value_is_not_null {
+      @Test void returns_a_handler_withThe_value() {
+        final var handler = SolveHandler.from(OK);
+
+        assertThat(handler.success()).containsSame(OK);
+        assertThat(handler.error()).isEmpty();
+      }
+    }
+
+    @Nested class when_the_value_is_null {
+      @Test void returns_a_handler_with_a_NullPointerException_error() {
+        final var handler = SolveHandler.from(null);
+
+        assertThat(handler.success()).isEmpty();
+        assertThat(handler.error())
+          .get(THROWABLE)
+          .isExactlyInstanceOf(NullPointerException.class)
+          .hasMessage("The \"Maybe<T>\" value solved to null");
+      }
+    }
+  }
+
+  @Nested class failure {
+    @Nested class when_the_error_is_not_null {
+      @Test void returns_a_handler_with_the_error() {
+        final var handler = SolveHandler.failure(FAIL_EXCEPTION);
+
+        assertThat(handler.success()).isEmpty();
+        assertThat(handler.error()).containsSame(FAIL_EXCEPTION);
+      }
+    }
+
+    @Nested class when_the_error_is_null {
+      @Test void returns_a_handler_with_a_NullPointerException_error() {
+        final var handler = SolveHandler.failure(null);
+
+        assertThat(handler.success()).isEmpty();
+        assertThat(handler.error())
+          .get(THROWABLE)
+          .isExactlyInstanceOf(NullPointerException.class)
+          .hasMessage("The \"Maybe<T>\" error was null");
+      }
+    }
+  }
+
   @Nested class doOnSuccess {
     @Nested class when_the_value_is_present {
       @Test void calls_the_effect_callback() {
@@ -179,7 +225,7 @@ import io.github.joselion.testing.UnitTest;
 
   @Nested class solve {
     @Nested class when_the_value_is_present {
-      @Test void calls_the_solver_callback_and_returns_a_new_handler() {
+      @Test void calls_the_solver_callback_and_returns_a_handler() {
         final var solverSpy = Spy.<ThrowingFunction<String, Integer, RuntimeException>>lambda(String::length);
         final var successSpy = Spy.<ThrowingFunction<String, Integer, RuntimeException>>lambda(String::length);
         final var errorSpy = Spy.<ThrowingFunction<RuntimeException, Integer, RuntimeException>>lambda(e -> -1);
@@ -247,7 +293,7 @@ import io.github.joselion.testing.UnitTest;
 
   @Nested class effect {
     @Nested class when_the_value_is_present {
-      @Test void calls_the_solver_callback_and_returns_a_new_handler() throws FileSystemException {
+      @Test void calls_the_solver_callback_and_returns_a_handler() throws FileSystemException {
         final var effectSpy = Spy.<ThrowingConsumer<String, FileSystemException>>lambda(v -> throwingOp.get());
         final var successSpy = Spy.<ThrowingConsumer<String, FileSystemException>>lambda(v -> throwingOp.get());
         final var errorSpy = Spy.<ThrowingConsumer<RuntimeException, FileSystemException>>lambda(err -> { });
@@ -269,7 +315,7 @@ import io.github.joselion.testing.UnitTest;
 
     @Nested class when_the_error_is_present {
       @Nested class and_the_error_callback_is_provided {
-        @Test void calls_only_the_error_callback_and_returns_a_new_handler() throws FileSystemException {
+        @Test void calls_only_the_error_callback_and_returns_a_handler() throws FileSystemException {
           final var successSpy = Spy.<ThrowingConsumer<String, FileSystemException>>lambda(v -> { });
           final var errorSpy = Spy.<ThrowingConsumer<FileSystemException, FileSystemException>>lambda(
             err -> throwingOp.get()
@@ -316,8 +362,8 @@ import io.github.joselion.testing.UnitTest;
 
   @Nested class map {
     @Nested class when_the_value_is_present {
-      @Test void returns_a_new_handler_applying_the_mapper_function() {
-        final var handler = SolveHandler.ofSuccess("Hello world!")
+      @Test void returns_a_handler_applying_the_mapper_function() {
+        final var handler = SolveHandler.from("Hello world!")
           .map(String::length);
 
         assertThat(handler.success()).contains(12);
@@ -327,8 +373,8 @@ import io.github.joselion.testing.UnitTest;
     }
 
     @Nested class when_the_error_is_present {
-      @Test void returns_a_new_handler_with_the_previous_error() {
-        final var handler = SolveHandler.ofError(FAIL_EXCEPTION)
+      @Test void returns_a_handler_with_the_previous_error() {
+        final var handler = SolveHandler.failure(FAIL_EXCEPTION)
           .map(Object::toString);
 
         assertThat(handler.success()).isEmpty();
@@ -340,9 +386,9 @@ import io.github.joselion.testing.UnitTest;
   @Nested class cast {
     @Nested class when_the_value_is_present {
       @Nested class and_the_object_can_be_cast {
-        @Test void returns_a_new_handler_with_the_cast_value() {
+        @Test void returns_a_handler_with_the_cast_value() {
           final var anyValue = (Object) "Hello";
-          final var handler = SolveHandler.ofSuccess(anyValue)
+          final var handler = SolveHandler.from(anyValue)
             .cast(String.class);
 
           assertThat(handler.success()).contains("Hello");
@@ -351,8 +397,8 @@ import io.github.joselion.testing.UnitTest;
       }
 
       @Nested class and_the_object_can_not_be_cast {
-        @Test void returns_a_new_handler_with_the_cast_exception() {
-          final var handler = SolveHandler.ofSuccess(3)
+        @Test void returns_a_handler_with_the_cast_exception() {
+          final var handler = SolveHandler.from(3)
             .cast(String.class);
 
           assertThat(handler.success()).isEmpty();
@@ -365,8 +411,8 @@ import io.github.joselion.testing.UnitTest;
     }
 
     @Nested class when_the_error_is_present {
-      @Test void returns_a_new_handler_with_a_cast_exception() {
-        final var handler = SolveHandler.ofError(FAIL_EXCEPTION)
+      @Test void returns_a_handler_with_a_cast_exception() {
+        final var handler = SolveHandler.failure(FAIL_EXCEPTION)
             .cast(String.class);
 
         assertThat(handler.success()).isEmpty();

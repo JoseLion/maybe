@@ -1,5 +1,7 @@
 package io.github.joselion.maybe;
 
+import static java.util.Objects.isNull;
+
 import java.util.Optional;
 
 import io.github.joselion.maybe.helpers.Commons;
@@ -22,12 +24,8 @@ public class CloseableHandler<T extends AutoCloseable, E extends Throwable> {
 
   private final Either<E, T> value;
 
-  private CloseableHandler(final T resource) {
-    this.value = Either.ofRight(resource);
-  }
-
-  private CloseableHandler(final E error) {
-    this.value = Either.ofLeft(error);
+  private CloseableHandler(final Either<E, T> value) {
+    this.value = value;
   }
 
   /**
@@ -39,7 +37,12 @@ public class CloseableHandler<T extends AutoCloseable, E extends Throwable> {
    * @return a new instance of CloseableHandler with the given resource
    */
   static <T extends AutoCloseable, E extends Throwable> CloseableHandler<T, E> from(final T resource) {
-    return new CloseableHandler<>(resource);
+    final var nullException = new NullPointerException("The \"Maybe<T>\" resource solved to null");
+    final var either = isNull(resource) // NOSONAR
+      ? Either.<E, T>ofLeft(Commons.cast(nullException))
+      : Either.<E, T>ofRight(resource);
+
+    return new CloseableHandler<>(either);
   }
 
   /**
@@ -51,7 +54,12 @@ public class CloseableHandler<T extends AutoCloseable, E extends Throwable> {
    * @return a new instance of the failed CloseableHandler with the error
    */
   static <T extends AutoCloseable, E extends Throwable> CloseableHandler<T, E> failure(final E error) {
-    return new CloseableHandler<>(error);
+    final var nullException = new NullPointerException("The \"Maybe<T>\" error was null");
+    final var either = isNull(error) // NOSONAR
+      ? Either.<E, T>ofLeft(Commons.cast(nullException))
+      : Either.<E, T>ofLeft(error);
+
+    return new CloseableHandler<>(either);
   }
 
   /**
@@ -95,13 +103,13 @@ public class CloseableHandler<T extends AutoCloseable, E extends Throwable> {
     return this.value
       .mapLeft(Commons::<X>cast)
       .unwrap(
-        SolveHandler::ofError,
+        SolveHandler::failure,
         resource -> {
           try (var res = resource) {
-            return SolveHandler.ofSuccess(solver.apply(res));
+            return SolveHandler.from(solver.apply(res));
           } catch (final Throwable e) { //NOSONAR
             final var error = Commons.<X>cast(e);
-            return SolveHandler.ofError(error);
+            return SolveHandler.failure(error);
           }
         }
       );
@@ -154,14 +162,14 @@ public class CloseableHandler<T extends AutoCloseable, E extends Throwable> {
     return this.value
       .mapLeft(Commons::<X>cast)
       .unwrap(
-        EffectHandler::ofError,
+        EffectHandler::failure,
         resource -> {
           try (var res = resource) {
             effect.accept(res);
             return EffectHandler.empty();
           } catch (final Throwable e) { // NOSONAR
             final var error = Commons.<X>cast(e);
-            return EffectHandler.ofError(error);
+            return EffectHandler.failure(error);
           }
         }
       );

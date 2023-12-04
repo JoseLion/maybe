@@ -1,5 +1,7 @@
 package io.github.joselion.maybe;
 
+import static java.util.Objects.isNull;
+
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -39,8 +41,13 @@ public final class SolveHandler<T, E extends Throwable> {
    * @param success the success value to instantiate the SolveHandler
    * @return a SolveHandler instance with a success value
    */
-  static <T, E extends Throwable> SolveHandler<T, E> ofSuccess(final T success) {
-    return new SolveHandler<>(Either.ofRight(success));
+  static <T, E extends Throwable> SolveHandler<T, E> from(final T success) {
+    final var nullException = new NullPointerException("The \"Maybe<T>\" value solved to null");
+    final var either = isNull(success) // NOSONAR
+      ? Either.<E, T>ofLeft(Commons.cast(nullException))
+      : Either.<E, T>ofRight(success);
+
+    return new SolveHandler<>(either);
   }
 
   /**
@@ -51,8 +58,13 @@ public final class SolveHandler<T, E extends Throwable> {
    * @param error the error to instantiate the SolveHandler
    * @return a SolveHandler instance with an error value
    */
-  static <T, E extends Throwable> SolveHandler<T, E> ofError(final E error) {
-    return new SolveHandler<>(Either.ofLeft(error));
+  static <T, E extends Throwable> SolveHandler<T, E> failure(final E error) {
+    final var nullException = new NullPointerException("The \"Maybe<T>\" error was null");
+    final var either = isNull(error) // NOSONAR
+      ? Either.<E, T>ofLeft(Commons.cast(nullException))
+      : Either.<E, T>ofLeft(error);
+
+    return new SolveHandler<>(either);
   }
 
   /**
@@ -140,7 +152,7 @@ public final class SolveHandler<T, E extends Throwable> {
       .filter(ofType::isInstance)
       .map(ofType::cast)
       .map(handler)
-      .map(SolveHandler::<T, E>ofSuccess)
+      .map(SolveHandler::<T, E>from)
       .orElse(this);
   }
 
@@ -156,7 +168,7 @@ public final class SolveHandler<T, E extends Throwable> {
   public SolveHandler<T, E> catchError(final Function<? super E, ? extends T> handler) {
     return this.value
       .mapLeft(handler)
-      .mapLeft(SolveHandler::<T, E>ofSuccess)
+      .mapLeft(SolveHandler::<T, E>from)
       .leftOrElse(this);
   }
 
@@ -229,7 +241,7 @@ public final class SolveHandler<T, E extends Throwable> {
     return this.value
       .mapLeft(Commons::<X>cast)
       .unwrap(
-        SolveHandler::ofError,
+        SolveHandler::failure,
         Maybe.partial(solver)
       );
   }
@@ -305,7 +317,7 @@ public final class SolveHandler<T, E extends Throwable> {
     return this.value
       .mapLeft(Commons::<X>cast)
       .unwrap(
-        EffectHandler::ofError,
+        EffectHandler::failure,
         Maybe.partial(effect)
       );
   }
@@ -341,8 +353,8 @@ public final class SolveHandler<T, E extends Throwable> {
     return this.value
       .mapRight(mapper)
       .unwrap(
-        SolveHandler::ofError,
-        SolveHandler::ofSuccess
+        SolveHandler::failure,
+        SolveHandler::from
       );
   }
 
@@ -358,12 +370,12 @@ public final class SolveHandler<T, E extends Throwable> {
    */
   public <U> SolveHandler<U, ClassCastException> cast(final Class<U> type) {
     return this.value.unwrap(
-      error -> ofError(new ClassCastException(error.getMessage())),
+      error -> failure(new ClassCastException(error.getMessage())),
       success -> {
         try {
-          return ofSuccess(type.cast(success));
+          return from(type.cast(success));
         } catch (ClassCastException error) {
-          return ofError(error);
+          return failure(error);
         }
       }
     );
