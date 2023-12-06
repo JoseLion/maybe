@@ -383,6 +383,28 @@ import io.github.joselion.testing.UnitTest;
     }
   }
 
+  @Nested class flatMap {
+    @Nested class when_the_value_is_present {
+      @Test void returns_a_handler_applying_the_mapper_function() {
+        final var handler = SolveHandler.from("Hello world!")
+          .flatMap(x -> Maybe.of(x.length()));
+
+        assertThat(handler.success()).contains(12);
+        assertThat(handler.error()).isEmpty();
+      }
+    }
+
+    @Nested class when_the_error_is_present {
+      @Test void returns_a_handler_with_the_previous_error() {
+        final var handler = SolveHandler.failure(FAIL_EXCEPTION)
+          .flatMap(x -> Maybe.of(x.toString()));
+
+        assertThat(handler.success()).isEmpty();
+        assertThat(handler.error()).contains(FAIL_EXCEPTION);
+      }
+    }
+  }
+
   @Nested class cast {
     @Nested class when_the_value_is_present {
       @Nested class and_the_object_can_be_cast {
