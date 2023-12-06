@@ -32,10 +32,10 @@ import io.github.joselion.testing.UnitTest;
 
   private static final String OTHER = "OTHER";
 
-  private static final FileSystemException FAIL_EXCEPTION = new FileSystemException("FAIL");
+  private static final FileSystemException FAILURE = new FileSystemException("FAIL");
 
   private final ThrowingSupplier<String, FileSystemException> throwingOp = () -> {
-    throw FAIL_EXCEPTION;
+    throw FAILURE;
   };
 
   private final ThrowingSupplier<String, RuntimeException> okOp = () -> OK;
@@ -66,10 +66,10 @@ import io.github.joselion.testing.UnitTest;
   @Nested class failure {
     @Nested class when_the_error_is_not_null {
       @Test void returns_a_handler_with_the_error() {
-        final var handler = SolveHandler.failure(FAIL_EXCEPTION);
+        final var handler = SolveHandler.failure(FAILURE);
 
         assertThat(handler.success()).isEmpty();
-        assertThat(handler.error()).containsSame(FAIL_EXCEPTION);
+        assertThat(handler.error()).containsSame(FAILURE);
       }
     }
 
@@ -120,7 +120,7 @@ import io.github.joselion.testing.UnitTest;
             Maybe.from(throwingOp)
               .doOnError(FileSystemException.class, consumerSpy);
 
-            verify(consumerSpy, times(1)).accept(FAIL_EXCEPTION);
+            verify(consumerSpy, times(1)).accept(FAILURE);
           }
         }
 
@@ -143,7 +143,7 @@ import io.github.joselion.testing.UnitTest;
           Maybe.from(throwingOp)
             .doOnError(consumerSpy);
 
-          verify(consumerSpy, times(1)).accept(FAIL_EXCEPTION);
+          verify(consumerSpy, times(1)).accept(FAILURE);
         }
       }
     }
@@ -173,7 +173,7 @@ import io.github.joselion.testing.UnitTest;
             assertThat(handler.success()).contains(OK);
             assertThat(handler.error()).isEmpty();
 
-            verify(functionSpy, times(1)).apply(FAIL_EXCEPTION);
+            verify(functionSpy, times(1)).apply(FAILURE);
           }
         }
 
@@ -184,7 +184,7 @@ import io.github.joselion.testing.UnitTest;
               .catchError(AccessDeniedException.class, functionSpy);
 
             assertThat(handler.success()).isEmpty();
-            assertThat(handler.error()).contains(FAIL_EXCEPTION);
+            assertThat(handler.error()).contains(FAILURE);
 
             verify(functionSpy, never()).apply(any());
           }
@@ -200,7 +200,7 @@ import io.github.joselion.testing.UnitTest;
           assertThat(solver.success()).contains(OK);
           assertThat(solver.error()).isEmpty();
 
-          verify(handlerSpy, times(1)).apply(FAIL_EXCEPTION);
+          verify(handlerSpy, times(1)).apply(FAILURE);
         }
       }
     }
@@ -255,8 +255,8 @@ import io.github.joselion.testing.UnitTest;
           assertThat(handler.success()).isEmpty();
           assertThat(handler.error())
             .get(THROWABLE)
-            .isExactlyInstanceOf(FAIL_EXCEPTION.getClass())
-            .isEqualTo(FAIL_EXCEPTION);
+            .isExactlyInstanceOf(FAILURE.getClass())
+            .isEqualTo(FAILURE);
 
           verify(successSpy, never()).apply(any());
         }
@@ -273,7 +273,7 @@ import io.github.joselion.testing.UnitTest;
           assertThat(handler.error()).isEmpty();
 
           verify(successSpy, never()).apply(any());
-          verify(errorSpy, times(1)).apply(FAIL_EXCEPTION);
+          verify(errorSpy, times(1)).apply(FAILURE);
         }
       }
     }
@@ -304,7 +304,7 @@ import io.github.joselion.testing.UnitTest;
         );
 
         assertThat(newHandlers).isNotEmpty().allSatisfy(newHandler -> {
-          assertThat(newHandler.error()).contains(FAIL_EXCEPTION);
+          assertThat(newHandler.error()).contains(FAILURE);
         });
 
         verify(effectSpy, times(1)).accept(OK);
@@ -323,10 +323,10 @@ import io.github.joselion.testing.UnitTest;
           final var handler = Maybe.from(throwingOp);
           final var newHandler = handler.effect(successSpy, errorSpy);
 
-          assertThat(newHandler.error()).contains(FAIL_EXCEPTION);
+          assertThat(newHandler.error()).contains(FAILURE);
 
           verify(successSpy, never()).accept(any());
-          verify(errorSpy, times(1)).accept(FAIL_EXCEPTION);
+          verify(errorSpy, times(1)).accept(FAILURE);
         }
       }
 
@@ -338,8 +338,8 @@ import io.github.joselion.testing.UnitTest;
 
           assertThat(newHandler.error())
             .get(THROWABLE)
-            .isExactlyInstanceOf(FAIL_EXCEPTION.getClass())
-            .isEqualTo(FAIL_EXCEPTION);
+            .isExactlyInstanceOf(FAILURE.getClass())
+            .isEqualTo(FAILURE);
 
           verify(effectSpy, never()).accept(any());
         }
@@ -374,11 +374,11 @@ import io.github.joselion.testing.UnitTest;
 
     @Nested class when_the_error_is_present {
       @Test void returns_a_handler_with_the_previous_error() {
-        final var handler = SolveHandler.failure(FAIL_EXCEPTION)
+        final var handler = SolveHandler.failure(FAILURE)
           .map(Object::toString);
 
         assertThat(handler.success()).isEmpty();
-        assertThat(handler.error()).contains(FAIL_EXCEPTION);
+        assertThat(handler.error()).contains(FAILURE);
       }
     }
   }
@@ -396,11 +396,11 @@ import io.github.joselion.testing.UnitTest;
 
     @Nested class when_the_error_is_present {
       @Test void returns_a_handler_with_the_previous_error() {
-        final var handler = SolveHandler.failure(FAIL_EXCEPTION)
+        final var handler = SolveHandler.failure(FAILURE)
           .flatMap(x -> Maybe.of(x.toString()));
 
         assertThat(handler.success()).isEmpty();
-        assertThat(handler.error()).contains(FAIL_EXCEPTION);
+        assertThat(handler.error()).contains(FAILURE);
       }
     }
   }
@@ -420,8 +420,7 @@ import io.github.joselion.testing.UnitTest;
 
       @Nested class and_the_object_can_not_be_cast {
         @Test void returns_a_handler_with_the_cast_exception() {
-          final var handler = SolveHandler.from(3)
-            .cast(String.class);
+          final var handler = SolveHandler.from(3).cast(String.class);
 
           assertThat(handler.success()).isEmpty();
           assertThat(handler.error())
@@ -433,15 +432,11 @@ import io.github.joselion.testing.UnitTest;
     }
 
     @Nested class when_the_error_is_present {
-      @Test void returns_a_handler_with_a_cast_exception() {
-        final var handler = SolveHandler.failure(FAIL_EXCEPTION)
-            .cast(String.class);
+      @Test void returns_a_handler_with_the_error() {
+        final var handler = SolveHandler.failure(FAILURE).cast(String.class);
 
         assertThat(handler.success()).isEmpty();
-        assertThat(handler.error())
-          .get(THROWABLE)
-          .isExactlyInstanceOf(ClassCastException.class)
-          .hasMessage(FAIL_EXCEPTION.getMessage());
+        assertThat(handler.error()).get().isSameAs(FAILURE);
       }
     }
   }
@@ -461,7 +456,7 @@ import io.github.joselion.testing.UnitTest;
         final var handler = Maybe.from(throwingOp);
 
         assertThat(handler.orElse(OTHER)).isEqualTo(OTHER);
-        assertThat(handler.orElse(FileSystemException::getMessage)).isEqualTo(FAIL_EXCEPTION.getMessage());
+        assertThat(handler.orElse(FileSystemException::getMessage)).isEqualTo(FAILURE.getMessage());
       }
     }
   }
@@ -511,7 +506,7 @@ import io.github.joselion.testing.UnitTest;
   @Nested class orThrow {
     @Nested class when_the_value_is_present {
       @Test void returns_the_value() throws FileSystemException {
-        final var functionSpy = Spy.function((RuntimeException error) -> FAIL_EXCEPTION);
+        final var functionSpy = Spy.function((RuntimeException error) -> FAILURE);
         final var handler = Maybe.from(okOp);
 
         assertThat(handler.orThrow()).isEqualTo(OK);
@@ -527,10 +522,10 @@ import io.github.joselion.testing.UnitTest;
         final var functionSpy = Spy.function((FileSystemException error) -> anotherError);
         final var handler = Maybe.from(throwingOp);
 
-        assertThatThrownBy(handler::orThrow).isEqualTo(FAIL_EXCEPTION);
+        assertThatThrownBy(handler::orThrow).isEqualTo(FAILURE);
         assertThatThrownBy(() -> handler.orThrow(functionSpy)).isEqualTo(anotherError);
 
-        verify(functionSpy, times(1)).apply(FAIL_EXCEPTION);
+        verify(functionSpy, times(1)).apply(FAILURE);
       }
     }
   }
@@ -583,7 +578,7 @@ import io.github.joselion.testing.UnitTest;
 
         assertThat(either.isLeft()).isTrue();
         assertThat(either.isRight()).isFalse();
-        assertThat(either.leftOrNull()).isEqualTo(FAIL_EXCEPTION);
+        assertThat(either.leftOrNull()).isEqualTo(FAILURE);
         assertThat(either.rightOrNull()).isNull();
       }
     }

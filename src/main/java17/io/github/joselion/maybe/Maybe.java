@@ -396,10 +396,10 @@ public final class Maybe<T> {
    *         {@link #empty()} otherwise
    */
   public <U> Maybe<U> map(final Function<? super T, ? extends U> mapper) {
-    return Maybe
-      .of(this.value)
-      .<U, Throwable>solve(mapper::apply)
-      .toMaybe();
+    return this.value
+      .map(mapper)
+      .map(Maybe::<U>of)
+      .orElseGet(Maybe::empty);
   }
 
   /**
@@ -416,9 +416,8 @@ public final class Maybe<T> {
    *         {@link #empty()} otherwise
    */
   public <U> Maybe<U> flatMap(final Function<? super T, Maybe<? extends U>> mapper) {
-    return Maybe
-      .of(this.value)
-      .solve(mapper::apply)
+    return this.value
+      .map(mapper)
       .map(Commons::<Maybe<U>>cast)
       .orElseGet(Maybe::empty);
   }
@@ -514,11 +513,10 @@ public final class Maybe<T> {
    * @return a new {@code Maybe} with the cast value if it can be cast,
    *         {@link #empty()} otherwise
    */
-  public <U> Maybe<U> cast(final Class<U> type) {
+  public <U> SolveHandler<U, ClassCastException> cast(final Class<U> type) {
     return Maybe
       .of(this.value)
-      .solve(type::cast)
-      .toMaybe();
+      .solve(type::cast);
   }
 
   /**
