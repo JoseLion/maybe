@@ -393,16 +393,7 @@ public final class SolveHandler<T, E extends Throwable> {
    *         error
    */
   public <U> SolveHandler<U, ClassCastException> cast(final Class<U> type) {
-    return this.value.unwrap(
-      error -> failure(new ClassCastException(error.getMessage())),
-      success -> {
-        try {
-          return from(type.cast(success));
-        } catch (ClassCastException error) {
-          return failure(error);
-        }
-      }
-    );
+    return this.solve(type::cast);
   }
 
   /**
@@ -577,7 +568,6 @@ public final class SolveHandler<T, E extends Throwable> {
             .of(prev)
             .solve(solver)
             .map(CloseableHandler::<R, X>from)
-            .catchError(CloseableHandler::failure)
             .orElse(CloseableHandler::failure)
       );
   }

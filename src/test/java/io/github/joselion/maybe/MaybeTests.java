@@ -470,18 +470,18 @@ import io.github.joselion.testing.UnitTest;
 
   @Nested class cast {
     @Nested class when_the_value_is_castable_to_the_passed_type {
-      @Test void returns_a_maybe_with_the_value_cast() {
+      @Test void returns_a_solve_handler_with_the_cast_value() {
         final var maybe = Maybe.<Number>of(3);
 
-        assertThat(maybe.cast(Integer.class).value()).contains(3);
+        assertThat(maybe.cast(Integer.class).success()).contains(3);
       }
     }
 
     @Nested class when_the_value_is_not_castable_to_the_passed_type {
-      @Test void returns_an_empty_Maybe() {
+      @Test void returns_a_solve_handler_with_a_ClassCastException() {
         final var maybe = Maybe.of("3");
 
-        assertThat(maybe.cast(Integer.class).value()).isEmpty();
+        assertThat(maybe.cast(Integer.class).error()).containsInstanceOf(ClassCastException.class);
       }
     }
   }
