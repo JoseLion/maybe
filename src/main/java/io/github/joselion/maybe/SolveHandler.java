@@ -341,13 +341,14 @@ public final class SolveHandler<T, E extends Throwable> {
   }
 
   /**
-   * If the value is present, map it to another value through the {@code mapper}
-   * function. If the error is present, the {@code mapper} is never applied and
-   * the next handler will still contain the error.
-   * 
-   * @param <U> the type the value will be mapped to
-   * @param mapper a function that receives the solved value and produces another
-   * @return a new handler with either the mapped value, or the previous error
+   * If the value is present, map it to another value using the {@code mapper}
+   * function. If an error is present, the {@code mapper} function is never
+   * applied and the next handler will still contain the error.
+   *
+   * @param <U> the type the value is mapped to
+   * @param mapper a function which takes the value as argument and returns
+   *               another value
+   * @return a new handler with either the mapped value or an error
    */
   public <U> SolveHandler<U, E> map(final Function<? super T, ? extends U> mapper) {
     return this.value
@@ -355,6 +356,29 @@ public final class SolveHandler<T, E extends Throwable> {
       .unwrap(
         SolveHandler::failure,
         SolveHandler::from
+      );
+  }
+
+  /**
+   * If the value is present, map it to another value using the {@code mapper}
+   * function. If an error is present, the {@code mapper} function is never
+   * applied and the next handler will still contain the error.
+   *
+   * This method is similar to {@link #map(Function)}, but the mapping function is
+   * one whose result is a {@code Maybe}, and if invoked, flatMap does not wrap
+   * it within an additional {@code Maybe}.
+   *
+   * @param <U> the type the value is mapped to
+   * @param mapper a function which takes the value as argument and returns a
+   *               {@code Maybe<U>} with another value
+   * @return a new handler with either the mapped value or an error
+   */
+  public <U> SolveHandler<U, E> flatMap(final Function<? super T, Maybe<? extends U>> mapper) {
+    return this.value
+      .mapRight(mapper)
+      .unwrap(
+        SolveHandler::failure,
+        maybe -> maybe.solve(ThrowingFunction.identity())
       );
   }
 
