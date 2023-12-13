@@ -5,12 +5,15 @@
   "repository": "git@github.com:JoseLion/maybe.git",
   "author": "JoseLion <joseluis5000l@gmail.com>",
   "license": "MIT",
-  "packageManager": "yarn@4.0.1",
+  "packageManager": "yarn@4.0.2",
+  "engines": {
+    "node": "21.5.0"
+  },
   "scripts": {
     "release": "semantic-release"
   },
   "devDependencies": {
-    "gradle-semantic-release-plugin": "^1.7.7",
-    "semantic-release": "^22.0.7"
+    "gradle-semantic-release-plugin": "^1.8.0",
+    "semantic-release": "^22.0.12"
   }
 }

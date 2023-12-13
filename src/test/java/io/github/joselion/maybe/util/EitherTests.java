@@ -1,7 +1,7 @@
 package io.github.joselion.maybe.util;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.InstanceOfAssertFactories.type;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
@@ -29,7 +29,7 @@ import io.github.joselion.testing.UnitTest;
 
     @Nested class when_the_value_is_null {
       @Test void throws_a_null_pointer_exception() {
-        assertThatThrownBy(() -> Either.ofLeft(null))
+        assertThatCode(() -> Either.ofLeft(null))
           .isExactlyInstanceOf(NullPointerException.class)
           .hasMessage("An Either cannot be created with a null value");
       }
@@ -50,7 +50,7 @@ import io.github.joselion.testing.UnitTest;
 
     @Nested class when_the_value_is_null {
       @Test void throws_a_null_pointer_exception() {
-        assertThatThrownBy(() -> Either.ofRight(null))
+        assertThatCode(() -> Either.ofRight(null))
           .isExactlyInstanceOf(NullPointerException.class)
           .hasMessage("An Either cannot be created with a null value");
       }
