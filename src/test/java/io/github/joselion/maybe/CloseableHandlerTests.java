@@ -1,7 +1,7 @@
 package io.github.joselion.maybe;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.InstanceOfAssertFactories.THROWABLE;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
@@ -95,7 +95,7 @@ import io.github.joselion.testing.UnitTest;
 
           assertThat(handler.success()).contains("OK");
           assertThat(handler.error()).isEmpty();
-          assertThatThrownBy(fis::read)
+          assertThatCode(fis::read)
             .isExactlyInstanceOf(IOException.class)
             .hasMessage("Stream Closed");
 
@@ -112,7 +112,7 @@ import io.github.joselion.testing.UnitTest;
 
           assertThat(handler.success()).isEmpty();
           assertThat(handler.error()).contains(FAIL_EXCEPTION);
-          assertThatThrownBy(fis::read)
+          assertThatCode(fis::read)
             .isExactlyInstanceOf(IOException.class)
             .hasMessage("Stream Closed");
 
@@ -160,7 +160,7 @@ import io.github.joselion.testing.UnitTest;
             .effect(effectSpy);
 
           assertThat(handler.error()).isEmpty();
-          assertThatThrownBy(fis::read)
+          assertThatCode(fis::read)
             .isExactlyInstanceOf(IOException.class)
             .hasMessage("Stream Closed");
 
@@ -176,7 +176,7 @@ import io.github.joselion.testing.UnitTest;
             .effect(effectSpy);
 
           assertThat(handler.error()).contains(FAIL_EXCEPTION);
-          assertThatThrownBy(fis::read)
+          assertThatCode(fis::read)
             .isExactlyInstanceOf(IOException.class)
             .hasMessage("Stream Closed");
 

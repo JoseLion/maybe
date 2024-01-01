@@ -1,7 +1,7 @@
 package io.github.joselion.maybe;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.InstanceOfAssertFactories.INPUT_STREAM;
 import static org.assertj.core.api.InstanceOfAssertFactories.THROWABLE;
 import static org.mockito.ArgumentMatchers.any;
@@ -522,8 +522,8 @@ import io.github.joselion.testing.UnitTest;
         final var functionSpy = Spy.function((FileSystemException error) -> anotherError);
         final var handler = Maybe.from(throwingOp);
 
-        assertThatThrownBy(handler::orThrow).isEqualTo(FAILURE);
-        assertThatThrownBy(() -> handler.orThrow(functionSpy)).isEqualTo(anotherError);
+        assertThatCode(handler::orThrow).isEqualTo(FAILURE);
+        assertThatCode(() -> handler.orThrow(functionSpy)).isEqualTo(anotherError);
 
         verify(functionSpy, times(1)).apply(FAILURE);
       }
