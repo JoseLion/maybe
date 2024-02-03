@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.InstanceOfAssertFactories.THROWABLE;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -246,19 +245,6 @@ import io.github.joselion.testing.UnitTest;
           verify(effectSpy, never()).run();
         }
       }
-    }
-  }
-
-  @Nested class runEffect {
-    @Test void calls_effect() {
-      final var onSuccess = Spy.<ThrowingRunnable<FileSystemException>>lambda(() -> { });
-      final var onError = Spy.<ThrowingConsumer<FileSystemException, RuntimeException>>lambda(error -> { });
-      final var handler = spy(Maybe.from(throwingOp));
-      handler.runEffect(onSuccess, onError);
-      handler.runEffect(onSuccess);
-
-      verify(handler).effect(onSuccess, onError);
-      verify(handler).effect(onSuccess);
     }
   }
 

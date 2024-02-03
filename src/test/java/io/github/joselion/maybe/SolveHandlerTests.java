@@ -6,7 +6,6 @@ import static org.assertj.core.api.InstanceOfAssertFactories.INPUT_STREAM;
 import static org.assertj.core.api.InstanceOfAssertFactories.THROWABLE;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -279,18 +278,6 @@ import io.github.joselion.testing.UnitTest;
     }
   }
 
-  @Nested class resolve {
-    @Test void calls_solve() {
-      final var identity = ThrowingFunction.identity();
-      final var handler = spy(Maybe.from(okOp));
-      handler.resolve(identity, identity);
-      handler.resolve(identity);
-
-      verify(handler).solve(identity);
-      verify(handler).solve(identity, identity);
-    }
-  }
-
   @Nested class effect {
     @Nested class when_the_value_is_present {
       @Test void calls_the_solver_callback_and_returns_a_handler() throws FileSystemException {
@@ -344,19 +331,6 @@ import io.github.joselion.testing.UnitTest;
           verify(effectSpy, never()).accept(any());
         }
       }
-    }
-  }
-
-  @Nested class runEffect {
-    @Test void calls_effect() {
-      final var onSuccess = Spy.<ThrowingConsumer<String, RuntimeException>>lambda(x -> { });
-      final var onError = Spy.<ThrowingConsumer<RuntimeException, RuntimeException>>lambda(x -> { });
-      final var maybe = spy(Maybe.from(okOp));
-      maybe.runEffect(onSuccess);
-      maybe.runEffect(onSuccess, onError);
-
-      verify(maybe).effect(onSuccess, onError);
-      verify(maybe).effect(onSuccess);
     }
   }
 

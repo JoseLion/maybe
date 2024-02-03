@@ -84,21 +84,6 @@ public final class Maybe<T> {
   }
 
   /**
-   * Creates a {@link Maybe} wrapper of the given value. If the value is
-   * {@code null}, it returns a {@link #empty()}.
-   * 
-   * @param <T> the type of the value
-   * @param value the value be wrapped
-   * @return a {@code Maybe} wrapping the value if it's non-{@code null},
-   *         {@link #empty()} otherwise
-   * @deprecated in favor of {@link #of(Object)}
-   */
-  @Deprecated(forRemoval = true, since = "3.4.0")
-  public static <T> Maybe<T> just(final @Nullable T value) { // NOSONAR
-    return Maybe.of(value);
-  }
-
-  /**
    * Creates an empty {@link Maybe} instance.
    * 
    * @param <T> the type of the value
@@ -106,40 +91,6 @@ public final class Maybe<T> {
    */
   public static <T> Maybe<T> empty() {
     return Maybe.of(null);
-  }
-
-  /**
-   * Creates an empty {@link Maybe} instance.
-   * 
-   * @param <T> the type of the value
-   * @return an empty {@code Maybe}
-   * @deprecated in favor of {@link #empty()}
-   */
-  @Deprecated(forRemoval = true, since = "3.4.0")
-  public static <T> Maybe<T> nothing() { // NOSONAR
-    return Maybe.empty();
-  }
-
-  /**
-   * Creates a {@link Maybe} wrapper of the given value if the optional is not
-   * empty. Returns a {@link #empty()} otherwise.
-   * <p>
-   * This is a convenience creator that would be equivalent to:
-   * <pre>
-   *  Maybe.of(opt)
-   *    .solve(Optional::get)
-   *    .toMaybe();
-   * </pre>
-   *
-   * @param <T> the type of the value
-   * @param value an optional value to create the wrapper from
-   * @return a {@code Maybe} wrapping the value if it's not empty.
-   *         {@link #empty()} otherwise
-   * @deprecated in favor of {@link #of(Optional)}
-   */
-  @Deprecated(forRemoval = true, since = "3.4.0")
-  public static <T> Maybe<T> fromOptional(final Optional<T> value) { // NOSONAR
-    return Maybe.of(value);
   }
 
   /**
@@ -165,25 +116,6 @@ public final class Maybe<T> {
   }
 
   /**
-   * Solves the value of a throwing operation using a {@link ThrowingSupplier}
-   * expression. Returning then a {@link SolveHandler} which allows to handle
-   * the possible error and return a safe value.
-   * 
-   * @param <T> the type of the value returned by the {@code solver}
-   * @param <E> the type of exception the {@code solver} may throw
-   * @param solver the checked supplier operation to solve
-   * @return a {@link SolveHandler} with either the value solved or the thrown
-   *         exception to be handled
-   * @deprecated in favor of {@link #from(ThrowingSupplier)}
-   */
-  @Deprecated(forRemoval = true, since = "3.4.0")
-  public static <T, E extends Throwable> SolveHandler<T, E> fromResolver(// NOSONAR
-    final ThrowingSupplier<? extends T, ? extends E> solver
-  ) {
-    return Maybe.from(solver);
-  }
-
-  /**
    * Runs an effect that may throw an exception using a {@link ThrowingRunnable}
    * expression. Returning then an {@link EffectHandler} which allows to handle
    * the possible error.
@@ -201,24 +133,6 @@ public final class Maybe<T> {
       final var error = Commons.<E>cast(e);
       return EffectHandler.failure(error);
     }
-  }
-
-  /**
-   * Runs an effect that may throw an exception using a {@link ThrowingRunnable}
-   * expression. Returning then an {@link EffectHandler} which allows to handle
-   * the possible error.
-   * 
-   * @param <E> the type of exception the {@code effect} may throw
-   * @param effect the checked runnable operation to execute
-   * @return an {@link EffectHandler} with either the thrown exception to be
-   *         handled or empty
-   * @deprecated in favor of {@link #from(ThrowingRunnable)}
-   */
-  @Deprecated(forRemoval = true, since = "3.4.0")
-  public static <E extends Throwable> EffectHandler<E> fromEffect(// NOSONAR
-    final ThrowingRunnable<? extends E> effect
-  ) {
-    return Maybe.from(effect);
   }
 
   /**
@@ -254,40 +168,6 @@ public final class Maybe<T> {
   }
 
   /**
-   * Convenience partial application of a {@code solver}. This method creates
-   * a function that receives an {@code S} value which can be used to produce a
-   * {@link SolveHandler} once applied. This is specially useful when we want
-   * to create a {@link Maybe} from a callback argument, like on a
-   * {@link Optional#map(Function)} for instance.
-   * <p>
-   * In other words, the following code
-   * <pre>
-   *  Optional.of(value)
-   *    .map(str -&gt; Maybe.from(() -&gt; decode(str)));
-   * </pre>
-   * Is equivalent to
-   * <pre>
-   *  Optional.of(value)
-   *    .map(Maybe.partialResolver(this::decode));
-   * </pre>
-   *
-   * @param <S> the type of the value the returned function receives
-   * @param <T> the type of the value to be solved
-   * @param <E> the type of the error the solver may throw
-   * @param solver a checked function that receives an {@code S} value and
-   *                 returns a {@code T} value
-   * @return a partially applied {@link SolveHandler}. This means, a function
-   *         that receives an {@code S} value, and produces a {@code SolveHandler<T, E>}
-   * @deprecated in favor of {@link #partial(ThrowingFunction)}
-   */
-  @Deprecated(forRemoval = true, since = "3.4.0")
-  public static <S, T, E extends Throwable> Function<S, SolveHandler<T, E>> partialResolver(// NOSONAR
-    final ThrowingFunction<? super S, ? extends T, ? extends E> solver
-  ) {
-    return Maybe.partial(solver);
-  }
-
-  /**
    * Convenience partial application of an {@code effect}. This method creates
    * a function that receives an {@code S} value which can be used to produce
    * an {@link EffectHandler} once applied. This is specially useful when we
@@ -315,38 +195,6 @@ public final class Maybe<T> {
     final ThrowingConsumer<? super S, ? extends E> effect
   ) {
     return value -> Maybe.from(() -> effect.accept(value));
-  }
-
-  /**
-   * Convenience partial application of an {@code effect}. This method creates
-   * a function that receives an {@code S} value which can be used to produce
-   * an {@link EffectHandler} once applied. This is specially useful when we
-   * want to create a {@link Maybe} from a callback argument, like on a
-   * {@link Optional#map(Function)} for instance.
-   * <p>
-   * In other words, the following code
-   * <pre>
-   *  Optional.of(value)
-   *    .map(msg -&gt; Maybe.from(() -&gt; sendMessage(msg)));
-   * </pre>
-   * Is equivalent to
-   * <pre>
-   *  Optional.of(value)
-   *    .map(Maybe.partialEffect(this::sendMessage));
-   * </pre>
-   *
-   * @param <S> the type of the value the returned function receives
-   * @param <E> the type of the error the effect may throw
-   * @param effect a checked consumer that receives an {@code S} value
-   * @return a partially applied {@link EffectHandler}. This means, a function
-   *         that receives an {@code S} value, and produces an {@code EffectHandler<E>}
-   * @deprecated in favor of {@link #partial(ThrowingConsumer)}
-   */
-  @Deprecated(forRemoval = true, since = "3.4.0")
-  public static <S, E extends Throwable> Function<S, EffectHandler<E>> partialEffect(// NOSONAR
-    final ThrowingConsumer<? super S, ? extends E> effect
-  ) {
-    return Maybe.partial(effect);
   }
 
   /**
@@ -448,26 +296,6 @@ public final class Maybe<T> {
   }
 
   /**
-   * Chain the {@code Maybe} with another solver, if and only if the previous
-   * operation was handled with no errors. The value of the previous operation
-   * is passed as argument of the {@link ThrowingFunction}.
-   * 
-   * @param <U> the type of value returned by the next operation
-   * @param <E> the type of exception the new solver may throw
-   * @param solver a checked function that receives the current value and
-   *                 solves another
-   * @return a {@link SolveHandler} with either the solved value, or the
-   *         thrown exception to be handled
-   * @deprecated in favor of {@link #solve(ThrowingFunction)}
-   */
-  @Deprecated(forRemoval = true, since = "3.4.0")
-  public <U, E extends Throwable> SolveHandler<U, E> resolve(// NOSONAR
-    final ThrowingFunction<? super T, ? extends U, ? extends E> solver
-  ) {
-    return this.solve(solver);
-  }
-
-  /**
    * Chain the {@code Maybe} with another effect, if and only if the previous
    * operation was handled with no errors.
    * 
@@ -485,23 +313,6 @@ public final class Maybe<T> {
       final var error = Commons.<E>cast(e);
       return EffectHandler.failure(error);
     }
-  }
-
-  /**
-   * Chain the {@code Maybe} with another effect, if and only if the previous
-   * operation was handled with no errors.
-   * 
-   * @param <E> the type of exception the new effect may throw
-   * @param effect the checked runnable operation to execute next
-   * @return an {@link EffectHandler} with either the thrown exception to be
-   *         handled or nothing
-   * @deprecated in favor of {@link #effect(ThrowingConsumer)}
-   */
-  @Deprecated(forRemoval = true, since = "3.4.0")
-  public <E extends Throwable> EffectHandler<E> runEffect(// NOSONAR
-    final ThrowingConsumer<? super T, ? extends E> effect
-  ) {
-    return this.effect(effect);
   }
 
   /**
@@ -535,17 +346,6 @@ public final class Maybe<T> {
    */
   public boolean isEmpty() {
     return this.value.isEmpty();
-  }
-
-  /**
-   * Checks if the {@code Maybe} is empty. That is, when no value is present.
-   * 
-   * @return true if the value is not present, false otherwise
-   * @deprecated in favor of {@link #isEmpty()}
-   */
-  @Deprecated(forRemoval = true, since = "3.4.0")
-  public boolean hasNothing() { // NOSONAR
-    return this.isEmpty();
   }
 
   /**
