@@ -18,10 +18,9 @@ import io.github.joselion.maybe.util.function.ThrowingFunction;
  * SolveHandler is an API to handle the possible error of a {@link Maybe}'s
  * solve operation. It can return back to maybe to continue linking operations,
  * or use terminal methods to return a safe value.
- * 
+ *
  * @param <T> the type of the value passed through the {@code Maybe}
  * @param <E> the type of exception that the solve operation may throw
- * 
  * @author Jose Luis Leon
  * @since v0.3.2
  */
@@ -34,8 +33,8 @@ public final class SolveHandler<T, E extends Throwable> {
   }
 
   /**
-   * Internal use method to instantiate a SolveHandler of a success value
-   * 
+   * Internal use method to instantiate a SolveHandler of a success value.
+   *
    * @param <T> the type of the success value
    * @param <E> the type of the possible exception
    * @param success the success value to instantiate the SolveHandler
@@ -51,8 +50,8 @@ public final class SolveHandler<T, E extends Throwable> {
   }
 
   /**
-   * Internal use method to instantiate a SolveHandler of an error value
-   * 
+   * Internal use method to instantiate a SolveHandler of an error value.
+   *
    * @param <T> the type of the success value
    * @param <E> the type of the possible exception
    * @param error the error to instantiate the SolveHandler
@@ -121,7 +120,7 @@ public final class SolveHandler<T, E extends Throwable> {
   /**
    * Run an effect if the error is present. The error is passed in the argument
    * of the {@code effect} consumer.
-   * 
+   *
    * @param effect a consumer function that receives the caught error
    * @return the same handler to continue chainning operations
    */
@@ -135,7 +134,7 @@ public final class SolveHandler<T, E extends Throwable> {
    * Catch the error if is present and is an instance of the provided type.
    * Then handle the error and return a new value. The caught error is passed
    * in the argument of the {@code handler} function.
-   * 
+   *
    * @param <X> the type of the error to catch
    * @param ofType a class instance of the error type to catch
    * @param handler a function that receives the caught error and produces
@@ -175,8 +174,8 @@ public final class SolveHandler<T, E extends Throwable> {
   /**
    * Chain another solver covering both cases of success or error of the
    * previous solver in two different callbacks.
-   * <p>
-   * The first callback receives the solved value, the second callback the
+   *
+   * <p>The first callback receives the solved value, the second callback the
    * caught error. Both should solve another value of the same type {@code S},
    * but only one of the callbacks is invoked. It depends on whether the
    * previous value was solved or not.
@@ -283,9 +282,9 @@ public final class SolveHandler<T, E extends Throwable> {
    * function. If an error is present, the {@code mapper} function is never
    * applied and the next handler will still contain the error.
    *
-   * This method is similar to {@link #map(Function)}, but the mapping function is
-   * one whose result is a {@code Maybe}, and if invoked, flatMap does not wrap
-   * it within an additional {@code Maybe}.
+   * <p>This method is similar to {@link #map(Function)}, but the mapping
+   * function is one whose result is a {@code Maybe}, and if invoked, flatMap
+   * does not wrap it within an additional {@code Maybe}.
    *
    * @param <U> the type the value is mapped to
    * @param mapper a function which takes the value as argument and returns a
@@ -305,7 +304,7 @@ public final class SolveHandler<T, E extends Throwable> {
    * If the value is present, cast the value to anoter type. If the cast fails
    * or if the error is present, it returns a new handler which contains a
    * {@link ClassCastException} error.
-   * 
+   *
    * @param <U> the type the value will be cast to
    * @param type the class instance of the type to cast
    * @return a new handler with either the cast value or a ClassCastException
@@ -317,7 +316,7 @@ public final class SolveHandler<T, E extends Throwable> {
 
   /**
    * Returns the solved value if present. Another value otherwise.
-   * 
+   *
    * @param fallback the value to return if the operation failed to solve
    * @return the solved value if present. Another value otherwise
    */
@@ -357,12 +356,12 @@ public final class SolveHandler<T, E extends Throwable> {
 
   /**
    * Returns the solved value if present. Just {@code null} otherwise.
-   * <p>
-   * It's strongly encouraged to use {@link #toOptional()} instead to better
+   *
+   * <p>It's strongly encouraged to use {@link #toOptional()} instead to better
    * handle nullability, but if you really need to return {@code null} in case
    * of error, you should only use this method.
-   * <p>
-   * Using {@code .orElse(null)} will result in ambiguity between
+   *
+   * <p>Using {@code .orElse(null)} will result in ambiguity between
    * {@link #orElse(Function)} and {@link #orElse(Object)}.
    *
    * @return the solved value if present. Just {@code null} otherwise.
@@ -373,7 +372,7 @@ public final class SolveHandler<T, E extends Throwable> {
 
   /**
    * Returns the solved value if present. Throws the error otherwise.
-   * 
+   *
    * @return the solved/handled value if present
    * @throws E the error thrown by the {@code solve} operation
    */
@@ -385,7 +384,7 @@ public final class SolveHandler<T, E extends Throwable> {
 
   /**
    * Returns the value solved/handled if present. Throws another error otherwise.
-   * 
+   *
    * @param <X> the new error type
    * @param mapper a function that receives the caught error and produces
    *               another exception
@@ -401,7 +400,7 @@ public final class SolveHandler<T, E extends Throwable> {
   /**
    * Transforms the handler to a {@link Maybe} that contains either the
    * solved value or the error.
-   * 
+   *
    * @return the solved value wrapped in a {@link Maybe} or holding the error
    */
   public Maybe<T> toMaybe() {
@@ -415,7 +414,7 @@ public final class SolveHandler<T, E extends Throwable> {
    * Transforms the handler to an {@link Optional}. If the value was solved,
    * the {@link Optional} will contain it. Returs an {@code empty} optional
    * otherwise.
-   * 
+   *
    * @return the solved value wrapped in an {@link Optional} if present. An
    *         {@code empty} optional otherwise.
    */
@@ -426,11 +425,11 @@ public final class SolveHandler<T, E extends Throwable> {
   /**
    * Transforms the handler to an {@link Either}, in which the left side might
    * contain the error and the right side might contain the solved value.
-   * <p>
-   * The benefit of transforming to {@code Either} is that its implementation
+   *
+   * <p>The benefit of transforming to {@code Either} is that its implementation
    * ensures that only one of the two possible values is present at the same
    * time, never both nor none.
-   * 
+   *
    * @return an {@code Either} with the solved value on the right side or the
    *         error on the left
    */
@@ -443,13 +442,12 @@ public final class SolveHandler<T, E extends Throwable> {
    * {@code solve} or {@code effect} operation. These operations will close the
    * resource upon completation. If the value was not solved, the error is
    * propagated to the {@link CloseableHandler}.
-   * 
+   *
    * @param <R> the type of the {@link AutoCloseable} resource
    * @param mapper a function that receives the solved value and produces an
    *               autoclosable resource
    * @return a {@link CloseableHandler} with the mapped resource if the value is
    *         present or the error otherwise.
-   * 
    * @see CloseableHandler#solve(ThrowingFunction)
    * @see CloseableHandler#effect(ThrowingConsumer)
    */

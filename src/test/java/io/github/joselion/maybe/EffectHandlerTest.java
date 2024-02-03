@@ -20,7 +20,7 @@ import io.github.joselion.maybe.util.function.ThrowingRunnable;
 import io.github.joselion.testing.Spy;
 import io.github.joselion.testing.UnitTest;
 
-@UnitTest class EffectHandlerTests {
+@UnitTest class EffectHandlerTest {
 
   private static final FileSystemException FAIL_EXCEPTION = new FileSystemException("FAIL");
 

@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
 import io.github.joselion.testing.Spy;
 import io.github.joselion.testing.UnitTest;
 
-@UnitTest class EitherTests {
+@UnitTest class EitherTest {
 
   @Nested class ofLeft {
     @Nested class when_the_value_is_not_null {

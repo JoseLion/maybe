@@ -1,5 +1,5 @@
 plugins {
-  id('org.gradle.toolchains.foojay-resolver-convention') version '0.7.0'
+  id('org.gradle.toolchains.foojay-resolver-convention') version '0.8.0'
 }
 
 rootProject.name = 'maybe'
@@ -7,7 +7,7 @@ rootProject.name = 'maybe'
 dependencyResolutionManagement {
   versionCatalogs {
     libs {
-      version('checkstyle', '10.12.7')
+      version('checkstyle', '10.13.0')
       version('jacoco', '0.8.11')
       version('junit', '5.10.1')
       version('sonarlint-core', '9.6.1.76766')

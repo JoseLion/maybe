@@ -18,7 +18,7 @@ import io.github.joselion.maybe.util.function.ThrowingFunction;
 import io.github.joselion.testing.Spy;
 import io.github.joselion.testing.UnitTest;
 
-@UnitTest class CloseableHandlerTests {
+@UnitTest class CloseableHandlerTest {
 
   private static final String FILE_PATH = "./src/test/resources/readTest.txt";
 

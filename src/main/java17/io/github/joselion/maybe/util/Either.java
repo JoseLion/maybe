@@ -13,13 +13,12 @@ import io.github.joselion.maybe.helpers.Commons;
  * Either is a monadic wrapper that contains one of two possible values which
  * are represented as {@code Left} or {@code Right}. the values can be of
  * different types, and the API allows to safely transform an unwrap the value.
- * 
- * The sealed interface implementation ensures only one of the two can be
+ *
+ * <p>The sealed interface implementation ensures only one of the two can be
  * present at the same time.
- * 
+ *
  * @param <L> the {@code Left} data type
  * @param <R> the {@code Right} data type
- * 
  * @author Jose Luis Leon
  * @since v3.0.0
  */
@@ -167,10 +166,10 @@ public sealed interface Either<L, R> {
 
   /**
    * Map the {@code Left} value to another if present. Does nothing otherwise.
-   * 
-   * This method is similar to {@link #mapLeft(Function)}, but the
-   * mapping function can return another {@code Either} without wrapping the
-   * left value within an additional {@code Either}.
+   *
+   * <p>This method is similar to {@link #mapLeft(Function)}, but the mapping
+   * function can return another {@code Either} without wrapping the left value
+   * within an additional {@code Either}.
    *
    * @param <T> the type the left value will be mapped to
    * @param mapper a function that receives the left value and returns an {@code Either}
@@ -184,10 +183,10 @@ public sealed interface Either<L, R> {
 
   /**
    * Map the {@code Right} value to another if present. Does nothing otherwise.
-   * 
-   * This method is similar to {@link #mapRight(Function)}, but the
-   * mapping function can return another {@code Either} without wrapping the
-   * right value within an additional {@code Either}.
+   *
+   * <p>This method is similar to {@link #mapRight(Function)}, but the mapping
+   * function can return another {@code Either} without wrapping the right
+   * value within an additional {@code Either}.
    *
    * @param <T> the type the right value will be mapped to
    * @param mapper a function that receives the right value and returns an {@code Either}
@@ -271,7 +270,7 @@ public sealed interface Either<L, R> {
    * @return an {@code Optional<L>} instance
    */
   default Optional<L> leftToOptional() {
-    return Optional.ofNullable(leftOrNull());
+    return Optional.ofNullable(this.leftOrNull());
   }
 
   /**
@@ -281,11 +280,11 @@ public sealed interface Either<L, R> {
    * @return an {@code Optional<R>} instance
    */
   default Optional<R> rightToOptional() {
-    return Optional.ofNullable(rightOrNull());
+    return Optional.ofNullable(this.rightOrNull());
   }
 
   /**
-   * The {@code Left} implementation of {@link Either}
+   * The {@code Left} implementation of {@link Either}.
    *
    * @param <L> the {@code Left} data type
    * @param <R> the {@code Right} data type
@@ -295,8 +294,6 @@ public sealed interface Either<L, R> {
 
     /**
      * Compact constructor to validate the value is not null.
-     *
-     * @param value the value of the instance
      */
     public Left {
       Objects.requireNonNull(value, "An Either cannot be created with a null value");
@@ -332,7 +329,7 @@ public sealed interface Either<L, R> {
   }
 
   /**
-   * The {@code Right} implementation of {@link Either}
+   * The {@code Right} implementation of {@link Either}.
    *
    * @param <L> the {@code Left} data type
    * @param <R> the {@code Right} data type
@@ -342,8 +339,6 @@ public sealed interface Either<L, R> {
 
     /**
      * Compact constructor to validate the value is not null.
-     *
-     * @param value the value of the instance
      */
     public Right {
       Objects.requireNonNull(value, "An Either cannot be created with a null value");

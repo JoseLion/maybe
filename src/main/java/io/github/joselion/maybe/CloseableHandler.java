@@ -16,11 +16,10 @@ import io.github.joselion.maybe.util.function.ThrowingFunction;
  *
  * @param <T> The autoclosable type
  * @param <E> The throwable type
- *
  * @author Jose Luis Leon
  * @since v1.3.0
  */
-public class CloseableHandler<T extends AutoCloseable, E extends Throwable> {
+public final class CloseableHandler<T extends AutoCloseable, E extends Throwable> {
 
   private final Either<E, T> value;
 
@@ -30,7 +29,7 @@ public class CloseableHandler<T extends AutoCloseable, E extends Throwable> {
 
   /**
    * Internal use method to instatiate a CloseableHandler from a given resource.
-   * 
+   *
    * @param <T> the type of the resource
    * @param <E> the type of the error
    * @param resource the resource to instantiate the CloseableHandler with
@@ -86,11 +85,11 @@ public class CloseableHandler<T extends AutoCloseable, E extends Throwable> {
    * prepared resource in the argument. The resource is automatically closed
    * after the operation finishes, just like a common try-with-resources
    * statement.
-   * <p>
-   * Returs a {@link SolveHandler} which allows to handle the possible error
+   *
+   * <p>Returs a {@link SolveHandler} which allows to handle the possible error
    * and return a safe value. The returned handler is {@code empty} if neither
    * the resource nor the error is present.
-   * 
+   *
    * @param <S> the type of the value returned by the {@code solver}
    * @param <X> the type of exception the {@code solver} may throw
    * @param solver the checked function operation to solve
@@ -121,11 +120,11 @@ public class CloseableHandler<T extends AutoCloseable, E extends Throwable> {
    * prepared resource in the argument. The resource is automatically closed
    * after the operation finishes, just like a common try-with-resources
    * statement.
-   * <p>
-   * Returning then an {@link EffectHandler} which allows to handle the
+   *
+   * <p>Returning then an {@link EffectHandler} which allows to handle the
    * possible error. The returned handler is {@code empty} if neither the
    * resource nor the error is present.
-   * 
+   *
    * @param <X> the type of exception the {@code effect} may throw
    * @param effect the checked consumer operation to execute
    * @return an {@link EffectHandler} with either the thrown exception to be
