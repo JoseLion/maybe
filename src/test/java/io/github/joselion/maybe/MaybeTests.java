@@ -5,10 +5,7 @@ import static org.assertj.core.api.InstanceOfAssertFactories.INPUT_STREAM;
 import static org.assertj.core.api.InstanceOfAssertFactories.THROWABLE;
 import static org.assertj.core.api.InstanceOfAssertFactories.optional;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.CALLS_REAL_METHODS;
-import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -89,43 +86,11 @@ import io.github.joselion.testing.UnitTest;
     }
   }
 
-  @Nested class just {
-    @Nested class calls_of {
-      @Test void returns_a_Maybe_wrapping_the_value() {
-        try (var maybe = mockStatic(Maybe.class, CALLS_REAL_METHODS)) {
-          Maybe.just(OK);
-
-          maybe.verify(() -> Maybe.of(OK));
-        }
-      }
-    }
-  }
-
   @Nested class empty {
     @Test void returns_an_empty_Maybe() {
       final var maybe = Maybe.empty();
 
       assertThat(maybe.value()).isEmpty();
-    }
-  }
-
-  @Nested class nothing {
-    @Test void calls_empty() {
-      try (var maybe = mockStatic(Maybe.class, CALLS_REAL_METHODS)) {
-        Maybe.nothing();
-
-        maybe.verify(() -> Maybe.empty());
-      }
-    }
-  }
-
-  @Nested class fromOptional {
-    @Test void calls_of() {
-      try (var maybe = mockStatic(Maybe.class, CALLS_REAL_METHODS)) {
-        Maybe.fromOptional(Optional.empty());
-
-        maybe.verify(() -> Maybe.of(Optional.empty()));
-      }
     }
   }
 
@@ -181,26 +146,6 @@ import io.github.joselion.testing.UnitTest;
     }
   }
 
-  @Nested class fromResolver {
-    @Test void calls_from() {
-      try (var maybe = mockStatic(Maybe.class, CALLS_REAL_METHODS)) {
-        Maybe.fromResolver(failSupplier);
-
-        maybe.verify(() -> Maybe.from(failSupplier));
-      }
-    }
-  }
-
-  @Nested class fromEffect {
-    @Test void class_from() {
-      try (var maybe = mockStatic(Maybe.class, CALLS_REAL_METHODS)) {
-        Maybe.fromEffect(failRunnable);
-
-        maybe.verify(() -> Maybe.from(failRunnable));
-      }
-    }
-  }
-
   @Nested class partial {
     @Nested class when_a_function_is_provided {
       @Test void returns_a_function_that_takes_a_value_and_returns_a_solve_handler() throws IOException {
@@ -238,26 +183,6 @@ import io.github.joselion.testing.UnitTest;
 
         verify(successSpy, times(1)).accept(OK);
         verify(failureSpy, times(1)).accept(OK);
-      }
-    }
-  }
-
-  @Nested class partialResolver {
-    @Test void calls_partial() {
-      try (var maybe = mockStatic(Maybe.class, CALLS_REAL_METHODS)) {
-        Maybe.partialResolver(failFunction);
-
-        maybe.verify(() -> Maybe.partial(failFunction));
-      }
-    }
-  }
-
-  @Nested class partialEffect {
-    @Test void calls_partial() {
-      try (var maybe = mockStatic(Maybe.class, CALLS_REAL_METHODS)) {
-        Maybe.partialEffect(failConsumer);
-
-        maybe.verify(() -> Maybe.partial(failConsumer));
       }
     }
   }
@@ -397,15 +322,6 @@ import io.github.joselion.testing.UnitTest;
     }
   }
 
-  @Nested class resolve {
-    @Test void calls_solve() {
-      final var maybe = spy(Maybe.of(OK));
-      maybe.resolve(failFunction);
-
-      verify(maybe).solve(failFunction);
-    }
-  }
-
   @Nested class effect {
     @Nested class when_the_value_is_present {
       @Test void the_callback_is_called_with_the_value() {
@@ -459,15 +375,6 @@ import io.github.joselion.testing.UnitTest;
     }
   }
 
-  @Nested class runEffect {
-    @Test void call_effect() {
-      final var maybe = spy(Maybe.of(OK));
-      maybe.runEffect(failConsumer);
-
-      verify(maybe).effect(failConsumer);
-    }
-  }
-
   @Nested class cast {
     @Nested class when_the_value_is_castable_to_the_passed_type {
       @Test void returns_a_solve_handler_with_the_cast_value() {
@@ -511,15 +418,6 @@ import io.github.joselion.testing.UnitTest;
       @Test void returns_false() {
         assertThat(Maybe.of(OK).isEmpty()).isFalse();
       }
-    }
-  }
-
-  @Nested class hasNothing {
-    @Test void calls_isEmpty() {
-      final var maybe = spy(Maybe.of(OK));
-      maybe.hasNothing();
-
-      verify(maybe).isEmpty();
     }
   }
 

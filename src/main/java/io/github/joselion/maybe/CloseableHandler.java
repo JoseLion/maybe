@@ -116,31 +116,6 @@ public class CloseableHandler<T extends AutoCloseable, E extends Throwable> {
   }
 
   /**
-   * If the resource is present, solves the value of a throwing operation
-   * using a {@link ThrowingFunction} expression which has the previously
-   * prepared resource in the argument. The resource is automatically closed
-   * after the operation finishes, just like a common try-with-resources
-   * statement.
-   * <p>
-   * Returs a {@link SolveHandler} which allows to handle the possible error
-   * and return a safe value. The returned handler is {@code empty} if neither
-   * the resource nor the error is present.
-   * 
-   * @param <S> the type of the value returned by the {@code solver}
-   * @param <X> the type of exception the {@code solver} may throw
-   * @param solver the checked function operation to solve
-   * @return a {@link SolveHandler} with either the value solved or the thrown
-   *         exception to be handled
-   * @deprecated in favor of {@link #solve(ThrowingFunction)}
-   */
-  @Deprecated(forRemoval = true, since = "3.4.0")
-  public <S, X extends Throwable> SolveHandler<S, X> resolveClosing(// NOSONAR
-    final ThrowingFunction<? super T, ? extends S, ? extends X> solver
-  ) {
-    return this.solve(solver);
-  }
-
-  /**
    * If the resource is present, runs an effect that may throw an exception
    * using a {@link ThrowingConsumer} expression which has the previously
    * prepared resource in the argument. The resource is automatically closed
@@ -173,29 +148,5 @@ public class CloseableHandler<T extends AutoCloseable, E extends Throwable> {
           }
         }
       );
-  }
-
-  /**
-   * If the resource is present, runs an effect that may throw an exception
-   * using a {@link ThrowingConsumer} expression which has the previously
-   * prepared resource in the argument. The resource is automatically closed
-   * after the operation finishes, just like a common try-with-resources
-   * statement.
-   * <p>
-   * Returning then an {@link EffectHandler} which allows to handle the
-   * possible error. The returned handler is {@code empty} if neither the
-   * resource nor the error is present.
-   * 
-   * @param <X> the type of exception the {@code effect} may throw
-   * @param effect the checked consumer operation to execute
-   * @return an {@link EffectHandler} with either the thrown exception to be
-   *         handled or empty
-   * @deprecated in favor of {@link #effect(ThrowingConsumer)}
-   */
-  @Deprecated(forRemoval = true, since = "3.4.0")
-  public <X extends Throwable> EffectHandler<X> runEffectClosing(// NOSONAR
-    final ThrowingConsumer<? super T, ? extends X> effect
-  ) {
-    return this.effect(effect);
   }
 }

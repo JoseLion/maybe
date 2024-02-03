@@ -200,32 +200,6 @@ public final class SolveHandler<T, E extends Throwable> {
   }
 
   /**
-   * Chain another solver covering both cases of success or error of the
-   * previous solver in two different callbacks.
-   * <p>
-   * The first callback receives the solved value, the second callback the
-   * caught error. Both should solve another value of the same type {@code S},
-   * but only one of the callbacks is invoked. It depends on whether the
-   * previous value was solved or not.
-   *
-   * @param <S> the type of value returned by the next operation
-   * @param <X> the type of exception the new solver may throw
-   * @param onSuccess a checked function that receives the current value
-   *                        and solves another
-   * @param onError a checked function that receives the error and
-   *                      solves another value
-   * @return a new handler with either the solved value or the error
-   * @deprecated in favor of {@link #solve(ThrowingFunction, ThrowingFunction)}
-   */
-  @Deprecated(forRemoval = true, since = "3.4.0")
-  public <S, X extends Throwable> SolveHandler<S, X> resolve(// NOSONAR
-    final ThrowingFunction<? super T, ? extends S, ? extends X> onSuccess,
-    final ThrowingFunction<? super E, ? extends S, ? extends X> onError
-  ) {
-    return this.solve(onSuccess, onError);
-  }
-
-  /**
    * Chain another solver function if the value was solved. Otherwise,
    * returns a handler containing the error so it can be propagated upstream.
    *
@@ -244,24 +218,6 @@ public final class SolveHandler<T, E extends Throwable> {
         SolveHandler::failure,
         Maybe.partial(solver)
       );
-  }
-
-  /**
-   * Chain another solver function if the value was solved. Otherwise,
-   * returns a handler containing the error so it can be propagated upstream.
-   *
-   * @param <S> the type of value returned by the next operation
-   * @param <X> the type of exception the new solver may throw
-   * @param solver a checked function that receives the current value and
-   *                 solves another
-   * @return a new handler with either the solved value or an error
-   * @deprecated in favor of {@link #solve(ThrowingFunction)}
-   */
-  @Deprecated(forRemoval = true, since = "3.4.0")
-  public <S, X extends Throwable> SolveHandler<S, X> resolve(// NOSONAR
-    final ThrowingFunction<? super T, ? extends S, ? extends X> solver
-  ) {
-    return this.solve(solver);
   }
 
   /**
@@ -285,25 +241,6 @@ public final class SolveHandler<T, E extends Throwable> {
   }
 
   /**
-   * Chain the previous operation to an effect covering both the success or
-   * error cases in two different callbacks.
-   *
-   * @param <X> the type of the error the effect may throw
-   * @param onSuccess a consumer checked function to run in case of succeess
-   * @param onError a consumer checked function to run in case of error
-   * @return an {@link EffectHandler} representing the result of one of the
-   *         invoked callback
-   * @deprecated in favor of {@link #effect(ThrowingConsumer, ThrowingConsumer)}
-   */
-  @Deprecated(forRemoval = true, since = "3.4.0")
-  public <X extends Throwable> EffectHandler<X> runEffect(// NOSONAR
-    final ThrowingConsumer<? super T, ? extends X> onSuccess,
-    final ThrowingConsumer<? super E, ? extends X> onError
-  ) {
-    return this.effect(onSuccess, onError);
-  }
-
-  /**
    * Chain the previous operation to an effect if the value was solved.
    * Otherwise, returns a handler containing the error so it can be propagated
    * upstream.
@@ -320,24 +257,6 @@ public final class SolveHandler<T, E extends Throwable> {
         EffectHandler::failure,
         Maybe.partial(effect)
       );
-  }
-
-  /**
-   * Chain the previous operation to an effect if the value was solved.
-   * Otherwise, returns a handler containing the error so it can be propagated
-   * upstream.
-   *
-   * @param <X> the type of the error the effect may throw
-   * @param effect a consume checked function to run in case of succeess
-   * @return a new {@link EffectHandler} representing the result of the success
-   *         callback or containg the error
-   * @deprecated in favor of {@link #effect(ThrowingConsumer)}
-   */
-  @Deprecated(forRemoval = true, since = "3.4.0")
-  public <X extends Throwable> EffectHandler<X> runEffect(// NOSONAR
-    final ThrowingConsumer<? super T, ? extends X> effect
-  ) {
-    return this.effect(effect);
   }
 
   /**

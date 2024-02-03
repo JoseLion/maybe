@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.InstanceOfAssertFactories.THROWABLE;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 
 import java.io.FileInputStream;
@@ -139,17 +138,6 @@ import io.github.joselion.testing.UnitTest;
     }
   }
 
-  @Nested class resolveClosing {
-    @Test void calls_solve() {
-      final var identity = ThrowingFunction.identity();
-      final var error = new IOException("Something went wrong...");
-      final var handler = spy(CloseableHandler.failure(error));
-      handler.resolveClosing(identity);
-
-      verify(handler).solve(identity);
-    }
-  }
-
   @Nested class effect {
     @Nested class when_the_resource_is_present {
       @Nested class when_the_operation_succeeds {
@@ -199,15 +187,6 @@ import io.github.joselion.testing.UnitTest;
 
         verify(effectSpy, never()).accept(any());
       }
-    }
-  }
-
-  @Nested class runEffectClosing {
-    @Test void calls_effect() {
-      final var handler = spy(CloseableHandler.<FileInputStream, IOException>failure(FAIL_EXCEPTION));
-      handler.runEffectClosing(noOpEffect);
-
-      verify(handler).effect(noOpEffect);
     }
   }
 
