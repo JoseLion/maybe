@@ -17,9 +17,8 @@ import io.github.joselion.maybe.util.function.ThrowingSupplier;
  * Maybe is a monadic wrapper that may contain a value. Its rich API allows to
  * process throwing operations in a functional way leveraging {@link Optional}
  * to unwrap the possible contained value.
- * 
+ *
  * @param <T> the type of the wrapped value
- * 
  * @author Jose Luis Leon
  * @since v0.1.0
  */
@@ -43,7 +42,7 @@ public final class Maybe<T> {
   /**
    * Creates a {@link Maybe} wrapper of the given value. If the value is
    * {@code null}, it returns a {@link #empty()}.
-   * 
+   *
    * @param <T> the type of the value
    * @param value the value be wrapped
    * @return a {@code Maybe} wrapping the value if it's non-{@code null},
@@ -57,21 +56,17 @@ public final class Maybe<T> {
    * Creates a {@link Maybe} wrapper of the given optional if not empty.
    * Returns {@link #empty()} if the optional is empty or {@code null}.
    *
-   * @apiNote
-   * It is not convenient to create a {@code Maybe} wrapping an
-   * {@code Optional}. It'll be hard to use the value later on, and it defies
-   * the purpose of using {@code Maybe} in the first place (Maybe is like
-   * Optional, but for handling exceptions). But if you really want to do that
-   * for some reason, here are some workarounds:
-   * <pre>
-   *  Maybe.of(value).map(Optional::of);
-   *       // ^ can be an `Optional&lt;T&gt;` or not
-   * </pre>
-   *
    * @param <T> the type of the value
    * @param value an optional value to create the wrapper from
    * @return a {@code Maybe} wrapping the value if it's not empty.
    *         {@link #empty()} otherwise
+   * @apiNote It is not convenient to create a {@code Maybe} wrapping an
+   *          {@code Optional}. It'll be hard to use the value later on, and it
+   *          defies the purpose of using {@code Maybe} in the first place
+   *          (Maybe is like Optional, but for handling exceptions). But if you
+   *          really want to do that for some reason, here's a workaround where
+   *          {@code value} can be an {@code Optional<T>} or not:
+   *          <pre>{@code Maybe.of(value).map(Optional::of);}</pre>
    */
   public static <T> Maybe<T> of(final @Nullable Optional<T> value) { // NOSONAR
     if (value != null) { // NOSONAR
@@ -85,7 +80,7 @@ public final class Maybe<T> {
 
   /**
    * Creates an empty {@link Maybe} instance.
-   * 
+   *
    * @param <T> the type of the value
    * @return an empty {@code Maybe}
    */
@@ -97,7 +92,7 @@ public final class Maybe<T> {
    * Solves the value of a throwing operation using a {@link ThrowingSupplier}
    * expression. Returning then a {@link SolveHandler} which allows to handle
    * the possible error and return a safe value.
-   * 
+   *
    * @param <T> the type of the value returned by the {@code solver}
    * @param <E> the type of exception the {@code solver} may throw
    * @param solver the checked supplier operation to solve
@@ -119,7 +114,7 @@ public final class Maybe<T> {
    * Runs an effect that may throw an exception using a {@link ThrowingRunnable}
    * expression. Returning then an {@link EffectHandler} which allows to handle
    * the possible error.
-   * 
+   *
    * @param <E> the type of exception the {@code effect} may throw
    * @param effect the checked runnable operation to execute
    * @return an {@link EffectHandler} with either the thrown exception to be
@@ -141,23 +136,26 @@ public final class Maybe<T> {
    * {@link SolveHandler} once applied. This is specially useful when we want
    * to create a {@link Maybe} from a callback argument, like on a
    * {@link Optional#map(Function)} for instance.
-   * <p>
-   * In other words, the following code
-   * <pre>
-   *  Optional.of(value)
-   *    .map(str -&gt; Maybe.from(() -&gt; decode(str)));
-   * </pre>
-   * Is equivalent to
-   * <pre>
-   *  Optional.of(value)
-   *    .map(Maybe.partial(this::decode));
-   * </pre>
+   *
+   * <p>In other words, the following code:
+   * <pre>{@code
+   * Optional
+   *  .of(value)
+   *  .map(str -> Maybe.from(() -> this.decode(str)));
+   * }</pre>
+   *
+   * <p>Is equivalent to:
+   * <pre>{@code
+   *  Optional
+   *   .of(value)
+   *   .map(Maybe.partial(this::decode));
+   * }</pre>
    *
    * @param <S> the type of the value the returned function receives
    * @param <T> the type of the value to be solved
    * @param <E> the type of the error the solver may throw
    * @param solver a checked function that receives an {@code S} value and
-   *                 returns a {@code T} value
+   *               returns a {@code T} value
    * @return a partially applied {@link SolveHandler}. This means, a function
    *         that receives an {@code S} value, and produces a {@code SolveHandler<T, E>}
    */
@@ -173,17 +171,20 @@ public final class Maybe<T> {
    * an {@link EffectHandler} once applied. This is specially useful when we
    * want to create a {@link Maybe} from a callback argument, like on a
    * {@link Optional#map(Function)} for instance.
-   * <p>
-   * In other words, the following code
-   * <pre>
-   *  Optional.of(value)
-   *    .map(msg -&gt; Maybe.from(() -&gt; sendMessage(msg)));
-   * </pre>
-   * Is equivalent to
-   * <pre>
-   *  Optional.of(value)
-   *    .map(Maybe.partial(this::sendMessage));
-   * </pre>
+   *
+   * <p>In other words, the following code:
+   * <pre>{@code
+   * Optional
+   *  .of(value)
+   *  .map(msg -> Maybe.from(() -> this.sendMessage(msg)));
+   * }</pre>
+   *
+   * <p>Is equivalent to:
+   * <pre>{@code
+   * Optional
+   *  .of(value)
+   *  .map(Maybe.partial(this::sendMessage));
+   * }</pre>
    *
    * @param <S> the type of the value the returned function receives
    * @param <E> the type of the error the effect may throw
@@ -201,7 +202,7 @@ public final class Maybe<T> {
    * Prepare an {@link AutoCloseable} resource to use in a solver or effect.
    * The resource will be automatically closed after the operation is finished,
    * just like a common try-with-resources statement.
-   * 
+   *
    * @param <R> the type of the resource. Extends from {@link AutoCloseable}
    * @param <E> the type of error the holder may have
    * @param resource the {@link AutoCloseable} resource to prepare
@@ -237,7 +238,7 @@ public final class Maybe<T> {
   /**
    * If present, maps the value to another using the provided mapper function.
    * Otherwise, ignores the mapper and returns {@link #empty()}.
-   * 
+   *
    * @param <U> the type the value will be mapped to
    * @param mapper the mapper function
    * @return a {@code Maybe} with the mapped value if present,
@@ -254,10 +255,10 @@ public final class Maybe<T> {
    * If present, maps the value to another using the provided mapper function.
    * Otherwise, ignores the mapper and returns {@link #empty()}.
    * 
-   * This method is similar to {@link #map(Function)}, but the mapping function is
-   * one whose result is already a {@code Maybe}, and if invoked, flatMap does not
-   * wrap it within an additional {@code Maybe}.
-   * 
+   * <p>This method is similar to {@link #map(Function)}, but the mapping
+   * function is one whose result is already a {@code Maybe}, and if invoked,
+   * flatMap does not wrap it within an additional {@code Maybe}.
+   *
    * @param <U> the type the value will be mapped to
    * @param mapper the mapper function
    * @return a {@code Maybe} with the mapped value if present,
@@ -274,7 +275,7 @@ public final class Maybe<T> {
    * Chain the {@code Maybe} with another solver, if and only if the previous
    * operation was handled with no errors. The value of the previous operation
    * is passed as argument of the {@link ThrowingFunction}.
-   * 
+   *
    * @param <U> the type of value returned by the next operation
    * @param <E> the type of exception the new solver may throw
    * @param solver a checked function that receives the current value and
@@ -298,7 +299,7 @@ public final class Maybe<T> {
   /**
    * Chain the {@code Maybe} with another effect, if and only if the previous
    * operation was handled with no errors.
-   * 
+   *
    * @param <E> the type of exception the new effect may throw
    * @param effect the checked runnable operation to execute next
    * @return an {@link EffectHandler} with either the thrown exception to be
@@ -318,7 +319,7 @@ public final class Maybe<T> {
   /**
    * If the value is present, cast the value to another type. In case of an
    * exception during the cast, a Maybe with {@link #empty()} is returned.
-   * 
+   *
    * @param <U> the type that the value will be cast to
    * @param type the class instance of the type to cast
    * @return a new {@code Maybe} with the cast value if it can be cast,
@@ -332,7 +333,7 @@ public final class Maybe<T> {
 
   /**
    * Checks if the {@code Maybe} has a value.
-   * 
+   *
    * @return true if the value is present, false otherwise
    */
   public boolean hasValue() {
@@ -341,7 +342,7 @@ public final class Maybe<T> {
 
   /**
    * Checks if the {@code Maybe} is empty. That is, when no value is present.
-   * 
+   *
    * @return true if the value is not present, false otherwise
    */
   public boolean isEmpty() {
@@ -351,7 +352,7 @@ public final class Maybe<T> {
   /**
    * Safely unbox the value as an {@link Optional} which may or may not contain
    * a value.
-   * 
+   *
    * @return an optional with the value, if preset. An empty optional otherwise
    */
   public Optional<T> toOptional() {
@@ -365,7 +366,7 @@ public final class Maybe<T> {
    *   <li>Be an instance of {@code Maybe}</li>
    *   <li>Contain a values equal to via {@code equals()} comparation</li>
    * </ul>
-   * 
+   *
    * @param obj an object to be tested for equality
    * @return {@code true} if the other object is "equal to" this object,
    *         {@code false} otherwise
@@ -387,7 +388,7 @@ public final class Maybe<T> {
   /**
    * Returns the hash code of the value, if present, otherwise {@code 0} (zero)
    * if no value is present.
-   * 
+   *
    * @return hash code value of the present value or {@code 0} if no value is present
    */
   @Override
@@ -399,7 +400,7 @@ public final class Maybe<T> {
    * Returns a non-empty string representation of this {@code Maybe} suitable
    * for debugging. The exact presentation format is unspecified and may vary
    * between implementations and versions.
-   * 
+   *
    * @return the string representation of this instance
    */
   @Override

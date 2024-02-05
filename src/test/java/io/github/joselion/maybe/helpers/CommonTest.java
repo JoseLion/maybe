@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 
 import io.github.joselion.testing.UnitTest;
 
-@UnitTest class CommonTests {
+@UnitTest class CommonTest {
 
   @Nested class helper {
     @Nested class when_the_class_is_instantiated {

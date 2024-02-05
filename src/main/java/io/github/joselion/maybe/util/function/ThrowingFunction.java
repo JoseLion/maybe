@@ -3,10 +3,10 @@ package io.github.joselion.maybe.util.function;
 /**
  * The same as {@link java.util.function.Function Function}, but the lambda
  * expression throws an {@code E} checked exception.
- * 
- * This is a functional interface whose functional method is
+ *
+ * <p>This is a functional interface whose functional method is
  * {@link #apply(Object)}
- * 
+ *
  * @param <T> the type of argument passed to the function
  * @param <R> the type of results returned by the function
  * @param <E> the type of exception that the function throws
@@ -18,7 +18,7 @@ public interface ThrowingFunction<T, R, E extends Throwable> {
 
   /**
    * Applies this function to the given argument, or throws an exception.
-   * 
+   *
    * @param t the function argument
    * @return the function result
    * @throws E which extends from {@link Throwable}
@@ -33,6 +33,6 @@ public interface ThrowingFunction<T, R, E extends Throwable> {
    * @return a function that always returns its input argument
    */
   static <T, E extends Throwable> ThrowingFunction<T, T, E> identity() {
-      return t -> t;
+    return t -> t;
   }
 }

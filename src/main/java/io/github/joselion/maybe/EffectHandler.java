@@ -16,9 +16,8 @@ import io.github.joselion.maybe.util.function.ThrowingRunnable;
  * EffectHandler is an API to handle the posible error of a {@link Maybe}'s
  * effect operation. It can return back to maybe to continue linking operations,
  * or use termimal methods to return a safe value.
- * 
+ *
  * @param <E> the type of exception that the effect may throw
- * 
  * @author Jose Luis Leon
  * @since v0.3.2
  */
@@ -43,7 +42,7 @@ public final class EffectHandler<E extends Throwable> {
 
   /**
    * Internal use method to instantiate an {@link EffectHandler} with an error.
-   * 
+   *
    * @param <E> the type of the possible exception
    * @param error the error to instanciate the EffectHandler
    * @return a EffectHandler instance with an error value
@@ -101,7 +100,7 @@ public final class EffectHandler<E extends Throwable> {
   /**
    * Run an effect if the error is present. The error is passed in the argument
    * of the {@code effect} consumer.
-   * 
+   *
    * @param effect a consumer function that recieves the caught error
    * @return the same handler to continue chainning operations
    */
@@ -116,7 +115,7 @@ public final class EffectHandler<E extends Throwable> {
    * The caught error is passed to the argument of the handler consumer. If the
    * error is caught and handled, the operation returns an empty
    * {@link EffectHandler}. Otherwise, the same instance is returned.
-   * 
+   *
    * @param <X> the type of the error to catch
    * @param ofType thetype of the error to catch
    * @param handler a consumer function that receives the caught error
@@ -198,7 +197,7 @@ public final class EffectHandler<E extends Throwable> {
 
   /**
    * Throws the error if present. Does nothing otherwise.
-   * 
+   *
    * @throws E the error thrown by the {@code effect} operation
    */
   public void orThrow() throws E {
@@ -210,7 +209,7 @@ public final class EffectHandler<E extends Throwable> {
   /**
    * If an error is present, map the error to another exception and throw it. Does
    * nothing otherwise.
-   * 
+   *
    * @param <X> the new error type
    * @param mapper a function that maps the new exception to throw
    * @throws X a mapped exception

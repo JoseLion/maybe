@@ -25,7 +25,7 @@ import io.github.joselion.maybe.util.function.ThrowingSupplier;
 import io.github.joselion.testing.Spy;
 import io.github.joselion.testing.UnitTest;
 
-@UnitTest class SolveHandlerTests {
+@UnitTest class SolveHandlerTest {
 
   private static final String OK = "OK";
 
