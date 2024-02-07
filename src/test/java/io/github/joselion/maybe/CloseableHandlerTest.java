@@ -123,7 +123,7 @@ import io.github.joselion.testing.UnitTest;
     @Nested class when_the_error_is_present {
       @Test void returns_a_handler_with_the_propagated_error() throws Throwable {
         final var error = new IOException("Something went wrong...");
-        final var solverSpy = Spy.<ThrowingFunction<AutoCloseable, ?, ?>>lambda(fis -> "");
+        final var solverSpy = Spy.throwingFunction(fis -> "");
         final var handler = CloseableHandler.failure(error)
           .solve(solverSpy);
 
@@ -176,7 +176,7 @@ import io.github.joselion.testing.UnitTest;
     @Nested class when_the_error_is_present {
       @Test void returns_a_handler_with_the_propagated_error() throws Throwable {
         final var error = new IOException("Something went wrong...");
-        final var effectSpy = Spy.<ThrowingConsumer<AutoCloseable, ?>>lambda(res -> { });
+        final var effectSpy = Spy.throwingConsumer(res -> { });
         final var handler = CloseableHandler.failure(error)
           .effect(effectSpy);
 

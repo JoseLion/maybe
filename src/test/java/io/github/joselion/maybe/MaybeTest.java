@@ -6,7 +6,6 @@ import static org.assertj.core.api.InstanceOfAssertFactories.THROWABLE;
 import static org.assertj.core.api.InstanceOfAssertFactories.optional;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import java.io.FileInputStream;
@@ -98,13 +97,13 @@ import io.github.joselion.testing.UnitTest;
     @Nested class when_a_value_is_provided {
       @Nested class and_the_operation_succeeds {
         @Test void returns_a_handler_with_the_value() throws IOException {
-          final var supplierSpy = Spy.<ThrowingSupplier<String, IOException>>lambda(() -> OK);
+          final var supplierSpy = Spy.throwingSupplier(() -> OK);
           final var handler = Maybe.from(supplierSpy);
 
           assertThat(handler.success()).contains(OK);
           assertThat(handler.error()).isEmpty();
 
-          verify(supplierSpy, times(1)).get();
+          verify(supplierSpy).get();
         }
       }
 
@@ -116,7 +115,7 @@ import io.github.joselion.testing.UnitTest;
           assertThat(handler.success()).isEmpty();
           assertThat(handler.error()).contains(FAIL_EXCEPTION);
 
-          verify(supplierSpy, times(1)).get();
+          verify(supplierSpy).get();
         }
       }
     }
@@ -124,12 +123,12 @@ import io.github.joselion.testing.UnitTest;
     @Nested class when_an_effect_is_passed {
       @Nested class and_the_operation_succeeds {
         @Test void returns_an_empty_handler() {
-          final var runnableSpy = Spy.<ThrowingRunnable<RuntimeException>>lambda(() -> { });
+          final var runnableSpy = Spy.throwingRunnable(() -> { });
           final var handler = Maybe.from(runnableSpy);
 
           assertThat(handler.error()).isEmpty();
 
-          verify(runnableSpy, times(1)).run();
+          verify(runnableSpy).run();
         }
       }
 
@@ -140,7 +139,7 @@ import io.github.joselion.testing.UnitTest;
 
           assertThat(handler.error()).contains(FAIL_EXCEPTION);
 
-          verify(runnableSpy, times(1)).run();
+          verify(runnableSpy).run();
         }
       }
     }
@@ -149,7 +148,7 @@ import io.github.joselion.testing.UnitTest;
   @Nested class partial {
     @Nested class when_a_function_is_provided {
       @Test void returns_a_function_that_takes_a_value_and_returns_a_solve_handler() throws IOException {
-        final var successSpy = Spy.<ThrowingFunction<String, Integer, RuntimeException>>lambda(String::length);
+        final var successSpy = Spy.throwingFunction(String::length);
         final var failureSpy = Spy.lambda(failFunction);
 
         assertThat(Maybe.partial(successSpy).apply(OK))
@@ -161,14 +160,14 @@ import io.github.joselion.testing.UnitTest;
           .extracting(SolveHandler::error, optional(IOException.class))
           .contains(FAIL_EXCEPTION);
 
-        verify(successSpy, times(1)).apply(OK);
-        verify(failureSpy, times(1)).apply(OK);
+        verify(successSpy).apply(OK);
+        verify(failureSpy).apply(OK);
       }
     }
 
     @Nested class when_a_consumer_is_provided {
       @Test void returns_a_function_that_takes_a_value_and_returns_an_effect_handler() throws IOException {
-        final var successSpy = Spy.<ThrowingConsumer<String, RuntimeException>>lambda(v -> { });
+        final var successSpy = Spy.throwingConsumer(v -> { });
         final var failureSpy = Spy.lambda(failConsumer);
 
         assertThat(Maybe.partial(successSpy).apply(OK))
@@ -181,8 +180,8 @@ import io.github.joselion.testing.UnitTest;
           .extracting(EffectHandler::error, optional(IOException.class))
           .contains(FAIL_EXCEPTION);
 
-        verify(successSpy, times(1)).accept(OK);
-        verify(failureSpy, times(1)).accept(OK);
+        verify(successSpy).accept(OK);
+        verify(failureSpy).accept(OK);
       }
     }
   }
@@ -270,13 +269,13 @@ import io.github.joselion.testing.UnitTest;
   @Nested class solve {
     @Nested class when_the_value_is_present {
       @Test void the_callback_is_called_with_the_value() {
-        final var functionSpy = Spy.<ThrowingFunction<Integer, String, RuntimeException>>lambda(v -> OK);
+        final var functionSpy = Spy.throwingFunction(v -> OK);
         final var handler = Maybe.of(1).solve(functionSpy);
 
         assertThat(handler.success()).contains(OK);
         assertThat(handler.error()).isEmpty();
 
-        verify(functionSpy, times(1)).apply(1);
+        verify(functionSpy).apply(1);
       }
     }
 
@@ -304,7 +303,7 @@ import io.github.joselion.testing.UnitTest;
         assertThat(handler.success()).contains(OK);
         assertThat(handler.error()).isEmpty();
 
-        verify(functionSpy, times(1)).apply(OK);
+        verify(functionSpy).apply(OK);
       }
     }
 
@@ -317,7 +316,7 @@ import io.github.joselion.testing.UnitTest;
         assertThat(handler.success()).isEmpty();
         assertThat(handler.error()).contains(FAIL_EXCEPTION);
 
-        verify(functionSpy, times(1)).apply(OK);
+        verify(functionSpy).apply(OK);
       }
     }
   }
@@ -325,19 +324,19 @@ import io.github.joselion.testing.UnitTest;
   @Nested class effect {
     @Nested class when_the_value_is_present {
       @Test void the_callback_is_called_with_the_value() {
-        final var consumerSpy = Spy.<ThrowingConsumer<String, RuntimeException>>lambda(v -> { });
+        final var consumerSpy = Spy.throwingConsumer(v -> { });
         final var handler = Maybe.of(OK)
           .effect(consumerSpy);
 
         assertThat(handler.error()).isEmpty();
 
-        verify(consumerSpy, times(1)).accept(OK);
+        verify(consumerSpy).accept(OK);
       }
     }
 
     @Nested class when_the_value_is_not_present {
       @Test void the_callback_is_never_called_and_returns_a_handler_with_an_error() {
-        final var consumerSpy = Spy.<ThrowingConsumer<Object, RuntimeException>>lambda(v -> { });
+        final var consumerSpy = Spy.throwingConsumer(v -> { });
         final var handler = Maybe.empty()
           .effect(consumerSpy);
 
@@ -352,13 +351,13 @@ import io.github.joselion.testing.UnitTest;
 
     @Nested class when_the_new_operation_succeeds {
       @Test void returns_an_empty_handler() {
-        final var consumerSpy = Spy.<ThrowingConsumer<String, RuntimeException>>lambda(v -> { });
+        final var consumerSpy = Spy.throwingConsumer(v -> { });
         final var handler = Maybe.of(OK)
           .effect(consumerSpy);
 
         assertThat(handler.error()).isEmpty();
 
-        verify(consumerSpy, times(1)).accept(OK);
+        verify(consumerSpy).accept(OK);
       }
     }
 
@@ -370,7 +369,7 @@ import io.github.joselion.testing.UnitTest;
 
         assertThat(handler.error()).contains(FAIL_EXCEPTION);
 
-        verify(consumerSpy, times(1)).accept(OK);
+        verify(consumerSpy).accept(OK);
       }
     }
   }

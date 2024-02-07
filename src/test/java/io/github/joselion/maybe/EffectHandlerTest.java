@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.InstanceOfAssertFactories.THROWABLE;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import java.nio.file.AccessDeniedException;
@@ -15,7 +14,6 @@ import java.util.List;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import io.github.joselion.maybe.util.function.ThrowingConsumer;
 import io.github.joselion.maybe.util.function.ThrowingRunnable;
 import io.github.joselion.testing.Spy;
 import io.github.joselion.testing.UnitTest;
@@ -66,7 +64,7 @@ import io.github.joselion.testing.UnitTest;
 
         Maybe.from(noOp).doOnSuccess(runnableSpy);
 
-        verify(runnableSpy, times(1)).run();
+        verify(runnableSpy).run();
       }
     }
 
@@ -91,7 +89,7 @@ import io.github.joselion.testing.UnitTest;
             Maybe.from(throwingOp)
               .doOnError(FileSystemException.class, consumerSpy);
 
-            verify(consumerSpy, times(1)).accept(FAIL_EXCEPTION);
+            verify(consumerSpy).accept(FAIL_EXCEPTION);
           }
         }
 
@@ -114,7 +112,7 @@ import io.github.joselion.testing.UnitTest;
           Maybe.from(throwingOp)
             .doOnError(consumerSpy);
 
-          verify(consumerSpy, times(1)).accept(FAIL_EXCEPTION);
+          verify(consumerSpy).accept(FAIL_EXCEPTION);
         }
       }
     }
@@ -143,7 +141,7 @@ import io.github.joselion.testing.UnitTest;
 
             assertThat(handler.error()).isEmpty();
 
-            verify(consumerSpy, times(1)).accept(FAIL_EXCEPTION);
+            verify(consumerSpy).accept(FAIL_EXCEPTION);
           }
         }
 
@@ -168,7 +166,7 @@ import io.github.joselion.testing.UnitTest;
 
           assertThat(handler.error()).isEmpty();
 
-          verify(consumerSpy, times(1)).accept(FAIL_EXCEPTION);
+          verify(consumerSpy).accept(FAIL_EXCEPTION);
         }
       }
     }
@@ -195,9 +193,7 @@ import io.github.joselion.testing.UnitTest;
       @Test void calls_the_effect_callback_and_returns_a_new_handler() throws FileSystemException {
         final var effectSpy = Spy.lambda(throwingOp);
         final var successSpy = Spy.lambda(throwingOp);
-        final var errorSpy = Spy.<ThrowingConsumer<RuntimeException, FileSystemException>>lambda(
-          err -> throwingOp.run()
-        );
+        final var errorSpy = Spy.throwingConsumer(err -> throwingOp.run());
         final var handler = Maybe.from(noOp);
         final var newHandlers = List.of(
           handler.effect(effectSpy),
@@ -209,8 +205,8 @@ import io.github.joselion.testing.UnitTest;
           assertThat(newHandler.error()).contains(FAIL_EXCEPTION);
         });
 
-        verify(effectSpy, times(1)).run();
-        verify(successSpy, times(1)).run();
+        verify(effectSpy).run();
+        verify(successSpy).run();
         verify(errorSpy, never()).accept(any());
       }
     }
@@ -218,10 +214,8 @@ import io.github.joselion.testing.UnitTest;
     @Nested class when_the_error_is_present {
       @Nested class and_the_error_callback_is_provided {
         @Test void calls_only_the_error_callback_and_returns_a_new_handler() throws FileSystemException {
-          final var successSpy = Spy.<ThrowingRunnable<FileSystemException>>lambda(() -> { });
-          final var errorSpy = Spy.<ThrowingConsumer<FileSystemException, FileSystemException>>lambda(
-            err -> throwingOp.run()
-          );
+          final var successSpy = Spy.throwingRunnable(() -> { });
+          final var errorSpy = Spy.throwingConsumer(err -> throwingOp.run());
           final var handler = Maybe.from(throwingOp);
           final var newHandler = handler.effect(successSpy, errorSpy);
 
@@ -229,7 +223,7 @@ import io.github.joselion.testing.UnitTest;
           assertThat(newHandler.error()).contains(FAIL_EXCEPTION);
 
           verify(successSpy, never()).run();
-          verify(errorSpy, times(1)).accept(FAIL_EXCEPTION);
+          verify(errorSpy).accept(FAIL_EXCEPTION);
         }
       }
 
@@ -256,7 +250,7 @@ import io.github.joselion.testing.UnitTest;
 
         handler.orElse(consumerSpy);
 
-        verify(consumerSpy, times(1)).accept(FAIL_EXCEPTION);
+        verify(consumerSpy).accept(FAIL_EXCEPTION);
       }
     }
 
@@ -282,7 +276,7 @@ import io.github.joselion.testing.UnitTest;
         assertThatCode(handler::orThrow).isEqualTo(FAIL_EXCEPTION);
         assertThatCode(() -> handler.orThrow(functionSpy)).isEqualTo(anotherError);
 
-        verify(functionSpy, times(1)).apply(FAIL_EXCEPTION);
+        verify(functionSpy).apply(FAIL_EXCEPTION);
       }
     }
 
