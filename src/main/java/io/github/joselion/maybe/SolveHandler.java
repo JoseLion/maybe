@@ -172,6 +172,57 @@ public final class SolveHandler<T, E extends Throwable> {
   }
 
   /**
+   * If the value was not previously solved, chains another solver function.
+   * 
+   * <p>This is helpful to try to solve values in different ways, like when
+   * nesting a try-catch in another catch block, but more functional.
+   *
+   * <p>The caught error {@code E} is passed in the argument of the
+   * {@code solver} function.
+   *
+   * @param <X> the type of the error the new solver may throw
+   * @param solver a throwing function that receives the previous error and
+   *               solves another value
+   * @return a new handler with either the solved value or the error
+   */
+  public <X extends Throwable> SolveHandler<T, X> onErrorSolve(
+    final ThrowingFunction<? super E, ? extends T, ? extends X> solver
+  ) {
+    return this.value
+      .unwrap(
+        Maybe.partial(solver),
+        SolveHandler::from
+      );
+  }
+
+  /**
+   * If the value was not previously solved and the type matches the error
+   * thrown, chains another solver function.
+   *
+   * <p>This is helpful to try to solve values in different ways, like when
+   * nesting a try-catch in another catch block, but more functional.
+   *
+   * @param <X> the type of the error the new solver may throw
+   * @param <C> the type of the error to catch
+   * @param ofType a class instance of the error type to catch
+   * @param solver a throwing function that receives the previous error and
+   *               solves another value
+   * @return a new handler with either the solved value or the error
+   */
+  public <X extends Throwable, C extends Throwable> SolveHandler<T, X> onErrorSolve(
+    final Class<? extends C> ofType,
+    final ThrowingFunction<? super E, ? extends T, ? extends X> solver
+  ) {
+    return this.value
+      .unwrap(
+        x -> ofType.isInstance(x)
+          ? Maybe.of(x).solve(solver)
+          : SolveHandler.failure(Commons.cast(x)),
+        SolveHandler::from
+      );
+  }
+
+  /**
    * Chain another solver covering both cases of success or error of the
    * previous solver in two different callbacks.
    *
