@@ -18,6 +18,7 @@ import java.util.function.Function;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import io.github.joselion.maybe.helpers.Commons;
 import io.github.joselion.maybe.util.function.ThrowingFunction;
 import io.github.joselion.maybe.util.function.ThrowingSupplier;
 import io.github.joselion.testing.Spy;
@@ -114,7 +115,8 @@ import io.github.joselion.testing.UnitTest;
           @Test void calls_the_effect_callback() {
             final var consumerSpy = Spy.<FileSystemException>consumer(error -> { });
 
-            Maybe.from(throwingOp)
+            Maybe
+              .from(throwingOp)
               .doOnError(FileSystemException.class, consumerSpy);
 
             verify(consumerSpy).accept(FAILURE);
@@ -125,7 +127,8 @@ import io.github.joselion.testing.UnitTest;
           @Test void never_calls_the_effect_callback() {
             final var consumerSpy = Spy.<RuntimeException>consumer(error -> { });
 
-            Maybe.from(throwingOp)
+            Maybe
+              .from(throwingOp)
               .doOnError(RuntimeException.class, consumerSpy);
 
             verify(consumerSpy, never()).accept(any());
@@ -134,26 +137,45 @@ import io.github.joselion.testing.UnitTest;
       }
 
       @Nested class and_the_error_type_is_not_provided {
-        @Test void calls_the_effect_callback() {
-          final var consumerSpy = Spy.<FileSystemException>consumer(error -> { });
+        @Nested class and_the_error_matches_the_type_of_the_arg {
+          @Test void calls_the_effect_callback() {
+            final var consumerSpy = Spy.<Throwable>consumer(error -> { });
 
-          Maybe.from(throwingOp)
-            .doOnError(consumerSpy);
+            Maybe
+              .from(throwingOp)
+              .doOnError(consumerSpy);
 
-          verify(consumerSpy).accept(FAILURE);
+            verify(consumerSpy).accept(FAILURE);
+          }
+        }
+
+        @Nested class and_the_error_does_not_match_the_type_of_the_arg {
+          @Test void calls_the_effect_callback() {
+            final var consumerSpy = Spy.<Throwable>consumer(error -> { });
+
+            Maybe
+              .from(throwingOp)
+              .solve(Commons::cast)
+              .doOnError(consumerSpy);
+
+            verify(consumerSpy).accept(FAILURE);
+          }
         }
       }
     }
 
     @Nested class when_the_value_is_present {
       @Test void never_calls_the_effect_callback() {
-        final var cunsumerSpy = Spy.<RuntimeException>consumer(error -> { });
+        final var runtimeSpy = Spy.<RuntimeException>consumer(error -> { });
+        final var throwableSpy = Spy.<Throwable>consumer(error -> { });
 
-        Maybe.from(okOp)
-          .doOnError(RuntimeException.class, cunsumerSpy)
-          .doOnError(cunsumerSpy);
+        Maybe
+          .from(okOp)
+          .doOnError(RuntimeException.class, runtimeSpy)
+          .doOnError(throwableSpy);
 
-        verify(cunsumerSpy, never()).accept(any());
+        verify(runtimeSpy, never()).accept(any());
+        verify(throwableSpy, never()).accept(any());
       }
     }
   }
@@ -187,25 +209,42 @@ import io.github.joselion.testing.UnitTest;
       }
 
       @Nested class and_the_error_type_is_not_provided {
-        @Test void calls_the_handler_function() {
-          final var handlerSpy = Spy.function((FileSystemException e) -> OK);
-          final var solver = Maybe.from(throwingOp)
-            .catchError(handlerSpy);
+        @Nested class and_the_error_matches_the_type_of_the_arg {
+          @Test void calls_the_handler_function() {
+            final var handlerSpy = Spy.function((Throwable e) -> OK);
+            final var solver = Maybe.from(throwingOp)
+              .catchError(handlerSpy);
 
-          assertThat(solver.success()).contains(OK);
-          assertThat(solver.error()).isEmpty();
+            assertThat(solver.success()).contains(OK);
+            assertThat(solver.error()).isEmpty();
 
-          verify(handlerSpy).apply(FAILURE);
+            verify(handlerSpy).apply(FAILURE);
+          }
+        }
+
+        @Nested class and_the_error_does_not_match_the_type_of_the_arg {
+          @Test void calls_the_handler_function() {
+            final var handlerSpy = Spy.function((Throwable e) -> OK);
+            final var solver = Maybe.from(throwingOp)
+              .solve(Commons::cast)
+              .catchError(handlerSpy);
+
+            assertThat(solver.success()).contains(OK);
+            assertThat(solver.error()).isEmpty();
+
+            verify(handlerSpy).apply(FAILURE);
+          }
         }
       }
     }
 
     @Nested class when_the_value_is_present {
       @Test void never_calls_the_handler_function() {
-        final var functionSpy = Spy.function((RuntimeException e) -> OK);
+        final var runtimeSpy = Spy.function((RuntimeException e) -> OK);
+        final var throwableSpy = Spy.function((Throwable e) -> OK);
         final var solvers = List.of(
-          Maybe.from(okOp).catchError(RuntimeException.class, functionSpy),
-          Maybe.from(okOp).catchError(functionSpy)
+          Maybe.from(okOp).catchError(RuntimeException.class, runtimeSpy),
+          Maybe.from(okOp).catchError(throwableSpy)
         );
 
         assertThat(solvers).isNotEmpty().allSatisfy(solver -> {
@@ -213,25 +252,14 @@ import io.github.joselion.testing.UnitTest;
           assertThat(solver.error()).isEmpty();
         });
 
-        verify(functionSpy, never()).apply(any());
+        verify(runtimeSpy, never()).apply(any());
+        verify(throwableSpy, never()).apply(any());
       }
     }
   }
 
   @Nested class onErrorSolve {
     @Nested class when_the_error_is_present {
-      @Nested class and_the_error_type_is_not_provided {
-        @Test void calls_the_solver_callback_and_returns_a_handler() {
-          final var solverSpy = Spy.throwingFunction(FileSystemException::getMessage);
-          final var handler = Maybe.from(throwingOp).onErrorSolve(solverSpy);
-
-          assertThat(handler.success()).contains("FAIL");
-          assertThat(handler.error()).isEmpty();
-
-          verify(solverSpy).apply(FAILURE);
-        }
-      }
-
       @Nested class and_the_error_type_is_provided {
         @Nested class and_the_error_is_an_instance_of_the_provided_type {
           @Test void calls_the_solver_and_returns_a_handler() {
@@ -257,14 +285,41 @@ import io.github.joselion.testing.UnitTest;
           }
         }
       }
+
+      @Nested class and_the_error_type_is_not_provided {
+        @Nested class and_the_error_matches_the_type_of_the_arg {
+          @Test void calls_the_solver_callback_and_returns_a_handler() {
+            final var solverSpy = Spy.throwingFunction(Throwable::getMessage);
+            final var handler = Maybe.from(throwingOp).onErrorSolve(solverSpy);
+
+            assertThat(handler.success()).contains("FAIL");
+            assertThat(handler.error()).isEmpty();
+
+            verify(solverSpy).apply(FAILURE);
+          }
+        }
+
+        @Nested class and_the_error_does_not_match_the_type_of_the_arg {
+          @Test void calls_the_solver_callback_and_returns_a_handler() {
+            final var solverSpy = Spy.throwingFunction(Throwable::getMessage);
+            final var handler = Maybe.from(throwingOp).solve(Commons::cast).onErrorSolve(solverSpy);
+
+            assertThat(handler.success()).contains("FAIL");
+            assertThat(handler.error()).isEmpty();
+
+            verify(solverSpy).apply(FAILURE);
+          }
+        }
+      }
     }
 
     @Nested class when_the_value_is_present {
       @Test void never_calls_the_solver_and_returns_a_handler_with_the_value() {
-        final var solverSpy = Spy.throwingFunction(RuntimeException::getMessage);
+        final var runtimeSpy = Spy.throwingFunction(RuntimeException::getMessage);
+        final var throwableSpy = Spy.throwingFunction(Throwable::getMessage);
         final var handlers = List.of(
-          Maybe.from(okOp).onErrorSolve(solverSpy),
-          Maybe.from(okOp).onErrorSolve(RuntimeException.class, solverSpy)
+          Maybe.from(okOp).onErrorSolve(throwableSpy),
+          Maybe.from(okOp).onErrorSolve(RuntimeException.class, runtimeSpy)
         );
 
         assertThat(handlers).isNotEmpty().allSatisfy(handler -> {
@@ -272,7 +327,8 @@ import io.github.joselion.testing.UnitTest;
           assertThat(handler.error()).isEmpty();
         });
 
-        verify(solverSpy, never()).apply(any());
+        verify(runtimeSpy, never()).apply(any());
+        verify(throwableSpy, never()).apply(any());
       }
     }
   }
@@ -282,7 +338,7 @@ import io.github.joselion.testing.UnitTest;
       @Test void calls_the_solver_callback_and_returns_a_handler() {
         final var solverSpy = Spy.throwingFunction(String::length);
         final var successSpy = Spy.throwingFunction(String::length);
-        final var errorSpy = Spy.throwingFunction(e -> -1);
+        final var errorSpy = Spy.throwingFunction((Throwable e) -> -1);
         final var handlers = List.of(
           Maybe.from(okOp).solve(solverSpy),
           Maybe.from(okOp).solve(successSpy, errorSpy)
@@ -303,7 +359,8 @@ import io.github.joselion.testing.UnitTest;
       @Nested class and_the_error_solver_is_not_provided {
         @Test void never_calls_the_solver_callback_and_returns_a_handler_with_the_error() {
           final var successSpy = Spy.throwingFunction(String::length);
-          final var handler = Maybe.from(throwingOp)
+          final var handler = Maybe
+            .from(throwingOp)
             .solve(successSpy);
 
           assertThat(handler.success()).isEmpty();
@@ -317,17 +374,37 @@ import io.github.joselion.testing.UnitTest;
       }
 
       @Nested class and_the_error_solver_is_provided {
-        @Test void call_only_the_error_callback_and_returns_a_new_effect_handler() {
-          final var successSpy = Spy.throwingFunction(String::length);
-          final var errorSpy = Spy.throwingFunction(e -> -1);
-          final var handler = Maybe.from(throwingOp)
-            .solve(successSpy, errorSpy);
+        @Nested class and_the_error_matches_the_type_of_the_arg {
+          @Test void call_only_the_error_callback_and_returns_a_new_effect_handler() {
+            final var successSpy = Spy.throwingFunction(String::length);
+            final var errorSpy = Spy.throwingFunction((Throwable e) -> -1);
+            final var handler = Maybe
+              .from(throwingOp)
+              .solve(successSpy, errorSpy);
 
-          assertThat(handler.success()).contains(-1);
-          assertThat(handler.error()).isEmpty();
+            assertThat(handler.success()).contains(-1);
+            assertThat(handler.error()).isEmpty();
 
-          verify(successSpy, never()).apply(any());
-          verify(errorSpy).apply(FAILURE);
+            verify(successSpy, never()).apply(any());
+            verify(errorSpy).apply(FAILURE);
+          }
+        }
+
+        @Nested class and_the_error_does_not_match_the_type_of_the_arg {
+          @Test void call_only_the_error_callback_and_returns_a_new_effect_handler() {
+            final var successSpy = Spy.throwingFunction(String::length);
+            final var errorSpy = Spy.throwingFunction((Throwable e) -> -1);
+            final var handler = Maybe
+              .from(throwingOp)
+              .solve(Commons::<String>cast)
+              .solve(successSpy, errorSpy);
+
+            assertThat(handler.success()).contains(-1);
+            assertThat(handler.error()).isEmpty();
+
+            verify(successSpy, never()).apply(any());
+            verify(errorSpy).apply(FAILURE);
+          }
         }
       }
     }
@@ -336,9 +413,9 @@ import io.github.joselion.testing.UnitTest;
   @Nested class effect {
     @Nested class when_the_value_is_present {
       @Test void calls_the_solver_callback_and_returns_a_handler() throws FileSystemException {
-        final var effectSpy = Spy.throwingConsumer(v -> throwingOp.get());
-        final var successSpy = Spy.throwingConsumer(v -> throwingOp.get());
-        final var errorSpy = Spy.<RuntimeException, FileSystemException>throwingConsumer(err -> { });
+        final var effectSpy = Spy.throwingConsumer((String v) -> throwingOp.get());
+        final var successSpy = Spy.throwingConsumer((String v) -> throwingOp.get());
+        final var errorSpy = Spy.<Throwable, FileSystemException>throwingConsumer(err -> { });
         final var handler = Maybe.from(okOp);
         final var newHandlers = List.of(
           handler.effect(effectSpy),
@@ -356,32 +433,45 @@ import io.github.joselion.testing.UnitTest;
     }
 
     @Nested class when_the_error_is_present {
-      @Nested class and_the_error_callback_is_provided {
-        @Test void calls_only_the_error_callback_and_returns_a_handler() throws FileSystemException {
-          final var successSpy = Spy.throwingConsumer(v -> { });
-          final var errorSpy = Spy.throwingConsumer(err -> throwingOp.get());
-          final var handler = Maybe.from(throwingOp);
-          final var newHandler = handler.effect(successSpy, errorSpy);
-
-          assertThat(newHandler.error()).contains(FAILURE);
-
-          verify(successSpy, never()).accept(any());
-          verify(errorSpy).accept(FAILURE);
-        }
-      }
-
       @Nested class and_the_error_callback_is_not_provided {
         @Test void never_calls_the_effect_callback_and_returns_a_handler_with_the_error() throws FileSystemException {
-          final var effectSpy = Spy.throwingConsumer(v -> throwingOp.get());
-          final var handler = Maybe.from(throwingOp);
-          final var newHandler = handler.effect(effectSpy);
+          final var effectSpy = Spy.throwingConsumer((String v) -> throwingOp.get());
+          final var handler = Maybe.from(throwingOp).effect(effectSpy);
 
-          assertThat(newHandler.error())
+          assertThat(handler.error())
             .get(THROWABLE)
             .isExactlyInstanceOf(FAILURE.getClass())
             .isEqualTo(FAILURE);
 
           verify(effectSpy, never()).accept(any());
+        }
+      }
+
+      @Nested class and_the_error_callback_is_provided {
+        @Nested class and_the_error_matches_the_type_of_the_arg {
+          @Test void calls_only_the_error_callback_and_returns_a_handler() throws FileSystemException {
+            final var successSpy = Spy.throwingConsumer(v -> { });
+            final var errorSpy = Spy.throwingConsumer((Throwable err) -> throwingOp.get());
+            final var handler = Maybe.from(throwingOp).effect(successSpy, errorSpy);
+
+            assertThat(handler.error()).contains(FAILURE);
+
+            verify(successSpy, never()).accept(any());
+            verify(errorSpy).accept(FAILURE);
+          }
+        }
+
+        @Nested class and_the_error_does_not_match_the_type_of_the_arg {
+          @Test void calls_only_the_error_callback_and_returns_a_handler() throws FileSystemException {
+            final var successSpy = Spy.throwingConsumer(v -> { });
+            final var errorSpy = Spy.throwingConsumer((Throwable err) -> throwingOp.get());
+            final var handler = Maybe.from(throwingOp).solve(Commons::cast).effect(successSpy, errorSpy);
+
+            assertThat(handler.error()).contains(FAILURE);
+
+            verify(successSpy, never()).accept(any());
+            verify(errorSpy).accept(FAILURE);
+          }
         }
       }
     }
@@ -474,17 +564,37 @@ import io.github.joselion.testing.UnitTest;
         final var handler = Maybe.from(okOp);
 
         assertThat(handler.orElse(OTHER)).isEqualTo(OK);
-        assertThat(handler.orElse(RuntimeException::getMessage)).isEqualTo(OK);
+        assertThat(handler.orElse(Throwable::getMessage)).isEqualTo(OK);
       }
     }
 
     @Nested class when_the_error_is_present {
-      @Test void returns_the_provided_value() {
-        final var handler = Maybe.from(throwingOp);
+      @Nested class and_the_overload_is_a_fallback {
+        @Test void returns_the_fallback_value() {
+          final var handler = Maybe.from(throwingOp);
 
-        assertThat(handler.orElse(OTHER)).isEqualTo(OTHER);
-        assertThat(handler.orElse(FileSystemException::getMessage)).isEqualTo(FAILURE.getMessage());
+          assertThat(handler.orElse(OTHER)).isEqualTo(OTHER);
+        }
       }
+
+      @Nested class and_the_overload_is_a_mapper {
+        @Nested class and_the_error_matches_the_type_of_the_arg {
+          @Test void returns_the_mapped_value() {
+            final var handler = Maybe.from(throwingOp);
+
+            assertThat(handler.orElse(Throwable::getMessage)).isEqualTo(FAILURE.getMessage());
+          }
+        }
+
+        @Nested class and_the_error_does_not_match_the_type_of_the_arg {
+          @Test void returns_the_mapped_value() {
+            final var handler = Maybe.from(throwingOp).solve(Commons::cast);
+
+            assertThat(handler.orElse(Throwable::getMessage)).isEqualTo(FAILURE.getMessage());
+          }
+        }
+      }
+
     }
   }
 
@@ -533,7 +643,7 @@ import io.github.joselion.testing.UnitTest;
   @Nested class orThrow {
     @Nested class when_the_value_is_present {
       @Test void returns_the_value() throws FileSystemException {
-        final var functionSpy = Spy.function((RuntimeException error) -> FAILURE);
+        final var functionSpy = Spy.function((Throwable error) -> FAILURE);
         final var handler = Maybe.from(okOp);
 
         assertThat(handler.orThrow()).isEqualTo(OK);
@@ -544,16 +654,40 @@ import io.github.joselion.testing.UnitTest;
     }
 
     @Nested class when_the_error_is_present {
-      @Test void throws_the_error() {
-        final var anotherError = new RuntimeException(OTHER);
-        final var functionSpy = Spy.function((FileSystemException error) -> anotherError);
-        final var handler = Maybe.from(throwingOp);
+      @Nested class and_a_mapper_function_is_not_provided {
+        @Test void throws_the_error_present_in_the_handler() {
+          final var handler = Maybe.from(throwingOp);
 
-        assertThatCode(handler::orThrow).isEqualTo(FAILURE);
-        assertThatCode(() -> handler.orThrow(functionSpy)).isEqualTo(anotherError);
-
-        verify(functionSpy).apply(FAILURE);
+          assertThatCode(handler::orThrow).isEqualTo(FAILURE);
+        }
       }
+
+      @Nested class and_a_mapper_function_is_provided {
+        @Nested class and_the_error_matches_the_type_of_the_arg {
+          @Test void throws_the_error_produced_by_the_function() {
+            final var anotherError = new RuntimeException(OTHER);
+            final var functionSpy = Spy.function((Throwable error) -> anotherError);
+            final var handler = Maybe.from(throwingOp);
+
+            assertThatCode(() -> handler.orThrow(functionSpy)).isEqualTo(anotherError);
+
+            verify(functionSpy).apply(FAILURE);
+          }
+        }
+
+        @Nested class and_the_error_does_not_match_the_type_of_the_arg {
+          @Test void throws_the_error_produced_by_the_function() {
+            final var anotherError = new RuntimeException(OTHER);
+            final var handler = Maybe.from(throwingOp).solve(Commons::cast);
+
+            assertThat(handler.success()).isEmpty();
+            assertThat(handler.error()).isPresent();
+
+            assertThatCode(() -> handler.orThrow(x -> anotherError)).isEqualTo(anotherError);
+          }
+        }
+      }
+
     }
   }
 

@@ -124,7 +124,7 @@ public final class SolveHandler<T, E extends Throwable> {
    * @param effect a consumer function that receives the caught error
    * @return the same handler to continue chainning operations
    */
-  public SolveHandler<T, E> doOnError(final Consumer<? super E> effect) {
+  public SolveHandler<T, E> doOnError(final Consumer<Throwable> effect) {
     this.value.doOnLeft(effect);
 
     return this;
@@ -164,7 +164,7 @@ public final class SolveHandler<T, E extends Throwable> {
    * @return a handler containing a new value if an error was caught. The same
    *         handler instance otherwise
    */
-  public SolveHandler<T, E> catchError(final Function<? super E, ? extends T> handler) {
+  public SolveHandler<T, E> catchError(final Function<Throwable, ? extends T> handler) {
     return this.value
       .mapLeft(handler)
       .mapLeft(SolveHandler::<T, E>from)
@@ -186,7 +186,7 @@ public final class SolveHandler<T, E extends Throwable> {
    * @return a new handler with either the solved value or the error
    */
   public <X extends Throwable> SolveHandler<T, X> onErrorSolve(
-    final ThrowingFunction<? super E, ? extends T, ? extends X> solver
+    final ThrowingFunction<Throwable, ? extends T, ? extends X> solver
   ) {
     return this.value
       .unwrap(
@@ -202,21 +202,21 @@ public final class SolveHandler<T, E extends Throwable> {
    * <p>This is helpful to try to solve values in different ways, like when
    * nesting a try-catch in another catch block, but more functional.
    *
-   * @param <X> the type of the error the new solver may throw
    * @param <C> the type of the error to catch
+   * @param <X> the type of the error the new solver may throw
    * @param ofType a class instance of the error type to catch
    * @param solver a throwing function that receives the previous error and
    *               solves another value
    * @return a new handler with either the solved value or the error
    */
-  public <X extends Throwable, C extends Throwable> SolveHandler<T, X> onErrorSolve(
-    final Class<? extends C> ofType,
-    final ThrowingFunction<? super E, ? extends T, ? extends X> solver
+  public <C extends Throwable, X extends Throwable> SolveHandler<T, X> onErrorSolve(
+    final Class<C> ofType,
+    final ThrowingFunction<? super C, ? extends T, ? extends X> solver
   ) {
     return this.value
       .unwrap(
         x -> ofType.isInstance(x)
-          ? Maybe.of(x).solve(solver)
+          ? Maybe.of(x).map(Commons::<C>cast).solve(solver)
           : SolveHandler.failure(Commons.cast(x)),
         SolveHandler::from
       );
@@ -241,7 +241,7 @@ public final class SolveHandler<T, E extends Throwable> {
    */
   public <S, X extends Throwable> SolveHandler<S, X> solve(
     final ThrowingFunction<? super T, ? extends S, ? extends X> onSuccess,
-    final ThrowingFunction<? super E, ? extends S, ? extends X> onError
+    final ThrowingFunction<Throwable, ? extends S, ? extends X> onError
   ) {
     return this.value.unwrap(
       Maybe.partial(onError),
@@ -251,7 +251,7 @@ public final class SolveHandler<T, E extends Throwable> {
 
   /**
    * Chain another solver function if the value was solved. Otherwise,
-   * returns a handler containing the error so it can be propagated upstream.
+   * returns a handler containing the error so it can be propagated downstream.
    *
    * @param <S> the type of value returned by the next operation
    * @param <X> the type of exception the new solver may throw
@@ -282,7 +282,7 @@ public final class SolveHandler<T, E extends Throwable> {
    */
   public <X extends Throwable> EffectHandler<X> effect(
     final ThrowingConsumer<? super T, ? extends X> onSuccess,
-    final ThrowingConsumer<? super E, ? extends X> onError
+    final ThrowingConsumer<Throwable, ? extends X> onError
   ) {
     return this.value.unwrap(
       Maybe.partial(onError),
@@ -293,7 +293,7 @@ public final class SolveHandler<T, E extends Throwable> {
   /**
    * Chain the previous operation to an effect if the value was solved.
    * Otherwise, returns a handler containing the error so it can be propagated
-   * upstream.
+   * downstream.
    *
    * @param <X> the type of the error the effect may throw
    * @param effect a consume checked function to run in case of succeess
@@ -384,7 +384,7 @@ public final class SolveHandler<T, E extends Throwable> {
    *               another value
    * @return the solved value if present. Another value otherwise
    */
-  public T orElse(final Function<? super E, ? extends T> mapper) {
+  public T orElse(final Function<Throwable, ? extends T> mapper) {
     return this.value.unwrap(mapper, Function.identity());
   }
 
@@ -434,7 +434,7 @@ public final class SolveHandler<T, E extends Throwable> {
   }
 
   /**
-   * Returns the value solved/handled if present. Throws another error otherwise.
+   * Returns the solved value if present. Throws another error otherwise.
    *
    * @param <X> the new error type
    * @param mapper a function that receives the caught error and produces
@@ -442,7 +442,7 @@ public final class SolveHandler<T, E extends Throwable> {
    * @return the solved/handled value if present
    * @throws X a mapped exception
    */
-  public <X extends Throwable> T orThrow(final Function<? super E, ? extends X> mapper) throws X {
+  public <X extends Throwable> T orThrow(final Function<Throwable, ? extends X> mapper) throws X {
     return this.value
       .rightToOptional()
       .orElseThrow(() -> mapper.apply(this.value.leftOrNull()));
@@ -536,7 +536,7 @@ public final class SolveHandler<T, E extends Throwable> {
             .of(prev)
             .solve(solver)
             .map(CloseableHandler::<R, X>from)
-            .orElse(CloseableHandler::failure)
+            .orElse(x -> CloseableHandler.failure(Commons.cast(x)))
       );
   }
 }
