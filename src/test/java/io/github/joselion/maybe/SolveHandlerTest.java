@@ -335,7 +335,7 @@ import io.github.joselion.testing.UnitTest;
 
   @Nested class solve {
     @Nested class when_the_value_is_present {
-      @Test void calls_the_solver_callback_and_returns_a_handler() {
+      @Test void calls_only_the_success_callback_and_returns_a_handler() {
         final var solverSpy = Spy.throwingFunction(String::length);
         final var successSpy = Spy.throwingFunction(String::length);
         final var errorSpy = Spy.throwingFunction((Throwable e) -> -1);
@@ -357,7 +357,7 @@ import io.github.joselion.testing.UnitTest;
 
     @Nested class when_the_error_is_present {
       @Nested class and_the_error_solver_is_not_provided {
-        @Test void never_calls_the_solver_callback_and_returns_a_handler_with_the_error() {
+        @Test void never_calls_the_success_callback_and_returns_a_handler_with_the_error() {
           final var successSpy = Spy.throwingFunction(String::length);
           final var handler = Maybe
             .from(throwingOp)

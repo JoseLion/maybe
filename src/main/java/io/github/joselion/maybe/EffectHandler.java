@@ -10,7 +10,9 @@ import org.eclipse.jdt.annotation.Nullable;
 
 import io.github.joselion.maybe.helpers.Commons;
 import io.github.joselion.maybe.util.function.ThrowingConsumer;
+import io.github.joselion.maybe.util.function.ThrowingFunction;
 import io.github.joselion.maybe.util.function.ThrowingRunnable;
+import io.github.joselion.maybe.util.function.ThrowingSupplier;
 
 /**
  * EffectHandler is an API to handle the posible error of a {@link Maybe}'s
@@ -67,7 +69,7 @@ public final class EffectHandler<E extends Throwable> {
   /**
    * Runs an effect if the operation succeeds.
    *
-   * @param effect a runnable function
+   * @param effect the runnable to run on success
    * @return the same handler to continue chainning operations
    */
   public EffectHandler<E> doOnSuccess(final Runnable effect) {
@@ -85,7 +87,7 @@ public final class EffectHandler<E extends Throwable> {
    *
    * @param <X> the type of the error to match
    * @param ofType a class instance of the error type to match
-   * @param effect a consumer function that recieves the caught error
+   * @param effect a consumer that recieves the caught error
    * @return the same handler to continue chainning operations
    */
   public <X extends Throwable> EffectHandler<E> doOnError(final Class<X> ofType, final Consumer<? super X> effect) {
@@ -101,7 +103,7 @@ public final class EffectHandler<E extends Throwable> {
    * Run an effect if the error is present. The error is passed in the argument
    * of the {@code effect} consumer.
    *
-   * @param effect a consumer function that recieves the caught error
+   * @param effect a consumer that recieves the caught error
    * @return the same handler to continue chainning operations
    */
   public EffectHandler<E> doOnError(final Consumer<Throwable> effect) {
@@ -118,7 +120,7 @@ public final class EffectHandler<E extends Throwable> {
    *
    * @param <X> the type of the error to catch
    * @param ofType thetype of the error to catch
-   * @param handler a consumer function that receives the caught error
+   * @param handler a consumer that receives the caught error
    * @return an empty handler if an error instance of the provided type was
    *         caught. The same handler instance otherwise
    */
@@ -139,7 +141,7 @@ public final class EffectHandler<E extends Throwable> {
    * the operations returns an empty {@link EffectHandler}. Otherwise, the same
    * instance is returned.
    *
-   * @param handler a consumer function that recieves the caught error
+   * @param handler a consumer that recieves the caught error
    * @return an empty handler if the error is present. The same handler
    *         instance otherwise
    */
@@ -157,8 +159,8 @@ public final class EffectHandler<E extends Throwable> {
    * previous effect in two different callbacks.
    *
    * @param <X> the type of the error the new effect may throw
-   * @param onSuccess a runnable checked function to run in case of succeess
-   * @param onError a runnable checked function to run in case of error
+   * @param onSuccess a throwing runnable to run in case of succeess
+   * @param onError a throwing runnable to run in case of error
    * @return a new {@link EffectHandler} representing the result of one of the
    *         invoked callback
    */
@@ -184,7 +186,7 @@ public final class EffectHandler<E extends Throwable> {
    * either empty or has a different error cause by the next effect.
    *
    * @param <X> the type of the error the new effect may throw
-   * @param effect a runnable checked function to run in case of succeess
+   * @param effect a throwing runnable to run in case of succeess
    * @return a new {@link EffectHandler} that is either empty or with the
    *         thrown error
    */
@@ -193,10 +195,33 @@ public final class EffectHandler<E extends Throwable> {
   }
 
   /**
+   * Chain a solver covering both cases of success or error of the
+   * previous effect in two different callbacks.
+   *
+   * <p>The second callback receives the caught error. Both callbacks should
+   * solve a value of the same type {@code T}, but only one of the callbacks is
+   * invoked. It depends on whether the previous effect threw an error or not.
+   *
+   * @param <T> the type of the value to be solved
+   * @param <X> the type of exception the callbacks may throw
+   * @param onSuccess a throwing supplier that solves a value
+   * @param onError a throwing function that receives the error and solves a value
+   * @return a {@link SolveHandler} with either the solved value or the error
+   */
+  public <T, X extends Throwable> SolveHandler<T, X> solve(
+    final ThrowingSupplier<T, X> onSuccess,
+    final ThrowingFunction<Throwable, T, X> onError
+  ) {
+    return this.error
+      .map(Maybe.partial(onError))
+      .orElseGet(() -> Maybe.from(onSuccess));
+  }
+
+  /**
    * Terminal operation to handle the error if present. The error is passed in
    * the argument of the {@code effect} consumer.
    *
-   * @param effect a consumer function that receives the caught error
+   * @param effect a consumer that receives the caught error
    */
   public void orElse(final Consumer<Throwable> effect) {
     this.error.ifPresent(effect);
