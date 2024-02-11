@@ -339,6 +339,67 @@ import io.github.joselion.testing.UnitTest;
     }
   }
 
+  @Nested class thenGet {
+    @Nested class when_the_error_is_not_present {
+      @Test void calls_only_the_success_callback_and_returns_the_supplied_value() {
+        final var successSpy = Spy.supplier(() -> "OK");
+        final var errorSpy = Spy.function((Throwable e) -> "FAIL");
+        final var value = Maybe.from(noop).thenGet(successSpy, errorSpy);
+
+        assertThat(value).isEqualTo("OK");
+
+        verify(successSpy).get();
+        verify(errorSpy, never()).apply(any());
+      }
+    }
+
+    @Nested class when_the_error_is_present {
+      @Nested class and_the_error_matches_the_type_of_the_arg {
+        @Test void calls_only_the_error_callback_and_returns_the_mapped_value() {
+          final var successSpy = Spy.supplier(() -> "OK");
+          final var errorSpy = Spy.function((Throwable e) -> "FAIL");
+          final var value = Maybe.from(throwingOp).thenGet(successSpy, errorSpy);
+
+          assertThat(value).isEqualTo("FAIL");
+
+          verify(successSpy, never()).get();
+          verify(errorSpy).apply(FAILURE);
+        }
+      }
+
+      @Nested class and_the_error_does_not_match_the_type_of_the_arg {
+        @Test void calls_only_the_error_callback_and_returns_the_mapped_value() {
+          final var successSpy = Spy.supplier(() -> "OK");
+          final var errorSpy = Spy.function((Throwable e) -> "FAIL");
+          final var value = Maybe.from(throwingOp).effect(noop).thenGet(successSpy, errorSpy);
+
+          assertThat(value).isEqualTo("FAIL");
+
+          verify(successSpy, never()).get();
+          verify(errorSpy).apply(FAILURE);
+        }
+      }
+    }
+  }
+
+  @Nested class thenReturn {
+    @Nested class when_the_error_is_not_present {
+      @Test void returns_the_success_value() {
+        final var value = Maybe.from(noop).thenReturn("OK", "FAIL");
+
+        assertThat(value).isEqualTo("OK");
+      }
+    }
+
+    @Nested class when_the_error_is_present {
+      @Test void returns_the_fallback_value() {
+        final var value = Maybe.from(throwingOp).thenReturn("OK", "FAIL");
+
+        assertThat(value).isEqualTo("FAIL");
+      }
+    }
+  }
+
   @Nested class orElse {
     @Nested class when_the_error_is_present {
       @Nested class and_the_error_matches_the_type_of_the_arg {
