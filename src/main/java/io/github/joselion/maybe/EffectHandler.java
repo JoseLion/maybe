@@ -104,7 +104,7 @@ public final class EffectHandler<E extends Throwable> {
    * @param effect a consumer function that recieves the caught error
    * @return the same handler to continue chainning operations
    */
-  public EffectHandler<E> doOnError(final Consumer<? super E> effect) {
+  public EffectHandler<E> doOnError(final Consumer<Throwable> effect) {
     this.error.ifPresent(effect);
 
     return this;
@@ -143,7 +143,7 @@ public final class EffectHandler<E extends Throwable> {
    * @return an empty handler if the error is present. The same handler
    *         instance otherwise
    */
-  public EffectHandler<E> catchError(final Consumer<? super E> handler) {
+  public EffectHandler<E> catchError(final Consumer<Throwable> handler) {
     return this.error
       .map(caught -> {
         handler.accept(caught);
@@ -164,10 +164,17 @@ public final class EffectHandler<E extends Throwable> {
    */
   public <X extends Throwable> EffectHandler<X> effect(
     final ThrowingRunnable<? extends X> onSuccess,
-    final ThrowingConsumer<? super E, ? extends X> onError
+    final ThrowingConsumer<Throwable, ? extends X> onError
   ) {
     return this.error
-      .map(Maybe.<E, X>partial(onError))
+      .map(e -> {
+        try {
+          onError.accept(e);
+          return EffectHandler.failure(Commons.<X>cast(e));
+        } catch (Throwable x) { // NOSONAR
+          return EffectHandler.failure(Commons.<X>cast(x));
+        }
+      })
       .orElseGet(() -> Maybe.from(onSuccess));
   }
 
@@ -191,7 +198,7 @@ public final class EffectHandler<E extends Throwable> {
    *
    * @param effect a consumer function that receives the caught error
    */
-  public void orElse(final Consumer<? super E> effect) {
+  public void orElse(final Consumer<Throwable> effect) {
     this.error.ifPresent(effect);
   }
 
@@ -214,7 +221,7 @@ public final class EffectHandler<E extends Throwable> {
    * @param mapper a function that maps the new exception to throw
    * @throws X a mapped exception
    */
-  public <X extends Throwable> void orThrow(final Function<? super E, ? extends X> mapper) throws X {
+  public <X extends Throwable> void orThrow(final Function<Throwable, ? extends X> mapper) throws X {
     if (this.error.isPresent()) {
       throw mapper.apply(this.error.get());
     }

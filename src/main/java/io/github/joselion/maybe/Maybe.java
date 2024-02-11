@@ -232,7 +232,7 @@ public final class Maybe<T> {
     return Maybe
       .from(supplier)
       .map(CloseableHandler::<R, E>from)
-      .orElse(CloseableHandler::failure);
+      .orElse(x -> CloseableHandler.failure(Commons.cast(x)));
   }
 
   /**
