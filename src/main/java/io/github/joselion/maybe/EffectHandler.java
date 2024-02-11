@@ -5,6 +5,7 @@ import static java.util.Objects.isNull;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import org.eclipse.jdt.annotation.Nullable;
 
@@ -200,7 +201,7 @@ public final class EffectHandler<E extends Throwable> {
    *
    * <p>The second callback receives the caught error. Both callbacks should
    * solve a value of the same type {@code T}, but only one of the callbacks is
-   * invoked. It depends on whether the previous effect threw an error or not.
+   * invoked. It depends on whether the previous effect(s) threw an error or not.
    *
    * @param <T> the type of the value to be solved
    * @param <X> the type of exception the callbacks may throw
@@ -215,6 +216,45 @@ public final class EffectHandler<E extends Throwable> {
     return this.error
       .map(Maybe.partial(onError))
       .orElseGet(() -> Maybe.from(onSuccess));
+  }
+
+  /**
+   * Terminal operation to supply a {@code T} value. If no error is present the
+   * {@code onSuccess} callback is used. Otherwise, the {@code onError}
+   * callback which receives the caught error.
+   *
+   * <p>Both callbacks should return a value of the same type {@code T}, but
+   * only one of the callbacks is invoked. It depends on whether the previous
+   * effect(s) threw an error or not.
+   *
+   * @param <T> the type of the value to supplied
+   * @param onSuccess a supplier that provides a value
+   * @param onError a function that receives the error and returns a value
+   * @return either the success or the error mapped value
+   */
+  public <T> T thenGet(final Supplier<? extends T> onSuccess, final Function<Throwable, ? extends T> onError) {
+    return this.error
+      .map(onError)
+      .orElseGet(() -> Commons.cast(onSuccess.get()));
+  }
+
+  /**
+   * Terminal operation to return a {@code T} value. If no error is present the
+   * {@code value} param is returned, {@code fallback} otherwise.
+   *
+   * <p>Both values should be of the same type {@code T}, but only one is
+   * returned. It depends on whether the previous effect(s) threw an error
+   * or not.
+   *
+   * @param <T> the type of the value to return
+   * @param value the value to return on success
+   * @param fallback the value to return on error
+   * @return either the success or the error value
+   */
+  public <T> T thenReturn(final T value, final T fallback) {
+    return this.error.isEmpty()
+      ? value
+      : fallback;
   }
 
   /**
