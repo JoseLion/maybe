@@ -88,7 +88,7 @@ public final class SolveHandler<T, E extends Throwable> {
    * Run an effect if the operation solved successfully. The solved value
    * is passed in the argument of the {@code effect} consumer.
    *
-   * @param effect a function that receives the solved value
+   * @param effect a consumer that receives the solved value
    * @return the same handler to continue chainning operations
    */
   public SolveHandler<T, E> doOnSuccess(final Consumer<? super T> effect) {
@@ -104,7 +104,7 @@ public final class SolveHandler<T, E extends Throwable> {
    *
    * @param <X> the type of the error to match
    * @param ofType a class instance of the error type to match
-   * @param effect a consumer function that receives the caught error
+   * @param effect a consumer that receives the caught error
    * @return the same handler to continue chainning operations
    */
   public <X extends Throwable> SolveHandler<T, E> doOnError(final Class<X> ofType, final Consumer<? super X> effect) {
@@ -121,7 +121,7 @@ public final class SolveHandler<T, E extends Throwable> {
    * Run an effect if the error is present. The error is passed in the argument
    * of the {@code effect} consumer.
    *
-   * @param effect a consumer function that receives the caught error
+   * @param effect a consumer that receives the caught error
    * @return the same handler to continue chainning operations
    */
   public SolveHandler<T, E> doOnError(final Consumer<Throwable> effect) {
@@ -233,10 +233,10 @@ public final class SolveHandler<T, E extends Throwable> {
    *
    * @param <S> the type of value returned by the next operation
    * @param <X> the type of exception the new solver may throw
-   * @param onSuccess a checked function that receives the current value
-   *                        and solves another
-   * @param onError a checked function that receives the error and
-   *                      solves another value
+   * @param onSuccess a throwing function that receives the current value
+   *                  and solves another
+   * @param onError a throwing function that receives the error and solves
+   *                another value
    * @return a new handler with either the solved value or the error
    */
   public <S, X extends Throwable> SolveHandler<S, X> solve(
@@ -255,8 +255,8 @@ public final class SolveHandler<T, E extends Throwable> {
    *
    * @param <S> the type of value returned by the next operation
    * @param <X> the type of exception the new solver may throw
-   * @param solver a checked function that receives the current value and
-   *                 solves another
+   * @param solver a throwing function that receives the current value and
+   *               solves another
    * @return a new handler with either the solved value or an error
    */
   public <S, X extends Throwable> SolveHandler<S, X> solve(
@@ -275,8 +275,8 @@ public final class SolveHandler<T, E extends Throwable> {
    * error cases in two different callbacks.
    *
    * @param <X> the type of the error the effect may throw
-   * @param onSuccess a consumer checked function to run in case of succeess
-   * @param onError a consumer checked function to run in case of error
+   * @param onSuccess a throwing consumer to run in case of succeess
+   * @param onError a throwing consumer to run in case of error
    * @return an {@link EffectHandler} representing the result of one of the
    *         invoked callback
    */
@@ -296,7 +296,7 @@ public final class SolveHandler<T, E extends Throwable> {
    * downstream.
    *
    * @param <X> the type of the error the effect may throw
-   * @param effect a consume checked function to run in case of succeess
+   * @param effect a throwing consume to run in case of succeess
    * @return a new {@link EffectHandler} representing the result of the success
    *         callback or containg the error
    */
@@ -389,14 +389,14 @@ public final class SolveHandler<T, E extends Throwable> {
   }
 
   /**
-   * Returns the solved value if present. Otherwise, the result produced by
-   * the supplying function as another value.
+   * Returns the solved value if present. Otherwise, another value produced by
+   * the {@code supplier}.
    *
    * @apiNote Use this method instead of {@link #orElse(Object)} to do lazy
    *          evaluation of the produced value. That means that the "else"
    *          value won't be evaluated if the error is not present.
-   * @param supplier the supplying function that produces another value if the
-   *                 operation failed to solve
+   * @param supplier the suplier that produces another value if the operation
+   *                 failed to solve
    * @return the solved value if present. Another value otherwise
    */
   public T orElseGet(final Supplier<? extends T> supplier) {

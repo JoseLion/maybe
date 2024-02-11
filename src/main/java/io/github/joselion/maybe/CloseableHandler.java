@@ -92,7 +92,7 @@ public final class CloseableHandler<T extends AutoCloseable, E extends Throwable
    *
    * @param <S> the type of the value returned by the {@code solver}
    * @param <X> the type of exception the {@code solver} may throw
-   * @param solver the checked function operation to solve
+   * @param solver the throwing function operation to solve
    * @return a {@link SolveHandler} with either the value solved or the thrown
    *         exception to be handled
    */
@@ -126,7 +126,7 @@ public final class CloseableHandler<T extends AutoCloseable, E extends Throwable
    * resource nor the error is present.
    *
    * @param <X> the type of exception the {@code effect} may throw
-   * @param effect the checked consumer operation to execute
+   * @param effect the throwing consumer operation to execute
    * @return an {@link EffectHandler} with either the thrown exception to be
    *         handled or empty
    */

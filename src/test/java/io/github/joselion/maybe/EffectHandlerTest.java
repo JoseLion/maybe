@@ -26,7 +26,7 @@ import io.github.joselion.testing.UnitTest;
     throw FAILURE;
   };
 
-  private final ThrowingRunnable<RuntimeException> noOp = () -> { };
+  private final ThrowingRunnable<RuntimeException> noop = () -> { };
 
   @Nested class empty {
     @Test void returns_an_empty_handler() {
@@ -62,7 +62,7 @@ import io.github.joselion.testing.UnitTest;
       @Test void calls_the_effect_callback() {
         final var runnableSpy = Spy.runnable(() -> { });
 
-        Maybe.from(noOp).doOnSuccess(runnableSpy);
+        Maybe.from(noop).doOnSuccess(runnableSpy);
 
         verify(runnableSpy).run();
       }
@@ -126,7 +126,7 @@ import io.github.joselion.testing.UnitTest;
 
             Maybe
               .from(throwingOp)
-              .effect(() -> { })
+              .effect(noop)
               .doOnError(consumerSpy);
 
             verify(consumerSpy).accept(FAILURE);
@@ -140,7 +140,7 @@ import io.github.joselion.testing.UnitTest;
         final var runtimeSpy = Spy.<RuntimeException>consumer(error -> { });
         final var throwableSpy = Spy.<Throwable>consumer(error -> { });
 
-        Maybe.from(noOp)
+        Maybe.from(noop)
           .doOnError(RuntimeException.class, runtimeSpy)
           .doOnError(throwableSpy);
 
@@ -198,7 +198,7 @@ import io.github.joselion.testing.UnitTest;
             final var consumerSpy = Spy.<Throwable>consumer(e -> { });
             final var handler = Maybe
               .from(throwingOp)
-              .effect(() -> { })
+              .effect(noop)
               .catchError(consumerSpy);
 
             assertThat(handler.error()).isEmpty();
@@ -214,8 +214,8 @@ import io.github.joselion.testing.UnitTest;
         final var runtimeSpy = Spy.<RuntimeException>consumer(e -> { });
         final var throwableSpy = Spy.<Throwable>consumer(e -> { });
         final var handlers = List.of(
-          Maybe.from(noOp).catchError(RuntimeException.class, runtimeSpy),
-          Maybe.from(noOp).catchError(throwableSpy)
+          Maybe.from(noop).catchError(RuntimeException.class, runtimeSpy),
+          Maybe.from(noop).catchError(throwableSpy)
         );
 
         assertThat(handlers).isNotEmpty().allSatisfy(handler -> {
@@ -234,7 +234,7 @@ import io.github.joselion.testing.UnitTest;
         final var effectSpy = Spy.lambda(throwingOp);
         final var successSpy = Spy.lambda(throwingOp);
         final var errorSpy = Spy.throwingConsumer((Throwable err) -> throwingOp.run());
-        final var handler = Maybe.from(noOp);
+        final var handler = Maybe.from(noop);
         final var newHandlers = List.of(
           handler.effect(effectSpy),
           handler.effect(successSpy, errorSpy)
@@ -255,7 +255,7 @@ import io.github.joselion.testing.UnitTest;
       @Nested class and_the_error_callback_is_provided {
         @Nested class and_the_error_matches_the_type_of_the_arg {
           @Test void calls_only_the_error_callback_and_returns_a_handler_with_the_error() throws FileSystemException {
-            final var successSpy = Spy.throwingRunnable(() -> { });
+            final var successSpy = Spy.throwingRunnable(noop);
             final var errorSpy = Spy.throwingConsumer((Throwable err) -> throwingOp.run());
             final var handler = Maybe.from(throwingOp).effect(successSpy, errorSpy);
 
@@ -268,9 +268,9 @@ import io.github.joselion.testing.UnitTest;
 
         @Nested class and_the_error_does_not_match_the_type_of_the_arg {
           @Test void calls_only_the_error_callback_and_returns_a_handler_with_the_error() throws FileSystemException {
-            final var successSpy = Spy.throwingRunnable(() -> { });
+            final var successSpy = Spy.throwingRunnable(noop);
             final var errorSpy = Spy.throwingConsumer((Throwable err) -> throwingOp.run());
-            final var handler = Maybe.from(throwingOp).effect(() -> { }).effect(successSpy, errorSpy);
+            final var handler = Maybe.from(throwingOp).effect(noop).effect(successSpy, errorSpy);
 
             assertThat(handler.error()).contains(FAILURE);
 
@@ -293,6 +293,52 @@ import io.github.joselion.testing.UnitTest;
     }
   }
 
+  @Nested class solve {
+    @Nested class when_the_error_is_not_present {
+      @Test void calls_only_the_success_callback_and_returns_a_SolveHandler() {
+        final var successSpy = Spy.throwingSupplier(() -> "OK");
+        final var errorSpy = Spy.throwingFunction((Throwable e) -> "FAIL");
+        final var handler = Maybe.from(noop).solve(successSpy, errorSpy);
+
+        assertThat(handler).isInstanceOf(SolveHandler.class);
+        assertThat(handler.success()).contains("OK");
+
+        verify(successSpy).get();
+        verify(errorSpy, never()).apply(any());
+      }
+    }
+
+    @Nested class when_the_error_is_present {
+      @Nested class and_the_error_matches_the_type_of_the_arg {
+        @Test void calls_only_the_error_callback_and_returns_a_handler_SolveHandler() {
+          final var successSpy = Spy.throwingSupplier(() -> "OK");
+          final var errorSpy = Spy.throwingFunction((Throwable e) -> "FAIL");
+          final var handler = Maybe.from(throwingOp).solve(successSpy, errorSpy);
+
+          assertThat(handler).isInstanceOf(SolveHandler.class);
+          assertThat(handler.success()).contains("FAIL");
+
+          verify(successSpy, never()).get();
+          verify(errorSpy).apply(FAILURE);
+        }
+      }
+
+      @Nested class and_the_error_does_not_match_the_type_of_the_arg {
+        @Test void calls_only_the_error_callback_and_returns_a_handler_SolveHandler() {
+          final var successSpy = Spy.throwingSupplier(() -> "OK");
+          final var errorSpy = Spy.throwingFunction((Throwable e) -> "FAIL");
+          final var handler = Maybe.from(throwingOp).effect(noop).solve(successSpy, errorSpy);
+
+          assertThat(handler).isInstanceOf(SolveHandler.class);
+          assertThat(handler.success()).contains("FAIL");
+
+          verify(successSpy, never()).get();
+          verify(errorSpy).apply(FAILURE);
+        }
+      }
+    }
+  }
+
   @Nested class orElse {
     @Nested class when_the_error_is_present {
       @Nested class and_the_error_matches_the_type_of_the_arg {
@@ -309,7 +355,7 @@ import io.github.joselion.testing.UnitTest;
       @Nested class and_the_error_does_not_match_the_type_of_the_arg {
         @Test void calls_the_effect_callback() {
           final var consumerSpy = Spy.<Throwable>consumer(e -> { });
-          final var handler = Maybe.from(throwingOp).effect(() -> { });
+          final var handler = Maybe.from(throwingOp).effect(noop);
 
           handler.orElse(consumerSpy);
 
@@ -321,7 +367,7 @@ import io.github.joselion.testing.UnitTest;
     @Nested class when_the_error_is_not_present {
       @Test void never_calls_the_effect_callback() {
         final var consumerSpy = Spy.<Throwable>consumer(e -> { });
-        final var handler = Maybe.from(noOp);
+        final var handler = Maybe.from(noop);
 
         handler.orElse(consumerSpy);
 
@@ -357,7 +403,7 @@ import io.github.joselion.testing.UnitTest;
           @Test void throws_the_error() {
             final var anotherError = new RuntimeException("OTHER");
             final var functionSpy = Spy.function((Throwable err) -> anotherError);
-            final var handler = Maybe.from(throwingOp).effect(() -> { });
+            final var handler = Maybe.from(throwingOp).effect(noop);
 
             assertThatCode(() -> handler.orThrow(functionSpy)).isEqualTo(anotherError);
 
@@ -370,7 +416,7 @@ import io.github.joselion.testing.UnitTest;
     @Nested class when_the_error_is_not_present {
       @Test void no_exception_is_thrown() {
         final var functionSpy = Spy.function((Throwable err) -> FAILURE);
-        final var handler = Maybe.from(noOp);
+        final var handler = Maybe.from(noop);
 
         assertThatCode(handler::orThrow).doesNotThrowAnyException();
         assertThatCode(() -> handler.orThrow(functionSpy)).doesNotThrowAnyException();
