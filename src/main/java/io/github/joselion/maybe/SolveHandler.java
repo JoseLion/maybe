@@ -312,9 +312,9 @@ public final class SolveHandler<T, E extends Throwable> {
   /**
    * If the value is present, map it to another value using the {@code mapper}
    * function. If an error is present, the {@code mapper} function is never
-   * applied and the next handler will still contain the error.
+   * applied and the next handler will just contain the error.
    *
-   * @param <U> the type the value is mapped to
+   * @param <U> the type the mapped value
    * @param mapper a function which takes the value as argument and returns
    *               another value
    * @return a new handler with either the mapped value or an error
@@ -322,6 +322,56 @@ public final class SolveHandler<T, E extends Throwable> {
   public <U> SolveHandler<U, E> map(final Function<? super T, ? extends U> mapper) {
     return this.value
       .mapRight(mapper)
+      .unwrap(
+        SolveHandler::failure,
+        SolveHandler::from
+      );
+  }
+
+  /**
+   * If an error is present and matches the specified {@code ofType} class, map
+   * it to another throwable using the {@code mapper} function which receives
+   * the mtching error in its argument. If the error is not present or it does
+   * not match the specified type, the {@code mapper} is never applied and the
+   * next handler will just contain the solved value.
+   *
+   * @param <C> the type of error to match
+   * @param <X> the type of the mapped error
+   * @param ofType a class instance of the error type to match
+   * @param mapper a function which takes the error as argument and returns
+   *               another error
+   * @return a new handler with either the mapped error or the value
+   */
+  public <C extends Throwable, X extends Throwable> SolveHandler<T, X> mapError(
+    final Class<C> ofType,
+    final Function<? super C, ? extends X> mapper
+  ) {
+    return this.value.unwrap(
+      e -> {
+        final var nextError = ofType.isInstance(e)
+          ? mapper.apply(Commons.cast(e))
+          : Commons.<X>cast(e);
+
+        return SolveHandler.failure(nextError);
+      },
+      SolveHandler::from
+    );
+  }
+
+  /**
+   * If an error is present, map it to another throwable using the {@code mapper}
+   * function which receives the previous error in its argument. If the error
+   * is not present, the {@code mapper} is never applied and the next handler
+   * will just contain the solved value.
+   *
+   * @param <X> the type of the mapped error
+   * @param mapper a function which takes the error as argument and returns
+   *               another error
+   * @return a new handler with either the mapped error or the value
+   */
+  public <X extends Throwable> SolveHandler<T, X> mapError(final Function<Throwable, ? extends X> mapper) {
+    return this.value
+      .mapLeft(mapper)
       .unwrap(
         SolveHandler::failure,
         SolveHandler::from
