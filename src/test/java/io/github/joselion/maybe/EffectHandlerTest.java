@@ -228,6 +228,81 @@ import io.github.joselion.testing.UnitTest;
     }
   }
 
+  @Nested class mapError {
+    @Nested class when_the_error_is_present {
+      @Nested class and_the_error_type_is_provided {
+        @Nested class and_the_error_is_an_instance_of_the_provided_type {
+          @Test void returns_a_handler_with_the_mapped_error() {
+            final var nextError = new RuntimeException("OTHER");
+            final var mapperSpy = Spy.function((FileSystemException e) -> nextError);
+            final var handler = EffectHandler.failure(FAILURE).mapError(FileSystemException.class, mapperSpy);
+
+            assertThat(handler.error()).contains(nextError);
+
+            verify(mapperSpy).apply(FAILURE);
+          }
+        }
+
+        @Nested class and_the_error_is_not_an_instance_of_the_provided_type {
+          @Test void returns_an_empty_handler_and_never_calls_the_mapper() {
+            final var nextError = new RuntimeException("OTHER");
+            final var mapperSpy = Spy.function((FileSystemException e) -> nextError);
+            final var handler = EffectHandler.failure(FAILURE).mapError(AccessDeniedException.class, mapperSpy);
+
+            assertThat(handler.error()).get().isEqualTo(FAILURE);
+
+            verify(mapperSpy, never()).apply(FAILURE);
+          }
+        }
+      }
+
+      @Nested class and_the_error_type_is_not_provided {
+        @Nested class and_the_error_matches_the_type_of_the_arg {
+          @Test void returns_a_handler_with_the_mapped_error() {
+            final var nextError = new RuntimeException("OTHER");
+            final var mapperSpy = Spy.function((Throwable e) -> nextError);
+            final var handler = EffectHandler.failure(FAILURE).mapError(mapperSpy);
+
+            assertThat(handler.error()).contains(nextError);
+
+            verify(mapperSpy).apply(FAILURE);
+          }
+        }
+
+        @Nested class and_the_error_does_not_match_the_type_of_the_arg {
+          @Test void returns_a_handler_with_the_mapped_error() {
+            final var nextError = new RuntimeException("OTHER");
+            final var mapperSpy = Spy.function((Throwable e) -> nextError);
+            final var handler = EffectHandler.failure(FAILURE).effect(noop).mapError(mapperSpy);
+
+            assertThat(handler.error()).contains(nextError);
+
+            verify(mapperSpy).apply(FAILURE);
+          }
+        }
+      }
+    }
+
+    @Nested class when_the_error_is_not_present {
+      @Test void returns_an_empty_handler_and_never_calls_the_mapper() {
+        final var runtimeSpy = Spy.function((RuntimeException e) -> FAILURE);
+        final var throwableSpy = Spy.function((Throwable e) -> FAILURE);
+        final var handler = EffectHandler.empty();
+        final var overloads = List.of(
+          handler.mapError(RuntimeException.class, runtimeSpy),
+          handler.mapError(throwableSpy)
+        );
+
+        assertThat(overloads).isNotEmpty().allSatisfy(overload -> {
+          assertThat(overload.error()).isEmpty();
+        });
+
+        verify(runtimeSpy, never()).apply(any());
+        verify(throwableSpy, never()).apply(any());
+      }
+    }
+  }
+
   @Nested class effect {
     @Nested class when_the_error_is_not_present {
       @Test void calls_the_effect_callback_and_returns_a_new_handler() throws FileSystemException {

@@ -40,7 +40,7 @@ import io.github.joselion.testing.UnitTest;
 
   @Nested class from {
     @Nested class when_the_value_is_not_null {
-      @Test void returns_a_handler_withThe_value() {
+      @Test void returns_a_handler_with_the_value() {
         final var handler = SolveHandler.from(OK);
 
         assertThat(handler.success()).containsSame(OK);
@@ -480,8 +480,7 @@ import io.github.joselion.testing.UnitTest;
   @Nested class map {
     @Nested class when_the_value_is_present {
       @Test void returns_a_handler_applying_the_mapper_function() {
-        final var handler = SolveHandler.from("Hello world!")
-          .map(String::length);
+        final var handler = SolveHandler.from("Hello world!").map(String::length);
 
         assertThat(handler.success()).contains(12);
 
@@ -491,11 +490,90 @@ import io.github.joselion.testing.UnitTest;
 
     @Nested class when_the_error_is_present {
       @Test void returns_a_handler_with_the_previous_error() {
-        final var handler = SolveHandler.failure(FAILURE)
-          .map(Object::toString);
+        final var handler = SolveHandler.failure(FAILURE).map(Object::toString);
 
         assertThat(handler.success()).isEmpty();
         assertThat(handler.error()).contains(FAILURE);
+      }
+    }
+  }
+
+  @Nested class mapError {
+    @Nested class when_the_error_is_present {
+      @Nested class and_the_error_type_is_provided {
+        @Nested class and_the_error_is_an_instance_of_the_provided_type {
+          @Test void returns_a_handler_with_the_mapped_error() {
+            final var nextError = new RuntimeException("OTHER");
+            final var mapperSpy = Spy.function((FileSystemException e) -> nextError);
+            final var handler = SolveHandler.failure(FAILURE).mapError(FileSystemException.class, mapperSpy);
+
+            assertThat(handler.success()).isEmpty();
+            assertThat(handler.error()).contains(nextError);
+
+            verify(mapperSpy).apply(FAILURE);
+          }
+        }
+
+        @Nested class and_the_error_is_not_an_instance_of_the_provided_type {
+          @Test void returns_a_handler_with_the_value_and_the_mapper_is_never_called() {
+            final var nextError = new RuntimeException("OTHER");
+            final var mapperSpy = Spy.function((FileSystemException e) -> nextError);
+            final var handler = SolveHandler.failure(FAILURE).mapError(AccessDeniedException.class, mapperSpy);
+
+            assertThat(handler.success()).isEmpty();
+            assertThat(handler.error()).get().isEqualTo(FAILURE);
+
+            verify(mapperSpy, never()).apply(any());
+          }
+        }
+      }
+
+      @Nested class and_the_error_type_is_not_provided {
+        @Nested class and_the_error_matches_the_type_of_the_arg {
+          @Test void returns_a_handler_with_the_mapped_error() {
+            final var nextError = new RuntimeException("OTHER");
+            final var mapperSpy = Spy.function((Throwable e) -> nextError);
+            final var handler = SolveHandler.failure(FAILURE).mapError(mapperSpy);
+
+            assertThat(handler.success()).isEmpty();
+            assertThat(handler.error()).contains(nextError);
+
+            verify(mapperSpy).apply(FAILURE);
+          }
+        }
+
+        @Nested class and_the_error_does_not_match_the_type_of_the_arg {
+          @Test void returns_a_handler_with_the_mapped_error() {
+            final var nextError = new RuntimeException("OTHER");
+            final var mapperSpy = Spy.function((Throwable e) -> nextError);
+            final var handler = SolveHandler.failure(FAILURE).cast(String.class).mapError(mapperSpy);
+
+            assertThat(handler.success()).isEmpty();
+            assertThat(handler.error()).contains(nextError);
+
+            verify(mapperSpy).apply(FAILURE);
+          }
+        }
+      }
+    }
+
+    @Nested class when_the_value_is_present {
+      @Test void returns_a_handler_with_the_value_and_the_mapper_is_never_called() {
+        final var runtimeSpy = Spy.function((RuntimeException e) -> FAILURE);
+        final var throwableSpy = Spy.function((Throwable e) -> FAILURE);
+        final var handler = SolveHandler.from(OK);
+        final var overloads = List.of(
+          handler.mapError(RuntimeException.class, runtimeSpy),
+          handler.mapError(throwableSpy)
+        );
+
+        assertThat(overloads).isNotEmpty().allSatisfy(overload -> {
+          assertThat(overload.success()).contains(OK);
+          assertThat(overload.error()).isEmpty();
+        });
+
+        verify(runtimeSpy, never()).apply(any());
+        verify(throwableSpy, never()).apply(any());
       }
     }
   }

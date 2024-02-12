@@ -156,6 +156,50 @@ public final class EffectHandler<E extends Throwable> {
   }
 
   /**
+   * If an error is present and matches the specified {@code ofType} class, map
+   * it to another throwable using the {@code mapper} function which receives
+   * the previous error in its argument. If the error is not present or it does
+   * not match the specified type, the {@code mapper} is never applied and the
+   * next handler will be the same as it was.
+   *
+   * @param <C> the type of error to match
+   * @param <X> the type of the mapped error
+   * @param ofType a class instance of the error type to match
+   * @param mapper a function which takes the error as argument and returns
+   *               another error
+   * @return a handler with either the mapped error or empty
+   */
+  public <C extends Throwable, X extends Throwable> EffectHandler<X> mapError(
+    final Class<C> ofType,
+    final Function<? super C, ? extends X> mapper
+  ) {
+    return this.error
+      .filter(ofType::isInstance)
+      .map(Commons::<C>cast)
+      .map(mapper)
+      .map(EffectHandler::<X>failure)
+      .orElseGet(() -> Commons.cast(this));
+  }
+
+  /**
+   * If an error is present, map it to another throwable using the {@code mapper}
+   * function which receives the previous error in its argument. If the error
+   * is not present, the {@code mapper} is never applied and the next handler
+   * will be empty.
+   *
+   * @param <X> the type of the mapped error
+   * @param mapper a function which takes the error as argument and returns
+   *               another error
+   * @return a handler with either the mapped error or empty
+   */
+  public <X extends Throwable> EffectHandler<X> mapError(final Function<Throwable, ? extends X> mapper) {
+    return this.error
+      .map(mapper)
+      .map(EffectHandler::<X>failure)
+      .orElseGet(EffectHandler::empty);
+  }
+
+  /**
    * Chain another effect covering both cases of success or error of the
    * previous effect in two different callbacks.
    *
