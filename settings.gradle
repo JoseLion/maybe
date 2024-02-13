@@ -9,17 +9,17 @@ dependencyResolutionManagement {
     libs {
       version('checkstyle', '10.13.0')
       version('jacoco', '0.8.11')
-      version('junit', '5.10.1')
-      version('sonarlint-core', '9.6.1.76766')
+      version('junit', '5.10.2')
+      version('sonarlint-core', '9.8.0.76914')
 
       plugin('mrjar', 'me.champeau.mrjar').version('0.1.1')
       plugin('prettyJupiter', 'io.github.joselion.pretty-jupiter').version('3.2.0')
-      plugin('publishPlugin', 'io.github.gradle-nexus.publish-plugin').version('2.0.0-rc-1')
-      plugin('sonarlint', 'name.remal.sonarlint').version('3.4.4')
+      plugin('publishPlugin', 'io.github.gradle-nexus.publish-plugin').version('2.0.0-rc-2')
+      plugin('sonarlint', 'name.remal.sonarlint').version('3.4.6')
       plugin('strictNullCheck', 'io.github.joselion.strict-null-check').version('3.3.0')
 
-      library('assertj', 'org.assertj', 'assertj-core').version('3.25.1')
-      library('mockito', 'org.mockito', 'mockito-core').version('5.9.0')
+      library('assertj', 'org.assertj', 'assertj-core').version('3.25.3')
+      library('mockito', 'org.mockito', 'mockito-core').version('5.10.0')
       library('sonarlint-java', 'org.sonarsource.java', 'sonar-java-plugin').version('7.30.1.34514')
     }
   }
