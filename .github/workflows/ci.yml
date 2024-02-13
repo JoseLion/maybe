@@ -28,7 +28,7 @@ jobs:
       - run: ./gradlew test java17Test java21Test
       - run: ./gradlew build
       - run: ./gradlew jacocoTestReport --rerun
-      - uses: codecov/codecov-action@v4
+      - uses: codecov/codecov-action@v3
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: true
