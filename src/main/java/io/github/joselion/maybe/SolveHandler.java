@@ -5,6 +5,7 @@ import static java.util.Objects.isNull;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import org.eclipse.jdt.annotation.Nullable;
@@ -215,9 +216,9 @@ public final class SolveHandler<T, E extends Throwable> {
   ) {
     return this.value
       .unwrap(
-        x -> ofType.isInstance(x)
-          ? Maybe.of(x).map(Commons::<C>cast).solve(solver)
-          : SolveHandler.failure(Commons.cast(x)),
+        prev -> ofType.isInstance(prev)
+          ? Maybe.of(prev).map(Commons::<C>cast).solve(solver)
+          : SolveHandler.failure(Commons.cast(prev)),
         SolveHandler::from
       );
   }
@@ -331,9 +332,9 @@ public final class SolveHandler<T, E extends Throwable> {
   /**
    * If an error is present and matches the specified {@code ofType} class, map
    * it to another throwable using the {@code mapper} function which receives
-   * the mtching error in its argument. If the error is not present or it does
-   * not match the specified type, the {@code mapper} is never applied and the
-   * next handler will just contain the solved value.
+   * the matching error as input. If the error is not present or it does not
+   * match the specified type, the {@code mapper} is never applied and the next
+   * handler will just contain the solved value.
    *
    * @param <C> the type of error to match
    * @param <X> the type of the mapped error
@@ -347,10 +348,10 @@ public final class SolveHandler<T, E extends Throwable> {
     final Function<? super C, ? extends X> mapper
   ) {
     return this.value.unwrap(
-      e -> {
-        final var nextError = ofType.isInstance(e)
-          ? mapper.apply(Commons.cast(e))
-          : Commons.<X>cast(e);
+      error -> {
+        final var nextError = ofType.isInstance(error)
+          ? mapper.apply(Commons.cast(error))
+          : Commons.<X>cast(error);
 
         return SolveHandler.failure(nextError);
       },
@@ -360,9 +361,9 @@ public final class SolveHandler<T, E extends Throwable> {
 
   /**
    * If an error is present, map it to another throwable using the {@code mapper}
-   * function which receives the previous error in its argument. If the error
-   * is not present, the {@code mapper} is never applied and the next handler
-   * will just contain the solved value.
+   * function which receives the previous error as input. If the error is not
+   * present, the {@code mapper} is never applied and the next handler will
+   * just contain the solved value.
    *
    * @param <X> the type of the mapped error
    * @param mapper a function which takes the error as argument and returns
@@ -402,6 +403,46 @@ public final class SolveHandler<T, E extends Throwable> {
   }
 
   /**
+   * If the value is present and the value matches the given predicate, returns
+   * a handler with the same value. Otherwise, returns a handler with an error
+   * mapped by the {@code onFalse} function, which receives the value as input.
+   * If an error is present, returns a handler containing the same error so it
+   * can be propagated downstream.
+   *
+   * <p>In simpler terms, this operation is a shorcut for the following:
+   * <pre>{@code
+   * Maybe.of(value)
+   *  .solve(MyService::processOrThrow)
+   *  .solve(x -> {
+   *    if (someCondition(x)) { // `predicate` param
+   *      return x;
+   *    }
+   *
+   *    throw new RuntimeException("Invalid value: " + x); // `onFalse` param
+   *  });
+   * }</pre>
+   *
+   * @param <X> the type of the supplied error
+   * @param predicate a predicate to apply to the value, if present
+   * @param onFalse a function that receives the value as input an returns an
+   *                error in case te predicate evaluates to false
+   * @return a handler with either the same value or the mapped error
+   */
+  public <X extends Throwable> SolveHandler<T, X> filter(
+    final Predicate<T> predicate,
+    final Function<T, X> onFalse
+  ) {
+    return this.value
+      .mapLeft(Commons::<X>cast)
+      .unwrap(
+        SolveHandler::failure,
+        prev -> predicate.test(prev)
+          ? SolveHandler.from(prev)
+          : SolveHandler.failure(onFalse.apply(prev))
+      );
+  }
+
+  /**
    * If the value is present, casts the value to the provided {@code type}
    * class. If the error is present or the value not assignable to {@code type},
    * returns a handler with a {@link ClassCastException} error.
@@ -418,8 +459,8 @@ public final class SolveHandler<T, E extends Throwable> {
    * If the value is present, casts the value to the provided {@code type}
    * class. If the value is not assignable to {@code type}, maps the error with
    * the provided {@code onError} function, which receives the produced
-   * {@link ClassCastException} on its argument. If the error is present,
-   * returns a handler with the same error.
+   * {@link ClassCastException} as input. If the error is present, returns a
+   * handler with the same error so it can be propagated downstream.
    *
    * @param <U> the type of the cast value
    * @param <X> the type of the mapped exception
@@ -607,7 +648,7 @@ public final class SolveHandler<T, E extends Throwable> {
             .of(prev)
             .solve(solver)
             .map(CloseableHandler::<R, X>from)
-            .orElse(x -> CloseableHandler.failure(Commons.cast(x)))
+            .orElse(error -> CloseableHandler.failure(Commons.cast(error)))
       );
   }
 }

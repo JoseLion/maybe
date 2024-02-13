@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.InstanceOfAssertFactories.INPUT_STREAM;
 import static org.assertj.core.api.InstanceOfAssertFactories.THROWABLE;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
@@ -596,6 +597,49 @@ import io.github.joselion.testing.UnitTest;
 
         assertThat(handler.success()).isEmpty();
         assertThat(handler.error()).contains(FAILURE);
+      }
+    }
+  }
+
+  @Nested class filter {
+    @Nested class when_the_value_is_present {
+      @Nested class and_the_value_matches_the_predicate {
+        @Test void returns_a_handler_with_the_same_value() {
+          final var onFalseSpy = Spy.function((String x) -> new RuntimeException("Invalid: " + x));
+          final var handler = SolveHandler.from(OK).filter(x -> x.length() <= 2, onFalseSpy);
+
+          assertThat(handler.success()).containsSame(OK);
+          assertThat(handler.error()).isEmpty();
+
+          verify(onFalseSpy, never()).apply(anyString());
+        }
+      }
+
+      @Nested class and_the_value_does_not_match_the_predicate {
+        @Test void returns_a_handler_with_the_mapped_error() {
+          final var onFalseSpy = Spy.function((String x) -> new RuntimeException("Invalid: " + x));
+          final var handler = SolveHandler.from(OK).filter(x -> x.length() > 2, onFalseSpy);
+
+          assertThat(handler.success()).isEmpty();
+          assertThat(handler.error())
+            .get(THROWABLE)
+            .isInstanceOf(RuntimeException.class)
+            .hasMessage("Invalid: OK");
+
+          verify(onFalseSpy).apply(OK);
+        }
+      }
+    }
+
+    @Nested class when_the_error_is_present {
+      @Test void returns_a_handler_with_the_error() {
+        final var onFalseSpy = Spy.function((Object x) -> new RuntimeException("Invalid: " + x));
+        final var handler = SolveHandler.failure(FAILURE).filter(OK::equals, onFalseSpy);
+
+        assertThat(handler.success()).isEmpty();
+        assertThat(handler.error()).get().isEqualTo(FAILURE);
+
+        verify(onFalseSpy, never()).apply(any());
       }
     }
   }
