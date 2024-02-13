@@ -3,6 +3,7 @@ package io.github.joselion.maybe;
 import static java.util.Objects.isNull;
 
 import java.util.Optional;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -458,23 +459,27 @@ public final class SolveHandler<T, E extends Throwable> {
   /**
    * If the value is present, casts the value to the provided {@code type}
    * class. If the value is not assignable to {@code type}, maps the error with
-   * the provided {@code onError} function, which receives the produced
-   * {@link ClassCastException} as input. If the error is present, returns a
-   * handler with the same error so it can be propagated downstream.
+   * the provided {@code onError} bi-function, which receives the value and the
+   * produced {@link ClassCastException} as inputs. If the error is present,
+   * returns a handler with the same error so it can be propagated downstream.
    *
    * @param <U> the type of the cast value
    * @param <X> the type of the mapped exception
    * @param type the class instance of the type to cast
-   * @param onError a function to map the error in case of failure
+   * @param onError a bi-function to map the error in case of failure
    * @return a handler with either the cast value or the mapped error
    */
   public <U, X extends Throwable> SolveHandler<U, X> cast(
     final Class<U> type,
-    final Function<ClassCastException, ? extends X> onError
+    final BiFunction<? super T, ClassCastException, ? extends X> onError
   ) {
-    return this
-      .solve(type::cast)
-      .mapError(ClassCastException.class, onError);
+    return this.solve(prev -> {
+      try {
+        return type.cast(prev);
+      } catch (ClassCastException e) {
+        throw onError.apply(prev, e);
+      }
+    });
   }
 
   /**
