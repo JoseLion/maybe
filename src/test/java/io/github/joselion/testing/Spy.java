@@ -3,6 +3,7 @@ package io.github.joselion.testing;
 import static org.mockito.AdditionalAnswers.delegatesTo;
 import static org.mockito.Mockito.mock;
 
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -37,12 +38,25 @@ public final class Spy {
    * Creates a spy of a generic {@link Function} interface.
    *
    * @param <T> the type of the input to the function
-   * @param <U> the type of the result of the function
+   * @param <R> the type of the result of the function
    * @param function the function to spy on
    * @return a spy of the provided function
    */
-  public static <T, U> Function<T, U> function(final Function<T, U> function) {
+  public static <T, R> Function<T, R> function(final Function<T, R> function) {
     return lambda(function);
+  }
+
+  /**
+   * Creates a spy of a generic {@link BiFunction} interface.
+   *
+   * @param <T> the type of the first input to the function
+   * @param <U> the type of the second input to the function
+   * @param <R> the type of the result of the function
+   * @param biFunction the bi-function to spy on
+   * @return a spy of the provided function
+   */
+  public static <T, U, R> BiFunction<T, U, R> biFunction(final BiFunction<T, U, R> biFunction) {
+    return lambda(biFunction);
   }
 
   /**
