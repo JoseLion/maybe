@@ -317,18 +317,37 @@ public final class Maybe<T> {
   }
 
   /**
-   * If the value is present, cast the value to another type. In case of an
-   * exception during the cast, a Maybe with {@link #empty()} is returned.
+   * If the value is present, casts the value to the provided {@code type}
+   * class. If the value is not assignable to {@code type}, returns a handler
+   * with a {@link ClassCastException} error.
    *
-   * @param <U> the type that the value will be cast to
+   * @param <U> the type of the cast value
    * @param type the class instance of the type to cast
-   * @return a new {@code Maybe} with the cast value if it can be cast,
-   *         {@link #empty()} otherwise
+   * @return a handler with either the cast value or a ClassCastException error
    */
   public <U> SolveHandler<U, ClassCastException> cast(final Class<U> type) {
-    return Maybe
-      .of(this.value)
-      .solve(type::cast);
+    return this.solve(type::cast);
+  }
+
+  /**
+   * If the value is present, casts the value to the provided {@code type}
+   * class. If the value is not assignable to {@code type}, maps the error with
+   * the provided {@code onError} function, which receives the produced
+   * {@link ClassCastException} on its argument.
+   *
+   * @param <U> the type of the cast value
+   * @param <X> the type of the mapped exception
+   * @param type the class instance of the type to cast
+   * @param onError a function to map the error in case of failure
+   * @return a handler with either the cast value or the mapped error
+   */
+  public <U, X extends Throwable> SolveHandler<U, X> cast(
+    final Class<U> type,
+    final Function<Throwable, ? extends X> onError
+  ) {
+    return this
+      .solve(type::cast)
+      .mapError(onError);
   }
 
   /**

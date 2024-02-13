@@ -602,36 +602,67 @@ import io.github.joselion.testing.UnitTest;
 
   @Nested class cast {
     @Nested class when_the_value_is_present {
-      @Nested class and_the_object_can_be_cast {
+      @Nested class and_the_value_is_an_instance_of_the_type {
         @Test void returns_a_handler_with_the_cast_value() {
           final var anyValue = (Object) "Hello";
-          final var handler = SolveHandler.from(anyValue)
-            .cast(String.class);
+          final var mapperSpy = Spy.function((ClassCastException e) -> new RuntimeException(e));
+          final var handler = SolveHandler.from(anyValue);
+          final var overloads = List.of(
+            handler.cast(String.class),
+            handler.cast(String.class, mapperSpy)
+          );
 
-          assertThat(handler.success()).contains("Hello");
-          assertThat(handler.error()).isEmpty();
+          assertThat(overloads).isNotEmpty().allSatisfy(overload -> {
+            assertThat(overload.success()).contains("Hello");
+            assertThat(overload.error()).isEmpty();
+          });
+
+          verify(mapperSpy, never()).apply(any());
         }
       }
 
-      @Nested class and_the_object_can_not_be_cast {
-        @Test void returns_a_handler_with_the_cast_exception() {
-          final var handler = SolveHandler.from(3).cast(String.class);
+      @Nested class and_the_value_is_not_an_instance_of_the_type {
+        @Nested class and_the_error_mapper_is_not_provided {
+          @Test void returns_a_handler_with_a_ClassCastException() {
+            final var handler = SolveHandler.from(3).cast(String.class);
 
-          assertThat(handler.success()).isEmpty();
-          assertThat(handler.error())
-            .get(THROWABLE)
-            .isExactlyInstanceOf(ClassCastException.class)
-            .hasMessage("Cannot cast java.lang.Integer to java.lang.String");
+            assertThat(handler.success()).isEmpty();
+            assertThat(handler.error())
+              .get(THROWABLE)
+              .isExactlyInstanceOf(ClassCastException.class)
+              .hasMessage("Cannot cast java.lang.Integer to java.lang.String");
+          }
+        }
+
+        @Nested class and_the_error_mapper_is_provided {
+          @Test void returns_a_handler_with_the_mapped_error() {
+            final var mapperSpy = Spy.function((ClassCastException e) -> FAILURE);
+            final var handler = SolveHandler.from(3).cast(String.class, mapperSpy);
+
+            assertThat(handler.success()).isEmpty();
+            assertThat(handler.error()).contains(FAILURE);
+
+            verify(mapperSpy).apply(any(ClassCastException.class));
+          }
         }
       }
     }
 
     @Nested class when_the_error_is_present {
       @Test void returns_a_handler_with_the_error() {
-        final var handler = SolveHandler.failure(FAILURE).cast(String.class);
+        final var mapperSpy = Spy.function((ClassCastException e) -> new RuntimeException(e));
+        final var handler = SolveHandler.failure(FAILURE);
+        final var overloads = List.of(
+          handler.cast(String.class),
+          handler.cast(String.class, mapperSpy)
+        );
 
-        assertThat(handler.success()).isEmpty();
-        assertThat(handler.error()).get().isSameAs(FAILURE);
+        assertThat(overloads).isNotEmpty().allSatisfy(overload -> {
+          assertThat(overload.success()).isEmpty();
+          assertThat(overload.error()).get().isSameAs(FAILURE);
+        });
+
+        verify(mapperSpy, never()).apply(any());
       }
     }
   }

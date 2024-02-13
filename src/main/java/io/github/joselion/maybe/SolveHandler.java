@@ -402,17 +402,38 @@ public final class SolveHandler<T, E extends Throwable> {
   }
 
   /**
-   * If the value is present, cast the value to anoter type. If the cast fails
-   * or if the error is present, it returns a new handler which contains a
-   * {@link ClassCastException} error.
+   * If the value is present, casts the value to the provided {@code type}
+   * class. If the error is present or the value not assignable to {@code type},
+   * returns a handler with a {@link ClassCastException} error.
    *
-   * @param <U> the type the value will be cast to
+   * @param <U> the type of the cast value
    * @param type the class instance of the type to cast
-   * @return a new handler with either the cast value or a ClassCastException
-   *         error
+   * @return a handler with either the cast value or a ClassCastException error
    */
   public <U> SolveHandler<U, ClassCastException> cast(final Class<U> type) {
     return this.solve(type::cast);
+  }
+
+  /**
+   * If the value is present, casts the value to the provided {@code type}
+   * class. If the value is not assignable to {@code type}, maps the error with
+   * the provided {@code onError} function, which receives the produced
+   * {@link ClassCastException} on its argument. If the error is present,
+   * returns a handler with the same error.
+   *
+   * @param <U> the type of the cast value
+   * @param <X> the type of the mapped exception
+   * @param type the class instance of the type to cast
+   * @param onError a function to map the error in case of failure
+   * @return a handler with either the cast value or the mapped error
+   */
+  public <U, X extends Throwable> SolveHandler<U, X> cast(
+    final Class<U> type,
+    final Function<ClassCastException, ? extends X> onError
+  ) {
+    return this
+      .solve(type::cast)
+      .mapError(ClassCastException.class, onError);
   }
 
   /**
