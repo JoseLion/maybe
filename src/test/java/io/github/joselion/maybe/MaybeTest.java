@@ -11,6 +11,7 @@ import static org.mockito.Mockito.verify;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
@@ -29,22 +30,22 @@ import io.github.joselion.testing.UnitTest;
 
   private static final String OK = "OK";
 
-  private static final IOException FAIL_EXCEPTION = new IOException("FAIL");
+  private static final IOException FAILURE = new IOException("FAIL");
 
   private final ThrowingFunction<String, String, IOException> failFunction = val -> {
-    throw FAIL_EXCEPTION;
+    throw FAILURE;
   };
 
   private final ThrowingSupplier<String, IOException> failSupplier = () -> {
-    throw FAIL_EXCEPTION;
+    throw FAILURE;
   };
 
   private final ThrowingConsumer<String, IOException> failConsumer = it -> {
-    throw FAIL_EXCEPTION;
+    throw FAILURE;
   };
 
   private final ThrowingRunnable<IOException> failRunnable = () -> {
-    throw FAIL_EXCEPTION;
+    throw FAILURE;
   };
 
   @Nested class of {
@@ -113,7 +114,7 @@ import io.github.joselion.testing.UnitTest;
           final var handler = Maybe.from(supplierSpy);
 
           assertThat(handler.success()).isEmpty();
-          assertThat(handler.error()).contains(FAIL_EXCEPTION);
+          assertThat(handler.error()).contains(FAILURE);
 
           verify(supplierSpy).get();
         }
@@ -137,7 +138,7 @@ import io.github.joselion.testing.UnitTest;
           final var runnableSpy = Spy.lambda(failRunnable);
           final var handler = Maybe.from(runnableSpy);
 
-          assertThat(handler.error()).contains(FAIL_EXCEPTION);
+          assertThat(handler.error()).contains(FAILURE);
 
           verify(runnableSpy).run();
         }
@@ -158,7 +159,7 @@ import io.github.joselion.testing.UnitTest;
         assertThat(Maybe.partial(failureSpy).apply(OK))
           .isInstanceOf(SolveHandler.class)
           .extracting(SolveHandler::error, optional(IOException.class))
-          .contains(FAIL_EXCEPTION);
+          .contains(FAILURE);
 
         verify(successSpy).apply(OK);
         verify(failureSpy).apply(OK);
@@ -178,7 +179,7 @@ import io.github.joselion.testing.UnitTest;
         assertThat(Maybe.partial(failureSpy).apply(OK))
           .isInstanceOf(EffectHandler.class)
           .extracting(EffectHandler::error, optional(IOException.class))
-          .contains(FAIL_EXCEPTION);
+          .contains(FAILURE);
 
         verify(successSpy).accept(OK);
         verify(failureSpy).accept(OK);
@@ -314,7 +315,7 @@ import io.github.joselion.testing.UnitTest;
           .solve(functionSpy);
 
         assertThat(handler.success()).isEmpty();
-        assertThat(handler.error()).contains(FAIL_EXCEPTION);
+        assertThat(handler.error()).contains(FAILURE);
 
         verify(functionSpy).apply(OK);
       }
@@ -367,7 +368,7 @@ import io.github.joselion.testing.UnitTest;
         final var handler = Maybe.of(OK)
           .effect(consumerSpy);
 
-        assertThat(handler.error()).contains(FAIL_EXCEPTION);
+        assertThat(handler.error()).contains(FAILURE);
 
         verify(consumerSpy).accept(OK);
       }
@@ -375,19 +376,69 @@ import io.github.joselion.testing.UnitTest;
   }
 
   @Nested class cast {
-    @Nested class when_the_value_is_castable_to_the_passed_type {
-      @Test void returns_a_solve_handler_with_the_cast_value() {
-        final var maybe = Maybe.<Number>of(3);
+    @Nested class when_the_value_is_present {
+      @Nested class and_the_value_is_an_instance_of_the_type {
+        @Test void returns_a_solve_handler_with_the_cast_value() {
+          final var mapperSpy = Spy.function((Throwable e) -> FAILURE);
+          final var handler = Maybe.of((Number) 3);
+          final var overloads = List.of(
+            handler.cast(Integer.class),
+            handler.cast(Integer.class, mapperSpy)
+          );
 
-        assertThat(maybe.cast(Integer.class).success()).contains(3);
+          assertThat(overloads).isNotEmpty().allSatisfy(overload -> {
+            assertThat(overload.success()).contains(3);
+            assertThat(overload.error()).isEmpty();
+          });
+
+          verify(mapperSpy, never()).apply(any());
+        }
+      }
+
+      @Nested class and_the_value_is_not_an_instance_of_the_type {
+        @Nested class and_the_error_mapper_is_not_provided {
+          @Test void returns_a_solve_handler_with_a_ClassCastException() {
+            final var handler = Maybe.of("3").cast(Integer.class);
+
+            assertThat(handler.success()).isEmpty();
+            assertThat(handler.error()).containsInstanceOf(ClassCastException.class);
+          }
+        }
+
+        @Nested class and_the_error_mapper_is_provided {
+          @Test void returns_a_solve_handler_with_the_mapped_error() {
+            final var mapperSpy = Spy.function((Throwable e) -> FAILURE);
+            final var handler = Maybe.of("3").cast(Integer.class, mapperSpy);
+
+            assertThat(handler.success()).isEmpty();
+            assertThat(handler.error()).contains(FAILURE);
+
+            verify(mapperSpy).apply(any(ClassCastException.class));
+          }
+        }
       }
     }
 
-    @Nested class when_the_value_is_not_castable_to_the_passed_type {
-      @Test void returns_a_solve_handler_with_a_ClassCastException() {
-        final var maybe = Maybe.of("3");
+    @Nested class when_the_value_is_not_present {
+      @Nested class and_the_error_mapper_is_not_provided {
+        @Test void returns_a_solve_handler_with_a_NoSuchElementException() {
+          final var handler = Maybe.empty().cast(String.class);
 
-        assertThat(maybe.cast(Integer.class).error()).containsInstanceOf(ClassCastException.class);
+          assertThat(handler.success()).isEmpty();
+          assertThat(handler.error()).containsInstanceOf(NoSuchElementException.class);
+        }
+      }
+
+      @Nested class and_the_error_mapper_is_provided {
+        @Test void returns_a_solve_handler_with_the_mapped_error() {
+          final var mapperSpy = Spy.function((Throwable e) -> FAILURE);
+          final var handler = Maybe.empty().cast(String.class, mapperSpy);
+
+          assertThat(handler.success()).isEmpty();
+          assertThat(handler.error()).contains(FAILURE);
+
+          verify(mapperSpy).apply(any(NoSuchElementException.class));
+        }
       }
     }
   }
