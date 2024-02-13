@@ -9,6 +9,6 @@ jobs:
     if: github.actor == github.repository_owner
     runs-on: ubuntu-latest
     steps:
-      - uses: hmarr/auto-approve-action@v3
+      - uses: hmarr/auto-approve-action@v4
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}

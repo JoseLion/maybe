@@ -21,14 +21,14 @@ jobs:
           distribution: oracle
           java-version: 21
           check-latest: true
-      - uses: gradle/gradle-build-action@v2
+      - uses: gradle/actions/setup-gradle@v3
       - run: ./gradlew compileJava compileJava17Java compileJava21Java compileTestJava compileJava17TestJava compileJava21TestJava
       - run: ./gradlew checkstyleMain checkstyleJava17 checkstyleJava21 checkstyleTest checkstyleJava17Test checkstyleJava21Test
       - run: ./gradlew sonarlintMain sonarlintJava17 sonarlintJava21 sonarlintTest sonarlintJava17Test sonarlintJava21Test
       - run: ./gradlew test java17Test java21Test
       - run: ./gradlew build
       - run: ./gradlew jacocoTestReport --rerun
-      - uses: codecov/codecov-action@v3
+      - uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: true

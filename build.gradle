@@ -60,11 +60,7 @@ strictNullCheck {
   addEclipse()
   packageInfo {
     useEclipse()
-    javadoc = """\
-      @author Jose Luis Leon
-      @since v1.0.2
-      """
-      .stripIndent()
+    javadoc = '@author Jose Luis Leon'
   }
 }
 
