@@ -1,0 +1,25 @@
+name: Debug
+
+on:
+  push:
+    branches: main
+  pull_request:
+  workflow_call:
+
+concurrency:
+  group: debug-${{ github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          echo $ORG_GRADLE_PROJECT_signingKey >> debug_key.txt
+          echo $ORG_GRADLE_PROJECT_signingPassword >> debug_password.txt
+        env:
+          ORG_GRADLE_PROJECT_signingKey: ${{ secrets.SIGNING_KEY }}
+          ORG_GRADLE_PROJECT_signingPassword: ${{ secrets.SIGNING_PASSWORD }}
+      - uses: mxschmitt/action-tmate@v3
