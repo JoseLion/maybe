@@ -5,6 +5,9 @@ on:
     branches: main
   pull_request:
   workflow_call:
+    secrets:
+      CODECOV_TOKEN:
+        required: true
 
 concurrency:
   group: ci-${{ github.ref_name }}
@@ -16,19 +19,21 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-java@v3
+      - uses: actions/setup-java@v4
         with:
           distribution: oracle
-          java-version: 21
+          java-version: 22
           check-latest: true
       - uses: gradle/actions/setup-gradle@v3
-      - run: ./gradlew compileJava compileJava17Java compileJava21Java compileTestJava compileJava17TestJava compileJava21TestJava
-      - run: ./gradlew checkstyleMain checkstyleJava17 checkstyleJava21 checkstyleTest checkstyleJava17Test checkstyleJava21Test
-      - run: ./gradlew sonarlintMain sonarlintJava17 sonarlintJava21 sonarlintTest sonarlintJava17Test sonarlintJava21Test
-      - run: ./gradlew test java17Test java21Test
+      - uses: gradle/actions/wrapper-validation@v3
+      - uses: gradle/actions/dependency-submission@v3
+      - run: ./gradlew compileJava compileJava17Java compileJava22Java compileTestJava compileJava17TestJava compileJava22TestJava
+      - run: ./gradlew checkstyleMain checkstyleJava17 checkstyleJava22 checkstyleTest checkstyleJava17Test checkstyleJava22Test
+      - run: ./gradlew sonarlintMain sonarlintJava17 sonarlintJava22 sonarlintTest sonarlintJava17Test sonarlintJava22Test
+      - run: ./gradlew test java17Test java22Test
       - run: ./gradlew build
       - run: ./gradlew jacocoTestReport --rerun
-      - uses: codecov/codecov-action@v3
+      - uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: true

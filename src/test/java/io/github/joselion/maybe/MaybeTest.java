@@ -97,7 +97,7 @@ import io.github.joselion.testing.UnitTest;
   @Nested class from {
     @Nested class when_a_value_is_provided {
       @Nested class and_the_operation_succeeds {
-        @Test void returns_a_handler_with_the_value() throws IOException {
+        @Test void returns_a_handler_with_the_value() {
           final var supplierSpy = Spy.throwingSupplier(() -> OK);
           final var handler = Maybe.from(supplierSpy);
 
@@ -188,7 +188,7 @@ import io.github.joselion.testing.UnitTest;
   }
 
   @Nested class withResource {
-    @Test void returns_the_CloseableHandler_with_the_resource() throws FileNotFoundException, IOException {
+    @Test void returns_the_CloseableHandler_with_the_resource() throws IOException {
       try (var fis = new FileInputStream("./src/test/resources/readTest.txt")) {
         final var holder = Maybe.withResource(fis);
 
@@ -203,7 +203,7 @@ import io.github.joselion.testing.UnitTest;
 
   @Nested class solveResource {
     @Nested class and_the_solver_does_not_throw {
-      @Test void returns_a_CloseableHandler_with_the_resource() throws FileNotFoundException, IOException {
+      @Test void returns_a_CloseableHandler_with_the_resource() {
         final var path = "./src/test/resources/readTest.txt";
         final var holder = Maybe.solveResource(() -> new FileInputStream(path));
 
