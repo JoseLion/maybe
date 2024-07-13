@@ -3,13 +3,13 @@
 # This file is expected to be part of source control.
 io.github.gradle-nexus.publish-plugin:io.github.gradle-nexus.publish-plugin.gradle.plugin:2.0.0=classpath
 io.github.gradle-nexus:publish-plugin:2.0.0=classpath
-io.github.joselion.pretty-jupiter:io.github.joselion.pretty-jupiter.gradle.plugin:3.4.0=classpath
-io.github.joselion.strict-null-check:io.github.joselion.strict-null-check.gradle.plugin:3.4.0=classpath
-io.github.joselion:maybe:4.2.1=classpath
-io.github.joselion:pretty-jupiter:3.4.0=classpath
-io.github.joselion:strict-null-check:3.4.0=classpath
+io.github.joselion.pretty-jupiter:io.github.joselion.pretty-jupiter.gradle.plugin:3.4.1=classpath
+io.github.joselion.strict-null-check:io.github.joselion.strict-null-check.gradle.plugin:3.4.1=classpath
+io.github.joselion:maybe:4.3.0=classpath
+io.github.joselion:pretty-jupiter:3.4.1=classpath
+io.github.joselion:strict-null-check:3.4.1=classpath
 me.champeau.gradle.mrjar:plugin:0.1.1=classpath
 me.champeau.mrjar:me.champeau.mrjar.gradle.plugin:0.1.1=classpath
-name.remal.gradle-plugins.sonarlint:sonarlint:4.2.3=classpath
-name.remal.sonarlint:name.remal.sonarlint.gradle.plugin:4.2.3=classpath
+name.remal.gradle-plugins.sonarlint:sonarlint:4.2.6=classpath
+name.remal.sonarlint:name.remal.sonarlint.gradle.plugin:4.2.6=classpath
 empty=
